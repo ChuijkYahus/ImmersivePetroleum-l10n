@@ -30,7 +30,7 @@ public class IPDataGenerator{
 		ExistingFileHelper exhelper = event.getExistingFileHelper();
 		//StaticTemplateManager.EXISTING_HELPER = exhelper;
 		CompletableFuture<HolderLookup.Provider> provider = event.getLookupProvider();
-
+		
 		if(event.includeServer()){
 			IPBlockTags blockTags = new IPBlockTags(generator, provider, exhelper);
 			generator.addProvider(true, blockTags);
@@ -45,7 +45,7 @@ public class IPDataGenerator{
 			
 			generator.addProvider(true, new IPBlockStates(generator, exhelper));
 			generator.addProvider(true, new IPItemModels(generator, exhelper));
-
+			
 			List<DataProvider> providers = IPWorldGen.makeProviders(generator.getPackOutput(), provider);
 			if (providers != null && !providers.isEmpty())
 			{
@@ -54,7 +54,7 @@ public class IPDataGenerator{
 					generator.addProvider(true, data);
 				}
 			}
-
+			
 			generator.addProvider(true, new IPMultiblockTexturesAttach(generator.getPackOutput(), exhelper));
 			//IPBiomeModifierProvider.method(generator, exhelper, d -> generator.addProvider(true, d));
 		}

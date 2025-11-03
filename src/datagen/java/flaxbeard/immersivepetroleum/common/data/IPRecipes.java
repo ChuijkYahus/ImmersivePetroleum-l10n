@@ -57,16 +57,16 @@ import java.util.function.Consumer;
 
 public class IPRecipes extends RecipeProvider{
 	private final Map<String, Integer> PATH_COUNT = new HashMap<>();
-
+	
 	protected Consumer<FinishedRecipe> out;
 	public IPRecipes(DataGenerator generatorIn){
 		super(generatorIn.getPackOutput());
 	}
-
+	
 	@Override
 	protected void buildRecipes(@Nonnull Consumer<FinishedRecipe> out){
 		this.out = out;
-
+		
 		itemRecipes();
 		blockRecipes();
 		speedboatUpgradeRecipes();
@@ -76,13 +76,13 @@ public class IPRecipes extends RecipeProvider{
 		reservoirs();
 		refineryRecipes();
 		paraffinWaxRecipes();
-
+		
 		MixerRecipeBuilder.builder(IPContent.Fluids.NAPALM.source().get(), 500)
 			.addFluidTag(IPTags.Fluids.gasoline, 500)
 			.addInput(new IngredientWithSize(IETags.getTagsFor(EnumMetals.ALUMINUM).dust, 3))
 			.setEnergy(3200)
 			.build(this.out, rl("mixer/napalm"));
-
+		
 		GeneratorFuelBuilder.builder(IPTags.Fluids.diesel, 322)
 			.build(this.out, rl("fuels/diesel"));
 		GeneratorFuelBuilder.builder(IPTags.Fluids.diesel_sulfur, 285)
@@ -90,7 +90,7 @@ public class IPRecipes extends RecipeProvider{
 		GeneratorFuelBuilder.builder(IPTags.Fluids.kerosene, 208)
 			.build(this.out, rl("fuels/kerosene"));
 	}
-
+	
 	private void reservoirs(){
 		ReservoirBuilder.builder("aquifer", Fluids.WATER, 5000.000, 10000.000, 0.025, 30)
 			.setDimensions(false, new ResourceLocation[]{
@@ -98,25 +98,25 @@ public class IPRecipes extends RecipeProvider{
 			})
 			.equilibrium(2000)
 			.build(this.out, rl("reservoirs/aquifer"));
-
+		
 		ReservoirBuilder.builder("oil", IPContent.Fluids.CRUDEOIL.source().get(), 2500.000, 32500.000, 0.006, 40)
 			.setDimensions(true, new ResourceLocation[]{
 					Level.END.location()
 			})
 			.build(this.out, rl("reservoirs/oil"));
-
+		
 		ReservoirBuilder.builder("lava", Fluids.LAVA, 250.000, 1000.000, 0.0, 30)
 			.setDimensions(true, new ResourceLocation[]{
 					Level.END.location()
 			})
 			.build(this.out, rl("reservoirs/lava"));
 	}
-
+	
 	private void distillationRecipes(){
 		// setEnergy and setTime are 1024 and 1 by default. But still allows to be customized.
-
+		
 		DistillationTowerRecipeBuilder.builder(
-                        new FluidStack(IPContent.Fluids.NAPHTHA.get(), 15),
+						new FluidStack(IPContent.Fluids.NAPHTHA.get(), 15),
 						new FluidStack(IPContent.Fluids.KEROSENE.get(), 20),
 						new FluidStack(IPContent.Fluids.DIESEL_SULFUR.get(), 30),
 						new FluidStack(IPContent.Fluids.LUBRICANT.get(), 10))
@@ -124,7 +124,7 @@ public class IPRecipes extends RecipeProvider{
 			.addInput(IPTags.Fluids.crudeOil, 60)
 			.setTimeAndEnergy(1, 1024)
 			.build(this.out, rl("distillationtower/oil"));
-
+		
 		DistillationTowerRecipeBuilder.builder(
 						new FluidStack(IPContent.Fluids.BENZOL.get(), 5),
 						new FluidStack(IPContent.Fluids.DIESEL_SULFUR.get(), 5))
@@ -132,7 +132,7 @@ public class IPRecipes extends RecipeProvider{
 			.setTimeAndEnergy(1, 1024)
 			.build(this.out, rl("distillationtower/kerosene"));
 	}
-
+	
 	/** Contains everything related to Petcoke */
 	private void cokerRecipes(){
 		CokerUnitRecipeBuilder.builder(new ItemStack(IPContent.Items.PETCOKE.get(), 2), IPContent.Fluids.DIESEL_SULFUR.get(), 27)

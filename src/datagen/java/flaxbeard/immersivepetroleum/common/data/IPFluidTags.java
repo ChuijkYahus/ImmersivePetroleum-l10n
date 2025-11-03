@@ -13,7 +13,6 @@ import net.minecraftforge.common.data.ExistingFileHelper;
 import java.util.concurrent.CompletableFuture;
 
 public class IPFluidTags extends FluidTagsProvider{
-	
 	public IPFluidTags(DataGenerator gen, CompletableFuture<HolderLookup.Provider> pProvider,  ExistingFileHelper exHelper){
 		super(gen.getPackOutput(), pProvider, ImmersivePetroleum.MODID, exHelper);
 	}
@@ -21,12 +20,12 @@ public class IPFluidTags extends FluidTagsProvider{
 	@Override
 	protected void addTags(HolderLookup.Provider pProvider){
 		tag(IPTags.Fluids.crudeOil).add(IPContent.Fluids.CRUDEOIL.get());
-
-        tag(IPTags.Fluids.naphtha).add(IPContent.Fluids.NAPHTHA.get());
-        tag(IPTags.Fluids.kerosene).add(IPContent.Fluids.KEROSENE.get());
-        tag(IPTags.Fluids.diesel_sulfur).add(IPContent.Fluids.DIESEL_SULFUR.get());
-        tag(IPTags.Fluids.lubricant).add(IPContent.Fluids.LUBRICANT.get());
-
+		
+		tag(IPTags.Fluids.naphtha).add(IPContent.Fluids.NAPHTHA.get());
+		tag(IPTags.Fluids.kerosene).add(IPContent.Fluids.KEROSENE.get());
+		tag(IPTags.Fluids.diesel_sulfur).add(IPContent.Fluids.DIESEL_SULFUR.get());
+		tag(IPTags.Fluids.lubricant).add(IPContent.Fluids.LUBRICANT.get());
+		
 		tag(IPTags.Fluids.diesel)
 			.add(IPContent.Fluids.DIESEL.get())
 			.add(IPContent.Fluids.DIESEL_SULFUR.get());
