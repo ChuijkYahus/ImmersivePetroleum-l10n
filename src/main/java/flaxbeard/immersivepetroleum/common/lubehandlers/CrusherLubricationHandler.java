@@ -61,6 +61,7 @@ public class CrusherLubricationHandler implements ILubricationHandler<IMultibloc
 	}
 	
 	@Override
+	@OnlyIn(Dist.CLIENT)
 	public void lubricateClient(ClientLevel world, Fluid lubricant, int ticks, IMultiblockBEHelperMaster<CrusherLogic.State> mbte){
 		// Animation of it can be sped up with this.
 		// But it's just too fast and looks awful, so I turned it off instead.

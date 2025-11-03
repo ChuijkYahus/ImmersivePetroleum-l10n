@@ -17,10 +17,10 @@ import net.minecraft.world.level.block.state.StateDefinition;
 
 import javax.annotation.Nonnull;
 
-//This serves to replace the "default" registered block that makes up the multiblocks.
+// This serves to replace the "default" registered block that makes up the multiblocks.
 public class IPMultiblockBase<T extends IMultiblockState> extends MultiblockPartBlock<T>{
 	
-	//the multiblock field is private so we save it here to reference it later on.
+	// The multiblock field is private, so we save it here to reference it later on.
 	private final MultiblockRegistration<T> multiblock;
 	
 	public IPMultiblockBase(BlockBehaviour.Properties properties, MultiblockRegistration<T> multiblock){
@@ -61,7 +61,7 @@ public class IPMultiblockBase<T extends IMultiblockState> extends MultiblockPart
 		return false;
 	}
 	
-	//Without this, the constructor of MultiblockPartBlock will throw an exception and initialization will actually explode.
+	// Without this, the constructor of MultiblockPartBlock will throw an exception and initialization will actually explode.
 	@Override
 	protected void createBlockStateDefinition(@Nonnull StateDefinition.Builder<Block, BlockState> builder){
 		super.createBlockStateDefinition(builder);

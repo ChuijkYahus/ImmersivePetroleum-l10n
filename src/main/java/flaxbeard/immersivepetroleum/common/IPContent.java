@@ -238,7 +238,6 @@ public class IPContent{
 	public static void preInit(){
 	}
 	
-	@SuppressWarnings("unchecked")
 	public static void init(ParallelDispatchEvent event){
 		//event.enqueueWork(IPWorldGen::registerReservoirGen);
 		
@@ -280,9 +279,9 @@ public class IPContent{
 		
 		FlarestackHandler.register(IPTags.Utility.burnableInFlarestack);
 		
-		LubricatedHandler.registerLubricatedTile(Multiblock.PUMPJACK.logic().getClass(), PumpjackLubricationHandler::new);
-		LubricatedHandler.registerLubricatedTile(IEMultiblockLogic.EXCAVATOR.logic().getClass(), ExcavatorLubricationHandler::new);
-		LubricatedHandler.registerLubricatedTile(IEMultiblockLogic.CRUSHER.logic().getClass(), CrusherLubricationHandler::new);
+		LubricatedHandler.register(Multiblock.PUMPJACK, PumpjackLubricationHandler::new);
+		LubricatedHandler.register(IEMultiblockLogic.EXCAVATOR, ExcavatorLubricationHandler::new);
+		LubricatedHandler.register(IEMultiblockLogic.CRUSHER, CrusherLubricationHandler::new);
 	}
 	
 	@OnlyIn(Dist.CLIENT)

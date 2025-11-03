@@ -75,6 +75,7 @@ public class ExcavatorLubricationHandler implements ILubricationHandler<IMultibl
 	}
 	
 	@Override
+	@OnlyIn(Dist.CLIENT)
 	public void lubricateClient(ClientLevel world, Fluid lubricant, int ticks, IMultiblockBEHelperMaster<ExcavatorLogic.State> mbte){
 		MultiblockBlockEntityMaster<BucketWheelLogic.State> wheelMaster = getWheelMaster(world, mbte);
 		if(wheelMaster == null)

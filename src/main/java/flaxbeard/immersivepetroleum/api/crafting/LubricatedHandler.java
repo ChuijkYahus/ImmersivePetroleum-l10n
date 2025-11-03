@@ -1,5 +1,6 @@
 package flaxbeard.immersivepetroleum.api.crafting;
 
+import blusunrize.immersiveengineering.api.multiblocks.blocks.MultiblockRegistration;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.env.IMultiblockBEHelper;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.env.IMultiblockBEHelperMaster;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.logic.IMultiblockLogic;
@@ -39,6 +40,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
+@SuppressWarnings({
+	"NonExtendableApiUsage",
+	"unchecked"
+})
 public class LubricatedHandler{
 	
 	public interface ILubricationHandler<E extends IMultiblockBEHelperMaster<B>, B extends IMultiblockState>{
@@ -49,6 +54,7 @@ public class LubricatedHandler{
 		
 		boolean isMachineEnabled(Level world, E mbte);
 		
+		@OnlyIn(Dist.CLIENT)
 		void lubricateClient(ClientLevel world, Fluid lubricant, int ticks, E mbte);
 		
 		void lubricateServer(ServerLevel world, Fluid lubricant, int ticks, E mbte);
@@ -63,12 +69,10 @@ public class LubricatedHandler{
 	
 	static final Map<Class<? extends IMultiblockLogic<? extends IMultiblockState>>, ILubricationHandler<? extends IMultiblockBEHelper<?>, ? extends IMultiblockState>> lubricationHandlers = new HashMap<>();
 	
-	public static <T extends IMultiblockLogic<B>, B extends IMultiblockState> void registerLubricatedTile(Class<T> tileClass, Supplier<ILubricationHandler<?, B>> handler){
-		ILubricationHandler<?, B> instance = handler.get();
-		lubricationHandlers.put(tileClass, handler.get());
+	public static <S extends IMultiblockState, L extends IMultiblockLogic<S>> void register(MultiblockRegistration<S> mbReg, Supplier<ILubricationHandler<?, S>> handler){
+		lubricationHandlers.put((Class<L>) mbReg.logic().getClass(), handler.get());
 	}
 	
-	@SuppressWarnings("unchecked")
 	public static <T extends IMultiblockBEHelper<?>> ILubricationHandler<?, ?> getHandlerForTile(T te){
 		if(te != null){
 			final IMultiblockLogic<?> logic = te.getMultiblock().logic();

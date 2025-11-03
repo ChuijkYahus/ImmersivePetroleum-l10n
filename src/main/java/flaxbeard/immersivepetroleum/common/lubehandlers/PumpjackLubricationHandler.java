@@ -66,6 +66,7 @@ public class PumpjackLubricationHandler implements ILubricationHandler<IMultiblo
 	}
 	
 	@Override
+	@OnlyIn(Dist.CLIENT)
 	public void lubricateClient(ClientLevel world, Fluid lubricant, int ticks, IMultiblockBEHelperMaster<PumpjackLogic.State> mbte){
 		mbte.getState().activeTicks += 1F / 4F;
 	}
