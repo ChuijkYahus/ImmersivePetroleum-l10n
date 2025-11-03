@@ -1,12 +1,12 @@
 {
-  "parent": "immersivepetroleum:main/naphtha_distillates",
+  "parent": "immersivepetroleum:main/cracking",
   "criteria": {
-    "benzene": {
+    "benzol": {
       "conditions": {
         "items": [
           {
             "items": [
-              "immersivepetroleum:benzene_bucket"
+              "immersivepetroleum:benzol_bucket"
             ]
           }
         ]
@@ -25,24 +25,12 @@
       },
       "trigger": "minecraft:inventory_changed"
     },
-    "ethylene": {
+    "petroleum_gas": {
       "conditions": {
         "items": [
           {
             "items": [
-              "immersivepetroleum:ethylene_bucket"
-            ]
-          }
-        ]
-      },
-      "trigger": "minecraft:inventory_changed"
-    },
-    "propylene": {
-      "conditions": {
-        "items": [
-          {
-            "items": [
-              "immersivepetroleum:propylene_bucket"
+              "immersivepetroleum:petroleum_gas_bucket"
             ]
           }
         ]
@@ -67,13 +55,10 @@
   },
   "requirements": [
     [
-      "benzene"
+      "benzol"
     ],
     [
-      "propylene"
-    ],
-    [
-      "ethylene"
+      "petroleum_gas"
     ],
     [
       "duroplast_block"

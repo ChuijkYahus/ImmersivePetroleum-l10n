@@ -6,7 +6,7 @@
         "items": [
           {
             "items": [
-              "immersivepetroleum:naphtha_cracked_bucket"
+              "immersivepetroleum:petroleum_gas_bucket"
             ]
           }
         ]
@@ -22,7 +22,7 @@
     "frame": "task",
     "hidden": false,
     "icon": {
-      "item": "immersivepetroleum:naphtha_cracked_bucket"
+      "item": "immersivepetroleum:petroleum_gas_bucket"
     },
     "show_toast": true,
     "title": {

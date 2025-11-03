@@ -1,15 +1,15 @@
 {
   "type": "immersiveengineering:refinery",
   "catalyst": {
-    "tag": "forge:plates/copper"
+    "tag": "forge:plates/constantan"
   },
   "energy": 120,
   "input0": {
-    "amount": 8,
-    "tag": "forge:ethylene"
+    "amount": 15,
+    "tag": "forge:petroleum_gas"
   },
   "result": {
-    "amount": 8,
+    "amount": 15,
     "fluid": "immersiveengineering:acetaldehyde"
   }
 }

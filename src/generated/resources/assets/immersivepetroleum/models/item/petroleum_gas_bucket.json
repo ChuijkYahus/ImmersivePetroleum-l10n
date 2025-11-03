@@ -1,5 +1,5 @@
 {
   "parent": "forge:item/bucket",
-  "fluid": "immersivepetroleum:lubricant_cracked",
+  "fluid": "immersivepetroleum:petroleum_gas",
   "loader": "forge:fluid_container"
 }

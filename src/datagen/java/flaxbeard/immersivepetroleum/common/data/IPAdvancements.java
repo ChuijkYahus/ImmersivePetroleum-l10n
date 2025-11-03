@@ -96,25 +96,18 @@ public class IPAdvancements extends ForgeAdvancementProvider {
 			.addCriterion("code_trigger", new ImpossibleTrigger.TriggerInstance())
 			.save(consumer, ResourceUtils.ip("main/flarestack"), fileHelper);
 		
-		Advancement cracking = advancement(hydrotreater, IPContent.Fluids.NAPHTHA_CRACKED.bucket().get(), "cracking", FrameType.TASK, true, true, false)
-			.addCriterion("cracking", InventoryChangeTrigger.TriggerInstance.hasItems(IPContent.Fluids.NAPHTHA_CRACKED.bucket().get()))
+		Advancement cracking = advancement(hydrotreater, IPContent.Fluids.PETROLEUM_GAS.bucket().get(), "cracking", FrameType.TASK, true, true, false)
+			.addCriterion("cracking", InventoryChangeTrigger.TriggerInstance.hasItems(IPContent.Fluids.PETROLEUM_GAS.bucket().get()))
 			.save(consumer, ResourceUtils.ip("main/cracking"), fileHelper);
 		
-		Advancement naphtha_distillates = advancement(cracking, IPContent.Fluids.BENZENE.bucket().get(), "naphtha_distillates", FrameType.GOAL, true, true, false)
-			.addCriterion("benzene", InventoryChangeTrigger.TriggerInstance.hasItems(IPContent.Fluids.BENZENE.bucket().get()))
-			.addCriterion("propylene", InventoryChangeTrigger.TriggerInstance.hasItems(IPContent.Fluids.PROPYLENE.bucket().get()))
-			.addCriterion("ethylene", InventoryChangeTrigger.TriggerInstance.hasItems(IPContent.Fluids.ETHYLENE.bucket().get()))
-			.save(consumer, ResourceUtils.ip("main/naphtha_distillates"), fileHelper);
-		
-		advancement(naphtha_distillates, IEBlocks.StoneDecoration.DUROPLAST.get().asItem(), "duroplast", FrameType.CHALLENGE, true, true, false)
-			.addCriterion("benzene", InventoryChangeTrigger.TriggerInstance.hasItems(IPContent.Fluids.BENZENE.bucket().get()))
-			.addCriterion("propylene", InventoryChangeTrigger.TriggerInstance.hasItems(IPContent.Fluids.PROPYLENE.bucket().get())) // These are here to make sure the player made their duroplast from naphtha
-			.addCriterion("ethylene", InventoryChangeTrigger.TriggerInstance.hasItems(IPContent.Fluids.ETHYLENE.bucket().get()))
+		advancement(cracking, IEBlocks.StoneDecoration.DUROPLAST.get().asItem(), "duroplast", FrameType.CHALLENGE, true, true, false)
+			.addCriterion("benzol", InventoryChangeTrigger.TriggerInstance.hasItems(IPContent.Fluids.BENZOL.bucket().get()))
+			.addCriterion("petroleum_gas", InventoryChangeTrigger.TriggerInstance.hasItems(IPContent.Fluids.PETROLEUM_GAS.bucket().get())) // These are here to make sure the player made their duroplast from naphtha
 			.addCriterion("duroplast_block", InventoryChangeTrigger.TriggerInstance.hasItems(IEBlocks.StoneDecoration.DUROPLAST.get().asItem()))
 			.save(consumer, ResourceUtils.ip("main/duroplast"), fileHelper);
 		
-		Advancement kerosene = advancement(tower, IPContent.Fluids.GASOLINE_ADDITIVES.bucket().get(), "kerosene", FrameType.TASK, true, true, false)
-			.addCriterion("kerosene", InventoryChangeTrigger.TriggerInstance.hasItems(IPContent.Fluids.GASOLINE_ADDITIVES.bucket().get()))
+		Advancement kerosene = advancement(tower, IPContent.Fluids.BENZOL.bucket().get(), "kerosene", FrameType.TASK, true, true, false)
+			.addCriterion("kerosene", InventoryChangeTrigger.TriggerInstance.hasItems(IPContent.Fluids.BENZOL.bucket().get()))
 			.save(consumer, ResourceUtils.ip("main/kerosene"), fileHelper);
 		
 		Advancement gasoline = advancement(kerosene, IPContent.Fluids.GASOLINE.bucket().get(), "gasoline", FrameType.GOAL, true, true, false)

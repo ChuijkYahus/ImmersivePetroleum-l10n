@@ -17,12 +17,12 @@
     "bitumen":{
         "type":"item_display",
         "items":[{"item":"immersivepetroleum:bitumen"}]},
-    "naphtha_derivates":{
+    "petroleum_gas":{
         "type":"item_display",
-        "items":[{"item":"immersivepetroleum:benzene_bucket"}, {"item":"immersivepetroleum:propylene_bucket"}, {"item":"immersivepetroleum:ethylene_bucket"}]},
+        "items":[{"item":"immersivepetroleum:petroleum_gas_bucket"}]},
     "gasoline":{
         "type":"item_display",
-        "items":[{"item":"immersivepetroleum:gasoline_bucket"}, {"item":"immersivepetroleum:gasoline_additives_bucket"}]},
+        "items":[{"item":"immersivepetroleum:gasoline_bucket"}, {"item":"immersivepetroleum:benzol_bucket"}]},
     "napalm":{
         "type":"item_display",
         "items":[{"item":"immersivepetroleum:napalm_bucket"}]},

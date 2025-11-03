@@ -4,8 +4,8 @@
 		"items":[{"item":"immersiveengineering:phenolic_resin_bucket"}, {"item":"immersiveengineering:plate_duroplast"}, {"item":"immersiveengineering:duroplast"}]},
 	"plastics1":{
 		"type":"item_display",
-		"items":[{"item":"immersivepetroleum:naphtha_cracked_bucket"}]},
+		"items":[{"item":"immersivepetroleum:petroleum_gas_bucket"}]},
 	"plastics2":{"type":"item_display",
 		"type":"item_display",
-		"items":[{"item":"immersivepetroleum:benzene_bucket"}, {"item":"immersivepetroleum:propylene_bucket"}, {"item":"immersivepetroleum:ethylene_bucket"}]}
+		"items":[{"item":"immersivepetroleum:benzol_bucket"}, {"item":"immersivepetroleum:petroleum_gas_bucket"}]}
 }

@@ -1,16 +1,19 @@
 {
   "type": "immersiveengineering:refinery",
+  "catalyst": {
+    "item": "minecraft:redstone"
+  },
   "energy": 240,
   "input0": {
-    "amount": 8,
-    "tag": "forge:benzene"
+    "amount": 5,
+    "tag": "forge:benzol"
   },
   "input1": {
-    "amount": 8,
-    "tag": "forge:propylene"
+    "amount": 5,
+    "tag": "forge:petroleum_gas"
   },
   "result": {
-    "amount": 16,
+    "amount": 10,
     "fluid": "immersiveengineering:creosote"
   }
 }

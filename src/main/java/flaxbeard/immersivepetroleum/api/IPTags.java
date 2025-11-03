@@ -46,13 +46,9 @@ public class IPTags{
 		public static final TagKey<Fluid> lubricant = createFluidWrapper(ResourceUtils.forge("lubricant"));
 		public static final TagKey<Fluid> napalm = createFluidWrapper(ResourceUtils.forge("napalm"));
 		public static final TagKey<Fluid> naphtha = createFluidWrapper(ResourceUtils.forge("naphtha"));
-		public static final TagKey<Fluid> naphtha_cracked = createFluidWrapper(ResourceUtils.forge("naphtha_cracked"));
-		public static final TagKey<Fluid> benzene = createFluidWrapper(ResourceUtils.forge("benzene"));
-		public static final TagKey<Fluid> propylene = createFluidWrapper(ResourceUtils.forge("propylene"));
-		public static final TagKey<Fluid> ethylene = createFluidWrapper(ResourceUtils.forge("ethylene"));
-		public static final TagKey<Fluid> lubricant_cracked = createFluidWrapper(ResourceUtils.forge("lubricant_cracked"));
+		public static final TagKey<Fluid> benzol = createFluidWrapper(ResourceUtils.forge("benzol"));
+		public static final TagKey<Fluid> petroleum_gas = createFluidWrapper(ResourceUtils.forge("petroleum_gas"));
 		public static final TagKey<Fluid> kerosene = createFluidWrapper(ResourceUtils.forge("kerosene"));
-		public static final TagKey<Fluid> gasoline_additives = createFluidWrapper(ResourceUtils.forge("gasoline_additives"));
 		
 		public static final TagKey<Fluid> water = createFluidWrapper(ResourceUtils.mc("water"));
 		public static final TagKey<Fluid> concrete = createFluidWrapper(ResourceUtils.forge("concrete"));

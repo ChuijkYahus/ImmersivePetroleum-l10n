@@ -10,4 +10,4 @@ It is built as shown and formed by using the Engineer's Hammer on the heavy engi
 
 Applying a redstone signal to the control panel will halt the machine, this behavior can be inverted with the Screwdriver.
 
-If pneumatically-processed plastic is available, the High-Pressure Refinery Unit can process both <link;immersivepetroleum:fluids;§n§oethylene§r;naphtha_derivates> and <link;immersivepetroleum:fluids;§n§opropylene§r;naphtha_derivates> into molten plastic at a 10x or 20x yield respectively.
+If pneumatically-processed plastic is available, the High-Pressure Refinery Unit can process <link;immersivepetroleum:fluids;§n§oPetroleum Gas§r;petroleum_gas> into molten plastic at a 20x yield, twice that of smaller machinery.

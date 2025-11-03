@@ -7,12 +7,8 @@
   },
   "results": [
     {
-      "amount": 2,
-      "fluid": "immersivepetroleum:naphtha"
-    },
-    {
-      "amount": 3,
-      "fluid": "immersivepetroleum:gasoline_additives"
+      "amount": 5,
+      "fluid": "immersivepetroleum:benzol"
     },
     {
       "amount": 5,

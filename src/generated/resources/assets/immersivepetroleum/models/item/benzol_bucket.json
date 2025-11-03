@@ -1,5 +1,5 @@
 {
   "parent": "forge:item/bucket",
-  "fluid": "immersivepetroleum:naphtha_cracked",
+  "fluid": "immersivepetroleum:benzol",
   "loader": "forge:fluid_container"
 }

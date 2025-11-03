@@ -2,15 +2,15 @@
   "type": "immersiveengineering:refinery",
   "energy": 80,
   "input0": {
-    "amount": 7,
+    "amount": 15,
     "tag": "forge:naphtha"
   },
   "input1": {
-    "amount": 3,
-    "tag": "forge:gasoline_additives"
+    "amount": 10,
+    "tag": "forge:benzol"
   },
   "result": {
-    "amount": 10,
+    "amount": 25,
     "fluid": "immersivepetroleum:gasoline"
   }
 }

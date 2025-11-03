@@ -8,16 +8,16 @@
   ],
   "energy": 1024,
   "input": {
-    "amount": 50,
+    "amount": 60,
     "tag": "forge:crude_oil"
   },
   "results": [
     {
-      "amount": 17,
+      "amount": 15,
       "fluid": "immersivepetroleum:naphtha"
     },
     {
-      "amount": 18,
+      "amount": 20,
       "fluid": "immersivepetroleum:kerosene"
     },
     {
@@ -25,7 +25,7 @@
       "fluid": "immersivepetroleum:diesel_sulfur"
     },
     {
-      "amount": 12,
+      "amount": 10,
       "fluid": "immersivepetroleum:lubricant"
     }
   ],

@@ -124,13 +124,9 @@ public class IPContent{
 		public static final IPFluidEntry GASOLINE = IPFluid.makeFluid("gasoline", 789, 1200);
 		
 		public static final IPFluidEntry NAPHTHA = IPFluid.makeFluid("naphtha", 750, 750);
-		public static final IPFluidEntry NAPHTHA_CRACKED = IPFluid.makeFluid("naphtha_cracked", 750, 750);
-		public static final IPFluidEntry BENZENE = IPFluid.makeFluid("benzene", 876, 700);
-		public static final IPFluidEntry PROPYLENE = IPFluid.makeFluid("propylene", 2, 1);
-		public static final IPFluidEntry ETHYLENE = IPFluid.makeFluid("ethylene", 1, 1);
-		public static final IPFluidEntry LUBRICANT_CRACKED = IPFluid.makeFluid("lubricant_cracked", 925, 1000);
+		public static final IPFluidEntry BENZOL = IPFluid.makeFluid("benzol", 876, 700);
+		public static final IPFluidEntry PETROLEUM_GAS = IPFluid.makeFluid("petroleum_gas", 2, 1);
 		public static final IPFluidEntry KEROSENE = IPFluid.makeFluid("kerosene", 810, 900);
-		public static final IPFluidEntry GASOLINE_ADDITIVES = IPFluid.makeFluid("gasoline_additives", 800, 900);
 		
 		public static final IPFluidEntry NAPALM = IPFluid.makeFluid("napalm", 1000, 4000, 0.0105, NapalmFluidBlock::new);
 		
@@ -263,13 +259,13 @@ public class IPContent{
 		ChemthrowerHandler.registerEffect(IPTags.Fluids.crudeOil, new ChemthrowerEffect_Potion(null, 0, IEPotions.FLAMMABLE.get(), 60, 1));
 		ChemthrowerHandler.registerEffect(IPTags.Fluids.gasoline, new ChemthrowerEffect_Potion(null, 0, IEPotions.FLAMMABLE.get(), 60, 1));
 		ChemthrowerHandler.registerEffect(IPTags.Fluids.naphtha, new ChemthrowerEffect_Potion(null, 0, IEPotions.FLAMMABLE.get(), 60, 1));
-		ChemthrowerHandler.registerEffect(IPTags.Fluids.benzene, new ChemthrowerEffect_Potion(null, 0, IEPotions.FLAMMABLE.get(), 60, 1));
+		ChemthrowerHandler.registerEffect(IPTags.Fluids.benzol, new ChemthrowerEffect_Potion(null, 0, IEPotions.FLAMMABLE.get(), 60, 1));
 		ChemthrowerHandler.registerEffect(IPTags.Fluids.napalm, new ChemthrowerEffect_Potion(null, 0, IEPotions.FLAMMABLE.get(), 60, 2));
 		
 		ChemthrowerHandler.registerFlammable(IPTags.Fluids.crudeOil);
 		ChemthrowerHandler.registerFlammable(IPTags.Fluids.gasoline);
 		ChemthrowerHandler.registerFlammable(IPTags.Fluids.naphtha);
-		ChemthrowerHandler.registerFlammable(IPTags.Fluids.benzene);
+		ChemthrowerHandler.registerFlammable(IPTags.Fluids.benzol);
 		ChemthrowerHandler.registerFlammable(IPTags.Fluids.napalm);
 		
 		MultiblockHandler.registerMultiblock(DistillationTowerMultiblock.INSTANCE);

@@ -1,21 +1,22 @@
 {
   "type": "immersivepetroleum:hydrotreater",
-  "energy": 2560,
+  "energy": 256000,
   "input": {
-    "amount": 24,
+    "amount": 2000,
     "tag": "forge:lubricant"
   },
   "result": {
-    "amount": 24,
-    "fluid": "immersivepetroleum:lubricant_cracked"
+    "amount": 2000,
+    "fluid": "immersivepetroleum:diesel_sulfur"
   },
   "secondary_input": {
-    "amount": 5,
+    "amount": 500,
     "tag": "minecraft:water"
   },
   "secondary_result": {
-    "chance": "0.024",
+    "chance": "1.0",
+    "count": 2,
     "item": "immersivepetroleum:paraffin_wax"
   },
-  "time": 5
+  "time": 400
 }

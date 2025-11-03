@@ -1,17 +1,17 @@
 {
   "type": "immersivepetroleum:hydrotreater",
-  "energy": 2560,
+  "energy": 192000,
   "input": {
-    "amount": 20,
+    "amount": 1500,
     "tag": "forge:naphtha"
   },
   "result": {
-    "amount": 20,
-    "fluid": "immersivepetroleum:naphtha_cracked"
+    "amount": 2000,
+    "fluid": "immersivepetroleum:petroleum_gas"
   },
   "secondary_input": {
-    "amount": 5,
+    "amount": 500,
     "tag": "minecraft:water"
   },
-  "time": 5
+  "time": 300
 }
