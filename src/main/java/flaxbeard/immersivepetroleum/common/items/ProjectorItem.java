@@ -38,7 +38,10 @@ import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.dedicated.DedicatedServer;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -314,6 +317,16 @@ public class ProjectorItem extends IPItemBase implements IUpgradeableTool{
 						
 						return false; // Don't ever skip a step.
 					};
+					
+					/*
+						FIXME MultiblockProjection can NOT be called on Dedicated Servers anymore!!!
+						TemplateWorldCreator uses ClientLevel for some fucking reason.
+					*/
+					if(playerIn instanceof ServerPlayer serverPlayer && serverPlayer.server instanceof DedicatedServer){
+						String warning = "Due to issues Creative Placement on Dedicated Servers is Disabled!";
+						playerIn.displayClientMessage(Component.literal(warning).withStyle(ChatFormatting.RED), true);
+						return InteractionResult.SUCCESS;
+					}
 					
 					MultiblockProjection projection = new MultiblockProjection(world, settings.getMultiblock());
 					projection.setFlip(settings.isMirrored());
