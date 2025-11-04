@@ -48,15 +48,10 @@ public class MultiblockProjection{
 		this.templateWorld = TemplateWorldCreator.CREATOR.getValue().makeWorld(blocks, pos -> true, world.registryAccess());
 		
 		this.blockcount = blocks.size();
-		for(StructureTemplate.StructureBlockInfo info:blocks){
-			List<StructureTemplate.StructureBlockInfo> list = this.layers.get(info.pos().getY());
-			if(list == null){
-				list = new ArrayList<>();
-				this.layers.put(info.pos().getY(), list);
-			}
-			
+		blocks.forEach(info -> {
+			List<StructureTemplate.StructureBlockInfo> list = this.layers.computeIfAbsent(info.pos().getY(), ArrayList::new);
 			list.add(info);
-		}
+		});
 	}
 	
 	public MultiblockProjection setRotation(Rotation rotation){
