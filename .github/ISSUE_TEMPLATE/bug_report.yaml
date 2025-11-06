@@ -15,7 +15,7 @@ body:
         Select the Minecraft version.
         
         *If your version does not show up here, support for it has been closed.*
-      options: [1.19.2]
+      options: [1.19.2, 1.20.1]
     validations:
       required: true
 
@@ -72,7 +72,7 @@ body:
     attributes:
       label: Debug Crash Log
       description: |
-        You can generate a debug crashlog ingame by holding down F3 and C for about 10 seconds.
+        You can generate a debug crash log in game by holding down F3 and C for about 10 seconds.
         The log contains a lot of useful information, such as your complete mod list, and certain technical details about your PC.
         Please upload that log to [Gist](https://gist.github.com/), [Pastebin](https://pastebin.com/) or a similar site and enter the link here.
       placeholder: <gist or pastebin link>
