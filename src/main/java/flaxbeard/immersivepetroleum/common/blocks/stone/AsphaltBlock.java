@@ -5,6 +5,7 @@ import flaxbeard.immersivepetroleum.common.cfg.IPServerConfig;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.BlockGetter;
@@ -20,7 +21,7 @@ public class AsphaltBlock extends IPBlockBase{
 	protected static final float SPEED_FACTOR = 1.20F;
 	
 	public AsphaltBlock(){
-		super(Block.Properties.copy(Blocks.STONE).speedFactor(SPEED_FACTOR).strength(2.0F, 10.0F).sound(SoundType.STONE).requiresCorrectToolForDrops());
+		super(Block.Properties.ofFullCopy(Blocks.STONE).speedFactor(SPEED_FACTOR).strength(2.0F, 10.0F).sound(SoundType.STONE).requiresCorrectToolForDrops());
 	}
 	
 	@Override
@@ -29,12 +30,12 @@ public class AsphaltBlock extends IPBlockBase{
 	}
 	
 	@Override
-	public void appendHoverText(@Nonnull ItemStack stack, BlockGetter worldIn, @Nonnull List<Component> tooltip, @Nonnull TooltipFlag flagIn){
-		tooltip(stack, worldIn, tooltip, flagIn);
-		super.appendHoverText(stack, worldIn, tooltip, flagIn);
+	public void appendHoverText(@Nonnull ItemStack stack, @Nonnull Item.TooltipContext ctx, @Nonnull List<Component> tooltip, @Nonnull TooltipFlag flag){
+		tooltip(tooltip);
+		super.appendHoverText(stack, ctx, tooltip, flag);
 	}
 	
-	static void tooltip(ItemStack stack, BlockGetter worldIn, List<Component> tooltip, TooltipFlag flagIn){
+	static void tooltip(List<Component> tooltip){
 		if(IPServerConfig.MISCELLANEOUS.asphalt_speed.get()){
 			MutableComponent out = Component.translatable("desc.immersivepetroleum.flavour.asphalt", String.format(Locale.ENGLISH, "%.1f%%", (SPEED_FACTOR * 100 - 100))).withStyle(ChatFormatting.GRAY);
 			

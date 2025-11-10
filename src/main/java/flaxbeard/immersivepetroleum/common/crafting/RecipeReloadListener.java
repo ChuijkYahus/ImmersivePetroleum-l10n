@@ -14,10 +14,11 @@ import net.minecraft.server.ReloadableServerResources;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
-import net.minecraftforge.client.event.RecipesUpdatedEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.client.event.RecipesUpdatedEvent;
 
 import javax.annotation.Nonnull;
 import java.util.Collection;
@@ -47,7 +48,7 @@ public class RecipeReloadListener implements ResourceManagerReloadListener{
 	}
 	
 	static void lists(RecipeManager recipeManager){
-		Collection<Recipe<?>> recipes = recipeManager.getRecipes();
+		Collection<RecipeHolder<?>> recipes = recipeManager.getRecipes();
 		
 		if(recipes.isEmpty())
 			return;
@@ -65,8 +66,10 @@ public class RecipeReloadListener implements ResourceManagerReloadListener{
 		HighPressureRefineryRecipe.recipes = filterRecipes(recipes, HighPressureRefineryRecipe.class, IPRecipeTypes.HYDROTREATER);
 	}
 	
-	static <R extends Recipe<?>> Map<ResourceLocation, R> filterRecipes(Collection<Recipe<?>> recipes, Class<R> recipeClass, IERecipeTypes.TypeWithClass<R> recipeType){
+	static <R extends Recipe<?>> Map<ResourceLocation, R> filterRecipes(Collection<RecipeHolder<?>> recipes, Class<R> recipeClass, IERecipeTypes.TypeWithClass<R> recipeType){
+		// FIXME A.S.A.P
 		return recipes.stream()
+				.map(RecipeHolder::value)
 				.filter(iRecipe -> iRecipe.getType() == recipeType.get())
 				.map(recipeClass::cast)
 				.collect(Collectors.toMap(recipe -> recipe.getId(), recipe -> recipe));

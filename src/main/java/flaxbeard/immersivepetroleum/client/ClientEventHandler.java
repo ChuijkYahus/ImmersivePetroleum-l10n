@@ -31,17 +31,16 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.client.event.RenderBlockScreenEffectEvent;
-import net.minecraftforge.client.event.RenderBlockScreenEffectEvent.OverlayType;
-import net.minecraftforge.client.event.RenderGuiOverlayEvent;
-import net.minecraftforge.client.event.RenderLevelStageEvent;
-import net.minecraftforge.client.event.RenderLevelStageEvent.Stage;
-import net.minecraftforge.client.event.RenderPlayerEvent;
-import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
-import net.minecraftforge.event.TickEvent.ClientTickEvent;
-import net.minecraftforge.event.TickEvent.Phase;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fluids.FluidStack;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.RenderBlockScreenEffectEvent;
+import net.neoforged.neoforge.client.event.RenderBlockScreenEffectEvent.OverlayType;
+import net.neoforged.neoforge.client.event.RenderGuiLayerEvent;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent.Stage;
+import net.neoforged.neoforge.client.event.RenderPlayerEvent;
+import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,7 +61,7 @@ public class ClientEventHandler{
 	}
 	
 	@SubscribeEvent
-	public void reservoirDebuggingOverlayText(RenderGuiOverlayEvent.Post event){
+	public void reservoirDebuggingOverlayText(RenderGuiLayerEvent.Post event){
 		if(ReservoirHandler.getGenerator() == null){
 			return;
 		}
@@ -101,8 +100,8 @@ public class ClientEventHandler{
 	}
 	
 	@SubscribeEvent
-	public void renderInfoOverlays(RenderGuiOverlayEvent.Post event){
-		if(MCUtil.getPlayer() != null && event.getOverlay().id() == VanillaGuiOverlay.HOTBAR.id()){
+	public void renderInfoOverlays(RenderGuiLayerEvent.Post event){
+		if(MCUtil.getPlayer() != null && event.getName() == VanillaGuiLayers.HOTBAR){
 			Player player = MCUtil.getPlayer();
 			
 			HitResult result = MCUtil.getHitResult();
@@ -130,8 +129,8 @@ public class ClientEventHandler{
 	}
 	
 	@SubscribeEvent
-	public void onRenderOverlayPost(RenderGuiOverlayEvent.Post event){
-		if(MCUtil.getPlayer() != null && event.getOverlay().id() == VanillaGuiOverlay.HOTBAR.id()){
+	public void onRenderOverlayPost(RenderGuiLayerEvent.Post event){
+		if(MCUtil.getPlayer() != null && event.getName() == VanillaGuiLayers.HOTBAR){
 			Player player = MCUtil.getPlayer();
 			PoseStack matrix = event.getGuiGraphics().pose();
 			
@@ -246,8 +245,8 @@ public class ClientEventHandler{
 	}
 	
 	@SubscribeEvent
-	public void handleLubricatingMachinesClient(ClientTickEvent event){
-		if(event.phase == Phase.END && MCUtil.getLevel() != null){
+	public void handleLubricatingMachinesClient(ClientTickEvent.Post event){
+		if(MCUtil.getLevel() != null){
 			CommonEventHandler.handleLubricatingMachines(MCUtil.getLevel());
 		}
 	}

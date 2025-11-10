@@ -1,9 +1,9 @@
 package flaxbeard.immersivepetroleum.common.cfg;
 
 import flaxbeard.immersivepetroleum.api.energy.FuelHandler;
+import flaxbeard.immersivepetroleum.common.util.RegistryUtils;
 import net.minecraft.ResourceLocationException;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.List;
 
@@ -49,7 +49,7 @@ public class ConfigUtils{
 					throw new IllegalArgumentException("Invalid value for fuel RF/tick for generator fuel " + (i + 1), e);
 				}
 				
-				if(!ForgeRegistries.FLUIDS.containsKey(fluidRL)){
+				if(RegistryUtils.getFluidFromRegistryName(fluidRL) != null){
 					throw new RuntimeException("\"" + fluidRL + "\" did not resolve into a valid fluid. (" + fluidRL + ")");
 				}
 				
@@ -88,7 +88,7 @@ public class ConfigUtils{
 					throw new IllegalArgumentException("Invalid value for fuel mB/tick for boat fuel " + (i + 1), e);
 				}
 				
-				if(!ForgeRegistries.FLUIDS.containsKey(fluidRL)){
+				if(RegistryUtils.getFluidFromRegistryName(fluidRL) != null){
 					throw new RuntimeException("\"" + fluidRL + "\" did not resolve into a valid fluid. (" + fluidRL + ")");
 				}
 				

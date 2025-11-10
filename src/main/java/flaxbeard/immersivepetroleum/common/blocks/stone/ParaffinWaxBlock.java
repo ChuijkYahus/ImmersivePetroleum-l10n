@@ -24,7 +24,7 @@ import java.util.function.Supplier;
 public class ParaffinWaxBlock extends IPBlockBase{
 	
 	public ParaffinWaxBlock(){
-		super(Properties.copy(Blocks.PACKED_ICE)
+		super(Properties.ofFullCopy(Blocks.PACKED_ICE)
 			.mapColor(MapColor.COLOR_YELLOW)
 			.strength(0.5F, 0.4F)
 			.sound(SoundType.HONEY_BLOCK)
@@ -33,17 +33,16 @@ public class ParaffinWaxBlock extends IPBlockBase{
 	}
 	
 	@Override
-	public void appendHoverText(@Nonnull ItemStack stack, BlockGetter worldIn, @Nonnull List<Component> tooltip, @Nonnull TooltipFlag flagIn){
-		tooltip(stack, worldIn, tooltip, flagIn);
-		super.appendHoverText(stack, worldIn, tooltip, flagIn);
+	public void appendHoverText(@Nonnull ItemStack stack, @Nonnull Item.TooltipContext ctx, @Nonnull List<Component> tooltip, @Nonnull TooltipFlag flag){
+		tooltip(tooltip);
+		super.appendHoverText(stack, ctx, tooltip, flag);
 	}
-	
-	static void tooltip(ItemStack stack, BlockGetter worldIn, List<Component> tooltip, TooltipFlag flagIn){
+	static void tooltip(List<Component> tooltip){
 		tooltip.add(Component.translatable("desc.immersivepetroleum.flavour.paraffin_wax").withStyle(ChatFormatting.GRAY));
 	}
 	
 	@Override
-	public int getFlammability(BlockState state, BlockGetter world, BlockPos pos, Direction face){
+	public int getFlammability(@Nonnull BlockState state, @Nonnull BlockGetter world, @Nonnull BlockPos pos, @Nonnull Direction face){
 		return 100;
 	}
 	
@@ -51,7 +50,7 @@ public class ParaffinWaxBlock extends IPBlockBase{
 	public Supplier<BlockItem> blockItemSupplier(){
 		return () -> new IPBlockItemBase(this, new Item.Properties()){
 			@Override
-			public int getBurnTime(ItemStack itemStack, RecipeType<?> recipeType){
+			public int getBurnTime(@Nonnull ItemStack itemStack, RecipeType<?> recipeType){
 				return 8000;
 			}
 		};

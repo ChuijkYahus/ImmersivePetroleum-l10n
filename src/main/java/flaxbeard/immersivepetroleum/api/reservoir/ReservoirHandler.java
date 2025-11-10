@@ -61,7 +61,7 @@ public class ReservoirHandler{
 				
 				
 				// Getting the biome now to prevent lockups
-				ResourceLocation biomeRL = RegistryUtils.getRegistryNameOf(world.getBiome(new BlockPos(x, 64, z)).value());
+				ResourceLocation biomeRL = RegistryUtils.getRegistryNameOf(world.getBiome(new BlockPos(x, 64, z)));
 				
 				final ColumnPos current = new ColumnPos(x, z);
 				if(storage.existsAt(current))

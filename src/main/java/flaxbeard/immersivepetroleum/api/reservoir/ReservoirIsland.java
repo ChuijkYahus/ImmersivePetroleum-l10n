@@ -11,7 +11,7 @@ import net.minecraft.server.level.ColumnPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.Fluid;
-import net.minecraftforge.fluids.capability.IFluidHandler.FluidAction;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -280,7 +280,7 @@ public class ReservoirIsland{
 	
 	public CompoundTag writeToNBT(){
 		CompoundTag nbt = new CompoundTag();
-		nbt.putString("reservoir", this.reservoir.getId().toString());
+		nbt.putString("reservoir", this.reservoir.getType().toString());
 		nbt.putInt("amount", (int) (this.getAmount() & MAX_AMOUNT));
 		nbt.putInt("capacity", (int) (this.getCapacity() & MAX_AMOUNT));
 		nbt.put("bounds", this.getBoundingBox().writeToNBT());

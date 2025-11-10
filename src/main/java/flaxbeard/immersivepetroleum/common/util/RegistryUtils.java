@@ -1,6 +1,12 @@
 package flaxbeard.immersivepetroleum.common.util;
 
+import flaxbeard.immersivepetroleum.ImmersivePetroleum;
+import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
 import net.minecraft.core.particles.ParticleType;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.effect.MobEffect;
@@ -13,69 +19,99 @@ import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.material.Fluid;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.common.EventBusSubscriber.Bus;
+import net.neoforged.neoforge.event.server.ServerStartedEvent;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+@EventBusSubscriber(modid = ImmersivePetroleum.MODID, bus = Bus.MOD)
 public class RegistryUtils{
-	@Nullable
+	private static Registry<Biome> BIOME_REGISTRY;
+	private static Registry<Fluid> FLUID_REGISTRY;
+	
+	@SubscribeEvent
+	public static void serverStart(ServerStartedEvent event){
+		/*
+			Yes, I know. These are likely not the right way to do this.
+			But for the time being this should be enough.
+		 */
+		BIOME_REGISTRY = event.getServer().registryAccess().registryOrThrow(Registries.BIOME);
+		FLUID_REGISTRY = event.getServer().registryAccess().registryOrThrow(Registries.FLUID);
+	}
+	
+	@Nonnull
 	public static ResourceLocation getRegistryNameOf(Item item){
-		return ForgeRegistries.ITEMS.getKey(item);
+		return BuiltInRegistries.ITEM.getKey(item);
 	}
 	
-	@Nullable
+	@Nonnull
 	public static ResourceLocation getRegistryNameOf(Block block){
-		return ForgeRegistries.BLOCKS.getKey(block);
+		return BuiltInRegistries.BLOCK.getKey(block);
 	}
 	
-	@Nullable
+	@Nonnull
 	public static ResourceLocation getRegistryNameOf(Fluid fluid){
-		return ForgeRegistries.FLUIDS.getKey(fluid);
+		return BuiltInRegistries.FLUID.getKey(fluid);
 	}
 	
 	@Nullable
-	public static ResourceLocation getRegistryNameOf(Biome biome){
-		return ForgeRegistries.BIOMES.getKey(biome);
+	public static Fluid getFluidFromRegistryName(ResourceLocation rl){
+		Holder<Fluid> holder = FLUID_REGISTRY.getHolder(ResourceKey.create(Registries.FLUID, rl)).orElse(null);
+		return holder != null ? holder.value() : null;
+	}
+	
+	@Nullable
+	public static ResourceLocation getRegistryNameOf(Holder<Biome> biome){
+		return biome.unwrapKey().map(ResourceKey::location).orElse(null);
+	}
+	
+	@Nullable
+	public static Biome getBiomeFromRegistryName(ResourceLocation rl){
+		Holder<Biome> holder = BIOME_REGISTRY.getHolder(ResourceKey.create(Registries.BIOME, rl)).orElse(null);
+		return holder != null ? holder.value() : null;
 	}
 	
 	@Nullable
 	public static ResourceLocation getRegistryNameOf(SoundEvent soundEvent){
-		return ForgeRegistries.SOUND_EVENTS.getKey(soundEvent);
+		return BuiltInRegistries.SOUND_EVENT.getKey(soundEvent);
 	}
 	
 	@Nullable
 	public static ResourceLocation getRegistryNameOf(MobEffect mobEffect){
-		return ForgeRegistries.MOB_EFFECTS.getKey(mobEffect);
+		return BuiltInRegistries.MOB_EFFECT.getKey(mobEffect);
 	}
 	
-	@Nullable
+	@Nonnull
 	public static ResourceLocation getRegistryNameOf(EntityType<?> entityType){
-		return ForgeRegistries.ENTITY_TYPES.getKey(entityType);
+		return BuiltInRegistries.ENTITY_TYPE.getKey(entityType);
 	}
 	
 	@Nullable
 	public static ResourceLocation getRegistryNameOf(BlockEntityType<?> blockEntityType){
-		return ForgeRegistries.BLOCK_ENTITY_TYPES.getKey(blockEntityType);
+		return BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(blockEntityType);
 	}
 	
 	@Nullable
 	public static ResourceLocation getRegistryNameOf(ParticleType<?> particleType){
-		return ForgeRegistries.PARTICLE_TYPES.getKey(particleType);
+		return BuiltInRegistries.PARTICLE_TYPE.getKey(particleType);
 	}
 	
 	@Nullable
 	public static ResourceLocation getRegistryNameOf(RecipeType<?> recipeType){
-		return ForgeRegistries.RECIPE_TYPES.getKey(recipeType);
+		return BuiltInRegistries.RECIPE_TYPE.getKey(recipeType);
 	}
 	
 	@Nullable
 	public static ResourceLocation getRegistryNameOf(RecipeSerializer<?> recipeSerializer){
-		return ForgeRegistries.RECIPE_SERIALIZERS.getKey(recipeSerializer);
+		return BuiltInRegistries.RECIPE_SERIALIZER.getKey(recipeSerializer);
 	}
 	
 	@Nullable
 	public static ResourceLocation getRegistryNameOf(MenuType<?> menuType){
-		return ForgeRegistries.MENU_TYPES.getKey(menuType);
+		return BuiltInRegistries.MENU.getKey(menuType);
 	}
 	
 	private RegistryUtils(){

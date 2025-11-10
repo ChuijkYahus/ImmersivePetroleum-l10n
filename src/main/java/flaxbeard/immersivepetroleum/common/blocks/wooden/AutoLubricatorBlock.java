@@ -3,7 +3,6 @@ package flaxbeard.immersivepetroleum.common.blocks.wooden;
 import flaxbeard.immersivepetroleum.common.IPTileTypes;
 import flaxbeard.immersivepetroleum.common.blocks.IPBlockBase;
 import flaxbeard.immersivepetroleum.common.blocks.IPBlockItemBase;
-import flaxbeard.immersivepetroleum.common.blocks.interfaces.IPlacementReader;
 import flaxbeard.immersivepetroleum.common.blocks.tileentities.AutoLubricatorTileEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -31,8 +30,8 @@ import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -120,15 +119,16 @@ public class AutoLubricatorBlock extends IPBlockBase implements EntityBlock{
 		return createCommonTicker(level.isClientSide, type, IPTileTypes.AUTOLUBE);
 	}
 	
+	@Nonnull
 	@Override
-	public void playerWillDestroy(@Nonnull Level worldIn, @Nonnull BlockPos pos, BlockState state, @Nonnull Player player){
+	public BlockState playerWillDestroy(@Nonnull Level worldIn, @Nonnull BlockPos pos, BlockState state, @Nonnull Player player){
 		if(state.getValue(SLAVE)){
 			worldIn.destroyBlock(pos.offset(0, -1, 0), !player.isCreative());
 		}else{
 			worldIn.destroyBlock(pos.offset(0, 1, 0), false);
 		}
 		
-		super.playerWillDestroy(worldIn, pos, state, player);
+		return super.playerWillDestroy(worldIn, pos, state, player);
 	}
 	
 	static final VoxelShape SHAPE_SLAVE = Shapes.box(.1875F, 0, .1875F, .8125f, 1, .8125f);

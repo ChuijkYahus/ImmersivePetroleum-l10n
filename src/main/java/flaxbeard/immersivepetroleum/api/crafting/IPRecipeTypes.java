@@ -6,10 +6,9 @@ import flaxbeard.immersivepetroleum.api.reservoir.ReservoirType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeType;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.RegistryObject;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredRegister;
 
 public class IPRecipeTypes{
 	private static final DeferredRegister<RecipeType<?>> REGISTER = DeferredRegister.create(Registries.RECIPE_TYPE, ImmersivePetroleum.MODID);
@@ -25,7 +24,7 @@ public class IPRecipeTypes{
 	}
 	
 	private static <T extends Recipe<?>> TypeWithClass<T> makeType(String name, Class<T> type){
-		RegistryObject<RecipeType<T>> regObj = REGISTER.register(name, () -> new RecipeType<T>(){
+		DeferredHolder<RecipeType<?>, RecipeType<T>> regObj = REGISTER.register(name, () -> new RecipeType<T>(){
 			final String res = ImmersivePetroleum.MODID + ":" + name;
 			@Override
 			public String toString(){

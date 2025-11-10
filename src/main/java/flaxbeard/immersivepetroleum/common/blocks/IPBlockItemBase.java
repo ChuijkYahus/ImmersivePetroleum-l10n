@@ -1,19 +1,13 @@
 package flaxbeard.immersivepetroleum.common.blocks;
 
-import blusunrize.immersiveengineering.api.Lib;
 import flaxbeard.immersivepetroleum.common.IPCreativeTab;
-import net.minecraft.ChatFormatting;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.fluids.FluidStack;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -24,7 +18,8 @@ public class IPBlockItemBase extends BlockItem implements IPCreativeTab.IMightSh
 	}
 	
 	@Override
-	public void appendHoverText(ItemStack stack, Level worldIn, @Nonnull List<Component> tooltip, @Nonnull TooltipFlag flagIn){
+	public void appendHoverText(@Nonnull ItemStack stack, @Nonnull TooltipContext ctx, @Nonnull List<Component> tooltip, @Nonnull TooltipFlag flagIn){
+		/* // TODO Tank and Energy Display
 		if(stack.hasTag()){
 			// Display Stored Tank Information
 			if(stack.getTag().contains("tank")){
@@ -44,12 +39,13 @@ public class IPBlockItemBase extends BlockItem implements IPCreativeTab.IMightSh
 				tooltip.add(Component.literal(flux + "RF").withStyle(ChatFormatting.GRAY));
 			}
 		}
+		*/
 		
-		super.appendHoverText(stack, worldIn, tooltip, flagIn);
+		super.appendHoverText(stack, ctx, tooltip, flagIn);
 	}
 	
 	@Override
-	protected boolean placeBlock(BlockPlaceContext pContext, BlockState pState){
+	protected boolean placeBlock(@Nonnull BlockPlaceContext pContext, @Nonnull BlockState pState){
 		return super.placeBlock(pContext, pState);
 	}
 }

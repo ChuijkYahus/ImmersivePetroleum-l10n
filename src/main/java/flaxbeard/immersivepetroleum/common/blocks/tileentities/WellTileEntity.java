@@ -11,6 +11,8 @@ import flaxbeard.immersivepetroleum.common.blocks.ticking.IPCommonTickableTile;
 import flaxbeard.immersivepetroleum.common.util.RegistryUtils;
 import net.minecraft.ResourceLocationException;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.ListTag;
@@ -22,7 +24,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
-import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nonnull;
@@ -64,7 +65,7 @@ public class WellTileEntity extends IPTileEntityBase implements IPCommonTickable
 	}
 	
 	@Override
-	protected void readCustom(CompoundTag nbt){
+	protected void readCustom(CompoundTag nbt, HolderLookup.Provider provider){
 		this.spill = nbt.getBoolean("spill");
 		this.clientFlow = nbt.getInt("flow");
 		this.drillingCompleted = nbt.getBoolean("drillingcompleted");
@@ -78,7 +79,7 @@ public class WellTileEntity extends IPTileEntityBase implements IPCommonTickable
 		this.selfDestructTimer = nbt.getInt("selfdestructtimer");
 		
 		try{
-			this.spillFType = ForgeRegistries.FLUIDS.getValue(ResourceLocation.parse(nbt.getString("spillftype")));
+			this.spillFType = BuiltInRegistries.FLUID.get(ResourceLocation.parse(nbt.getString("spillftype")));
 		}catch(ResourceLocationException rle){
 			this.spillFType = Fluids.EMPTY;
 		}
@@ -106,7 +107,7 @@ public class WellTileEntity extends IPTileEntityBase implements IPCommonTickable
 	}
 	
 	@Override
-	protected void writeCustom(CompoundTag nbt){
+	protected void writeCustom(CompoundTag nbt, HolderLookup.Provider provider){
 		nbt.putBoolean("spill", this.spill);
 		nbt.putInt("flow", getFlow());
 		

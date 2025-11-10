@@ -7,6 +7,7 @@ import flaxbeard.immersivepetroleum.ImmersivePetroleum;
 import flaxbeard.immersivepetroleum.api.crafting.CokerUnitRecipe;
 import net.minecraft.ResourceLocationException;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
@@ -14,9 +15,9 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.fluids.capability.templates.FluidTank;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -63,8 +64,8 @@ public class CokingChamber{
 		this.tank = new FluidTank(fluidCapacity);
 	}
 	
-	public CokingChamber readFromNBT(CompoundTag nbt){
-		this.tank.readFromNBT(nbt.getCompound("tank"));
+	public CokingChamber readFromNBT(CompoundTag nbt, HolderLookup.Provider provider){
+		this.tank.readFromNBT(provider, nbt.getCompound("tank"));
 		this.timer = nbt.getInt("timer");
 		this.inputAmount = nbt.getInt("input");
 		this.outputAmount = nbt.getInt("output");
@@ -83,15 +84,15 @@ public class CokingChamber{
 		return this;
 	}
 	
-	public CompoundTag writeToNBT(CompoundTag nbt){
-		nbt.put("tank", this.tank.writeToNBT(new CompoundTag()));
+	public CompoundTag writeToNBT(CompoundTag nbt, HolderLookup.Provider provider){
+		nbt.put("tank", this.tank.writeToNBT(provider, new CompoundTag()));
 		nbt.putInt("timer", this.timer);
 		nbt.putInt("input", this.inputAmount);
 		nbt.putInt("output", this.outputAmount);
 		nbt.putInt("state", this.state.id());
 		
 		if(this.recipe != null){
-			nbt.putString("recipe", this.recipe.getId().toString());
+			nbt.putString("recipe", this.recipe.getType().toString());
 		}
 		
 		return nbt;

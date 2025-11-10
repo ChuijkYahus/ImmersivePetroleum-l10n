@@ -31,7 +31,7 @@ public class CrudeOilFluid extends IPFluid{
 	
 	public static class CrudeOilBlock extends IPFluidBlock{
 		public CrudeOilBlock(IPFluidEntry entry, BlockBehaviour.Properties props){
-			super(entry, BlockBehaviour.Properties.copy(Blocks.WATER).mapColor(MapColor.COLOR_BLACK).noCollission().strength(100.0F).noLootTable());
+			super(entry, BlockBehaviour.Properties.ofFullCopy(Blocks.WATER).mapColor(MapColor.COLOR_BLACK).noCollission().strength(100.0F).noLootTable());
 		}
 	}
 }

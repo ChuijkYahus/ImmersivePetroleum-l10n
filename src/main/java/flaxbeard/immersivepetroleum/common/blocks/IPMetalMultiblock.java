@@ -42,7 +42,6 @@ public class IPMetalMultiblock<T extends IMultiblockState & IPCommonTickableTile
 	}
 	*/
 	
-	@Override
 	public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit){
 		if(hand == InteractionHand.MAIN_HAND){
 			BlockEntity te = world.getBlockEntity(pos);

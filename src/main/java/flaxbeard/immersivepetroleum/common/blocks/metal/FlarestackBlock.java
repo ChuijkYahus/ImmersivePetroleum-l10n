@@ -38,8 +38,8 @@ import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -112,14 +112,15 @@ public class FlarestackBlock extends IPBlockBase implements EntityBlock{
 		return InteractionResult.PASS;
 	}
 	
+	@Nonnull
 	@Override
-	public void playerWillDestroy(@Nonnull Level worldIn, @Nonnull BlockPos pos, BlockState state, @Nonnull Player player){
+	public BlockState playerWillDestroy(@Nonnull Level worldIn, @Nonnull BlockPos pos, BlockState state, @Nonnull Player player){
 		if(state.getValue(SLAVE)){
 			worldIn.destroyBlock(pos.offset(0, -1, 0), !player.isCreative());
 		}else{
 			worldIn.destroyBlock(pos.offset(0, 1, 0), false);
 		}
-		super.playerWillDestroy(worldIn, pos, state, player);
+		return super.playerWillDestroy(worldIn, pos, state, player);
 	}
 	
 	@Override
@@ -136,7 +137,6 @@ public class FlarestackBlock extends IPBlockBase implements EntityBlock{
 		}
 	}
 	
-	@SuppressWarnings("deprecation")
 	@Override
 	@Nonnull
 	public List<ItemStack> getDrops(BlockState state, @Nonnull LootParams.Builder builder){

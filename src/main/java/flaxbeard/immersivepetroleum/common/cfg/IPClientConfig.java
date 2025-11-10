@@ -1,12 +1,12 @@
 package flaxbeard.immersivepetroleum.common.cfg;
 
 import flaxbeard.immersivepetroleum.ImmersivePetroleum;
-import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
-import net.minecraftforge.fml.event.config.ModConfigEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.common.EventBusSubscriber.Bus;
+import net.neoforged.fml.event.config.ModConfigEvent;
+import net.neoforged.neoforge.common.ModConfigSpec;
+import net.neoforged.neoforge.common.ModConfigSpec.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -15,10 +15,10 @@ public class IPClientConfig{
 	public static final Miscellaneous MISCELLANEOUS;
 	public static final GridColors GRID_COLORS;
 	
-	public static final ForgeConfigSpec ALL;
+	public static final ModConfigSpec ALL;
 	
 	static{
-		ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
+		ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
 		GRID_COLORS = new GridColors(builder);
 		MISCELLANEOUS = new Miscellaneous(builder);
 		ALL = builder.build();
@@ -30,7 +30,7 @@ public class IPClientConfig{
 		public final ConfigValue<String> pipe_normal_color;
 		public final ConfigValue<String> pipe_perforated_color;
 		public final ConfigValue<String> pipe_perforated_fixed_color;
-		GridColors(ForgeConfigSpec.Builder builder){
+		GridColors(ModConfigSpec.Builder builder){
 			builder.push("GridColors");
 			
 			pipe_normal_color = builder
@@ -59,7 +59,7 @@ public class IPClientConfig{
 					try{
 						Integer.valueOf(str, 16);
 						return true;
-					}catch(NumberFormatException e){
+					}catch(NumberFormatException ignored){
 					}
 				}
 				log.error("{}: \"{}\" is not a valid RGB Hex color.", cfgPath, str);
@@ -70,7 +70,7 @@ public class IPClientConfig{
 	}
 	
 	public static class Miscellaneous{
-		Miscellaneous(ForgeConfigSpec.Builder builder){
+		Miscellaneous(ModConfigSpec.Builder builder){
 			builder.push("Miscellaneous");
 			
 			builder.pop();

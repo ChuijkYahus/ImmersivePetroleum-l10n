@@ -13,8 +13,6 @@ import blusunrize.immersiveengineering.api.multiblocks.blocks.util.CapabilityPos
 import blusunrize.immersiveengineering.api.multiblocks.blocks.util.MultiblockFace;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.util.RelativeBlockFace;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.util.ShapeType;
-import blusunrize.immersiveengineering.api.multiblocks.blocks.util.StoredCapability;
-import blusunrize.immersiveengineering.api.utils.CapabilityReference;
 import flaxbeard.immersivepetroleum.api.reservoir.ReservoirHandler;
 import flaxbeard.immersivepetroleum.api.reservoir.ReservoirIsland;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.shapes.PumpjackShape;
@@ -23,17 +21,15 @@ import flaxbeard.immersivepetroleum.common.blocks.tileentities.WellTileEntity;
 import flaxbeard.immersivepetroleum.common.cfg.IPServerConfig;
 import flaxbeard.immersivepetroleum.common.util.FluidHelper;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ColumnPos;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.energy.IEnergyStorage;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.fluids.capability.templates.FluidTank;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
@@ -106,8 +102,8 @@ public class PumpjackLogic implements IMultiblockLogic<State>, IServerTickableCo
 						if(!foundPressurizedIsland){
 							int extractSpeed = IPServerConfig.EXTRACTION.pumpjack_speed.get();
 							
-							IFluidHandler portEast_output = state.east_port_output.getNullable();
-							IFluidHandler portWest_output = state.west_port_output.getNullable();
+							IFluidHandler portEast_output = state.east_port_output;
+							IFluidHandler portWest_output = state.west_port_output;
 							
 							for(ColumnPos cPos: well.tappedIslands){
 								ReservoirIsland island = ReservoirHandler.getIsland(level.getRawLevel(), cPos);
@@ -153,25 +149,15 @@ public class PumpjackLogic implements IMultiblockLogic<State>, IServerTickableCo
 		}
 		state.wasActive = active;
 	}
-	
 	@Override
-	public <T> LazyOptional<T> getCapability(IMultiblockContext<State> ctx, CapabilityPosition position, Capability<T> cap){
-		final State state = ctx.getState();
-		
-		if(cap == ForgeCapabilities.FLUID_HANDLER){
-			if(position.equalsOrNullFace(EAST_PORT))
-				return state.fakeFluidHandler.cast(ctx); // East Port
+	public void registerCapabilities(CapabilityRegistrar<State> register){
+		register.registerAtOrNull(Capabilities.EnergyStorage.BLOCK, ENERGY_IN, state -> state.energy);
+		register.register(Capabilities.FluidHandler.BLOCK, (state, pos) -> {
+			if(EAST_PORT.equalsOrNullFace(pos) || WEST_PORT.equalsOrNullFace(pos))
+				return state.fakeFluidHandler;
 			
-			if(position.equalsOrNullFace(WEST_PORT))
-				return state.fakeFluidHandler.cast(ctx); // West Port
-		}
-		
-		if(cap == ForgeCapabilities.ENERGY){
-			if(position.equalsOrNullFace(ENERGY_IN))
-				return state.energyStorage.cast(ctx);
-		}
-		
-		return LazyOptional.empty();
+			return null;
+		});
 	}
 	
 	@Override
@@ -188,42 +174,41 @@ public class PumpjackLogic implements IMultiblockLogic<State>, IServerTickableCo
 		public boolean wasActive = false;
 		public float activeTicks = 0;
 		
-		private final StoredCapability<IFluidHandler> fakeFluidHandler = new StoredCapability<>(FAKE_TANK);
-		private final StoredCapability<IEnergyStorage> energyStorage = new StoredCapability<>(energy);
+		private final IFluidHandler fakeFluidHandler = FAKE_TANK;
 		
-		private final CapabilityReference<@Nullable IFluidHandler> east_port_output;
-		private final CapabilityReference<@Nullable IFluidHandler> west_port_output;
+		private final @Nullable IFluidHandler east_port_output;
+		private final @Nullable IFluidHandler west_port_output;
 		
 		public State(IInitialMultiblockContext<State> context){
-			this.east_port_output = context.getCapabilityAt(ForgeCapabilities.FLUID_HANDLER, EAST_PORT_OFFSET);
-			this.west_port_output = context.getCapabilityAt(ForgeCapabilities.FLUID_HANDLER, WEST_PORT_OFFSET);
+			this.east_port_output = context.getCapabilityAt(Capabilities.FluidHandler.BLOCK, EAST_PORT_OFFSET).get();
+			this.west_port_output = context.getCapabilityAt(Capabilities.FluidHandler.BLOCK, WEST_PORT_OFFSET).get();
 		}
 		
 		@Override
-		public void writeSaveNBT(CompoundTag nbt){
+		public void writeSaveNBT(CompoundTag nbt, HolderLookup.Provider provider){
 			nbt.putBoolean("wasActive", this.wasActive);
-			nbt.put("energy", energy.serializeNBT());
-			rsState.writeSaveNBT(nbt);
+			nbt.put("energy", this.energy.serializeNBT(provider));
+			this.rsState.writeSaveNBT(nbt, provider);
 		}
 		
 		@Override
-		public void readSaveNBT(CompoundTag nbt){
+		public void readSaveNBT(CompoundTag nbt, HolderLookup.Provider provider){
 			boolean lastActive = this.wasActive;
 			this.wasActive = nbt.getBoolean("wasActive");
 			if(!this.wasActive && lastActive){
 				this.activeTicks++;
 			}
-			energy.deserializeNBT(nbt.getCompound("energy"));
-			rsState.readSaveNBT(nbt);
+			this.energy.deserializeNBT(provider, nbt.getCompound("energy"));
+			this.rsState.readSaveNBT(nbt, provider);
 		}
 		
 		@Override
-		public void writeSyncNBT(CompoundTag nbt){
+		public void writeSyncNBT(CompoundTag nbt, HolderLookup.Provider provider){
 			nbt.putBoolean("wasActive", this.wasActive);
 		}
 		
 		@Override
-		public void readSyncNBT(CompoundTag nbt){
+		public void readSyncNBT(CompoundTag nbt, HolderLookup.Provider provider){
 			boolean lastActive = this.wasActive;
 			this.wasActive = nbt.getBoolean("wasActive");
 			if(!this.wasActive && lastActive){

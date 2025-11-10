@@ -11,6 +11,7 @@ import flaxbeard.immersivepetroleum.common.util.damageSources.IPDamageSources;
 import flaxbeard.immersivepetroleum.common.util.sounds.IPSounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
@@ -19,25 +20,23 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.fluids.capability.IFluidHandler.FluidAction;
-import net.minecraftforge.fluids.capability.templates.FluidTank;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 
 import javax.annotation.Nonnull;
 import java.util.List;
+
+import static net.neoforged.neoforge.fluids.capability.IFluidHandler.*;
 
 public class FlarestackTileEntity extends IPTileEntityBase implements IPCommonTickableTile, IEBlockInterfaces.ISoundBE{
 	
 	protected boolean isRedstoneInverted;
 	protected boolean isActive;
 	protected short drained;
-	protected final FluidTank tank = new FluidTank(250, fstack -> (fstack != FluidStack.EMPTY && FlarestackHandler.isBurnable(fstack)));
+	protected final FluidTank tank = new FluidTank(250, fs -> (fs != FluidStack.EMPTY && FlarestackHandler.isBurnable(fs)));
 	
 	public FlarestackTileEntity(BlockPos pWorldPosition, BlockState pBlockState){
 		super(IPTileTypes.FLARE.get(), pWorldPosition, pBlockState);
@@ -61,20 +60,20 @@ public class FlarestackTileEntity extends IPTileEntityBase implements IPCommonTi
 	}
 	
 	@Override
-	public void readCustom(CompoundTag nbt){
+	public void readCustom(CompoundTag nbt, HolderLookup.Provider provider){
 		this.isRedstoneInverted = nbt.getBoolean("inverted");
 		this.isActive = nbt.getBoolean("active");
 		this.drained = nbt.getShort("drained");
-		this.tank.readFromNBT(nbt.getCompound("tank"));
+		this.tank.readFromNBT(provider, nbt.getCompound("tank"));
 	}
 	
 	@Override
-	public void writeCustom(CompoundTag nbt){
+	public void writeCustom(CompoundTag nbt, HolderLookup.Provider provider){
 		nbt.putBoolean("inverted", this.isRedstoneInverted);
 		nbt.putBoolean("active", this.isActive);
 		nbt.putShort("drained", this.drained);
 		
-		CompoundTag tank = this.tank.writeToNBT(new CompoundTag());
+		CompoundTag tank = this.tank.writeToNBT(provider, new CompoundTag());
 		nbt.put("tank", tank);
 	}
 	
@@ -182,7 +181,7 @@ public class FlarestackTileEntity extends IPTileEntityBase implements IPCommonTi
 			if(!list.isEmpty()){
 				list.forEach(e -> {
 					if(!e.fireImmune()){
-						e.setSecondsOnFire(15);
+						e.igniteForTicks(15);
 						e.hurt(IPDamageSources.flarestack(this.level), 6.0F * (this.drained / (float) this.tank.getCapacity()));
 					}
 				});

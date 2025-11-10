@@ -7,6 +7,7 @@ import flaxbeard.immersivepetroleum.common.IPTileTypes;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.DerrickLogic;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.PumpjackLogic;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -18,11 +19,11 @@ public class WellPipeTileEntity extends IPTileEntityBase{
 	}
 	
 	@Override
-	protected void writeCustom(CompoundTag nbt){
+	protected void writeCustom(CompoundTag nbt, HolderLookup.Provider provider){
 	}
 	
 	@Override
-	protected void readCustom(CompoundTag nbt){
+	protected void readCustom(CompoundTag nbt, HolderLookup.Provider provider){
 	}
 	
 	/** Returns null if there is no connection to the Well. Used by Pumpjack. */

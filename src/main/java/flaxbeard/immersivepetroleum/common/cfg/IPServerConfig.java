@@ -4,28 +4,27 @@ import com.electronwill.nightconfig.core.Config;
 import com.google.common.base.Preconditions;
 import flaxbeard.immersivepetroleum.ImmersivePetroleum;
 import flaxbeard.immersivepetroleum.api.energy.FuelHandler;
-import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.common.ForgeConfigSpec.BooleanValue;
-import net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
-import net.minecraftforge.fml.event.config.ModConfigEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.event.config.ModConfigEvent;
+import net.neoforged.neoforge.common.ModConfigSpec;
+import net.neoforged.neoforge.common.ModConfigSpec.BooleanValue;
+import net.neoforged.neoforge.common.ModConfigSpec.ConfigValue;
 
 import java.lang.reflect.Field;
 import java.util.List;
 
-@EventBusSubscriber(modid = ImmersivePetroleum.MODID, bus = Bus.MOD)
+@EventBusSubscriber(modid = ImmersivePetroleum.MODID, bus = EventBusSubscriber.Bus.MOD)
 public class IPServerConfig{
 	public static final Extraction EXTRACTION;
 	public static final Refining REFINING;
 	public static final Generation GENERATION;
 	public static final Miscellaneous MISCELLANEOUS;
 	
-	public static final ForgeConfigSpec ALL;
+	public static final ModConfigSpec ALL;
 	
 	static{
-		ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
+		ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
 		
 		EXTRACTION = new Extraction(builder);
 		REFINING = new Refining(builder);
@@ -39,7 +38,7 @@ public class IPServerConfig{
 	public static Config getRawConfig(){
 		if(rawConfig == null){
 			try{
-				Field childConfig = ForgeConfigSpec.class.getDeclaredField("childConfig");
+				Field childConfig = ModConfigSpec.class.getDeclaredField("childConfig");
 				childConfig.setAccessible(true);
 				rawConfig = (Config) childConfig.get(ALL);
 				Preconditions.checkNotNull(rawConfig);
@@ -54,7 +53,7 @@ public class IPServerConfig{
 		public final ConfigValue<Integer> pumpjack_consumption;
 		public final ConfigValue<Integer> pumpjack_speed;
 		public final ConfigValue<Integer> derrick_consumption;
-		Extraction(ForgeConfigSpec.Builder builder){
+		Extraction(ModConfigSpec.Builder builder){
 			builder.push("Extraction");
 			
 			pumpjack_consumption = builder
@@ -80,7 +79,7 @@ public class IPServerConfig{
 		public final ConfigValue<Double> cokerUnit_timeModifier;
 		public final ConfigValue<Double> hydrotreater_energyModifier;
 		public final ConfigValue<Double> hydrotreater_timeModifier;
-		Refining(ForgeConfigSpec.Builder builder){
+		Refining(ModConfigSpec.Builder builder){
 			builder.push("Refining");
 			
 			distillationTower_energyModifier = builder
@@ -113,7 +112,7 @@ public class IPServerConfig{
 	
 	public static class Generation{
 		public final ConfigValue<List<? extends String>> fuels;
-		Generation(ForgeConfigSpec.Builder builder){
+		Generation(ModConfigSpec.Builder builder){
 			builder.push("Generation");
 			
 			fuels = builder
@@ -131,7 +130,7 @@ public class IPServerConfig{
 		public final ConfigValue<List<? extends String>> boat_fuels;
 		public final BooleanValue autounlock_recipes;
 		public final BooleanValue asphalt_speed;
-		Miscellaneous(ForgeConfigSpec.Builder builder){
+		Miscellaneous(ModConfigSpec.Builder builder){
 			builder.push("Miscellaneous");
 			
 			boat_fuels = builder

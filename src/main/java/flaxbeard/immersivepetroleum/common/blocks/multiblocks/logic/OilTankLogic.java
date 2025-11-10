@@ -14,7 +14,6 @@ import blusunrize.immersiveengineering.api.multiblocks.blocks.util.CapabilityPos
 import blusunrize.immersiveengineering.api.multiblocks.blocks.util.MultiblockOrientation;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.util.RelativeBlockFace;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.util.ShapeType;
-import blusunrize.immersiveengineering.api.multiblocks.blocks.util.StoredCapability;
 import blusunrize.immersiveengineering.client.utils.TextUtils;
 import blusunrize.immersiveengineering.common.blocks.multiblocks.logic.interfaces.MBOverlayText;
 import blusunrize.immersiveengineering.common.fluids.ArrayFluidHandler;
@@ -28,25 +27,25 @@ import flaxbeard.immersivepetroleum.common.util.FluidHelper;
 import flaxbeard.immersivepetroleum.common.util.Utils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.FluidType;
-import net.minecraftforge.fluids.FluidUtil;
-import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.fluids.capability.templates.FluidTank;
-import org.jetbrains.annotations.Nullable;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidType;
+import net.neoforged.neoforge.fluids.FluidUtil;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 
 import javax.annotation.Nonnull;
 import java.util.EnumMap;
@@ -160,7 +159,7 @@ public class OilTankLogic implements IMultiblockLogic<State>, IServerTickableCom
 						int accepted = out.fill(fs, IFluidHandler.FluidAction.SIMULATE);
 						if(accepted > 0){
 							int drained = out.fill(FluidHelper.copyFluid(fs, Math.min(fs.getAmount(), accepted), false), IFluidHandler.FluidAction.EXECUTE);
-							state.tank.drain(FluidUtils.copyFluidStackWithAmount(state.tank.getFluid(), drained, false), IFluidHandler.FluidAction.EXECUTE);
+							state.tank.drain(FluidHelper.copyFluid(state.tank.getFluid(), drained, false), IFluidHandler.FluidAction.EXECUTE);
 						}
 					});
 				}
@@ -172,35 +171,33 @@ public class OilTankLogic implements IMultiblockLogic<State>, IServerTickableCom
 	}
 	
 	@Override
-	public <T> LazyOptional<T> getCapability(IMultiblockContext<State> ctx, CapabilityPosition position, Capability<T> cap){
-		final State state = ctx.getState();
-		
-		if(cap == ForgeCapabilities.FLUID_HANDLER){
+	public void registerCapabilities(CapabilityRegistrar<State> register){
+		register.register(Capabilities.FluidHandler.BLOCK, (state, position) -> {
 			for(Port port: Port.values()){
 				if(port.matches(position.posInMultiblock())){
 					return switch(state.portConfig.get(port)){
-						case INPUT -> state.fluidInput.cast(ctx);
-						case OUTPUT -> state.fluidOutput.cast(ctx);
+						case INPUT -> state.fluidInput;
+						case OUTPUT -> state.fluidOutput;
 					};
 				}
 			}
-		}
-		return LazyOptional.empty();
+			return null;
+		});
 	}
 	
 	@Override
-	public InteractionResult click(IMultiblockContext<State> ctx, BlockPos posInMultiblock, Player player, InteractionHand hand, BlockHitResult absoluteHit, boolean isClient){
+	public ItemInteractionResult click(IMultiblockContext<State> ctx, BlockPos posInMultiblock, Player player, InteractionHand hand, BlockHitResult absoluteHit, boolean isClient){
 		if(ExternalModContent.IE.isHammer(player.getItemInHand(hand))){
 			if(hammering(ctx, posInMultiblock, isClient))
-				return InteractionResult.SUCCESS;
+				return ItemInteractionResult.SUCCESS;
 		}
 		
 		if(FluidUtils.interactWithFluidHandler(player, hand, ctx.getState().tank)){
 			ctx.markDirtyAndSync();
-			return InteractionResult.SUCCESS;
+			return ItemInteractionResult.SUCCESS;
 		}
 		
-		return InteractionResult.PASS;
+		return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
 	}
 	
 	private boolean hammering(IMultiblockContext<State> ctx, BlockPos posInMultiblock, boolean isClient){
@@ -217,9 +214,8 @@ public class OilTankLogic implements IMultiblockLogic<State>, IServerTickableCom
 		return false;
 	}
 	
-	@Nullable
 	@Override
-	public List<Component> getOverlayText(State state, Player player, boolean b){
+	public List<Component> getOverlayText(State state, BlockPos posInMultiblock, BlockHitResult absoluteHit, Player player, boolean hammer){
 		if(Utils.isFluidRelatedItemStack(player.getItemInHand(InteractionHand.MAIN_HAND))){
 			return List.of(TextUtils.formatFluidStack(state.tank.getFluid()));
 		}
@@ -240,8 +236,8 @@ public class OilTankLogic implements IMultiblockLogic<State>, IServerTickableCom
 		
 		private final LayeredComparatorOutput<IMultiblockContext<?>> comparatorHelper;
 		
-		private final StoredCapability<IFluidHandler> fluidInput;
-		private final StoredCapability<IFluidHandler> fluidOutput;
+		private final IFluidHandler fluidInput;
+		private final IFluidHandler fluidOutput;
 		public State(IInitialMultiblockContext<State> context){
 			final BlockPos masterPos = IPContent.Multiblock.OILTANK.masterPosInMB();
 			final Updater update = (ctx, layer, value) -> {
@@ -278,40 +274,40 @@ public class OilTankLogic implements IMultiblockLogic<State>, IServerTickableCom
 				}
 			}
 			
-			this.fluidInput = new StoredCapability<>(ArrayFluidHandler.fillOnly(this.tank, context.getMarkDirtyRunnable()));
-			this.fluidOutput = new StoredCapability<>(ArrayFluidHandler.drainOnly(this.tank, context.getMarkDirtyRunnable()));
+			this.fluidInput = ArrayFluidHandler.fillOnly(this.tank, context.getMarkDirtyRunnable());
+			this.fluidOutput = ArrayFluidHandler.drainOnly(this.tank, context.getMarkDirtyRunnable());
 		}
 		
 		@Override
-		public void writeSaveNBT(CompoundTag nbt){
-			nbt.put("tank", this.tank.writeToNBT(new CompoundTag()));
+		public void writeSaveNBT(CompoundTag nbt, HolderLookup.Provider provider){
+			nbt.put("tank", this.tank.writeToNBT(provider, new CompoundTag()));
 			
 			for(Port port: Port.DYNAMIC_PORTS){
 				nbt.putInt(port.getSerializedName(), getPortStateFor(port).ordinal());
 			}
 			
-			this.rsState.writeSaveNBT(nbt);
+			this.rsState.writeSaveNBT(nbt, provider);
 		}
 		
 		@Override
-		public void readSaveNBT(CompoundTag nbt){
-			this.tank.readFromNBT(nbt.getCompound("tank"));
+		public void readSaveNBT(CompoundTag nbt, HolderLookup.Provider provider){
+			this.tank.readFromNBT(provider, nbt.getCompound("tank"));
 			
 			for(Port port: Port.DYNAMIC_PORTS){
 				this.portConfig.put(port, PortState.values()[nbt.getInt(port.getSerializedName())]);
 			}
 			
-			this.rsState.readSaveNBT(nbt);
+			this.rsState.readSaveNBT(nbt, provider);
 		}
 		
 		@Override
-		public void writeSyncNBT(CompoundTag nbt){
-			writeSaveNBT(nbt);
+		public void writeSyncNBT(CompoundTag nbt, HolderLookup.Provider provider){
+			writeSaveNBT(nbt, provider);
 		}
 		
 		@Override
-		public void readSyncNBT(CompoundTag nbt){
-			readSaveNBT(nbt);
+		public void readSyncNBT(CompoundTag nbt, HolderLookup.Provider provider){
+			readSaveNBT(nbt, provider);
 		}
 		
 		public PortState getPortStateFor(Port port){
@@ -344,10 +340,12 @@ public class OilTankLogic implements IMultiblockLogic<State>, IServerTickableCom
 			State srcState = src.getState();
 			State dstState = dst.getState();
 			
-			FluidStack fs = new FluidStack(srcState.tank.getFluid(), amount);
+			final Holder<Fluid> fluid = srcState.tank.getFluid().getFluidHolder();
+			
+			FluidStack fs = new FluidStack(fluid, amount);
 			int accepted = dstState.tank.fill(fs, IFluidHandler.FluidAction.SIMULATE);
 			if(accepted > 0){
-				fs = new FluidStack(srcState.tank.getFluid(), accepted);
+				fs = new FluidStack(fluid, accepted);
 				dstState.tank.fill(fs, IFluidHandler.FluidAction.EXECUTE);
 				srcState.tank.drain(fs, IFluidHandler.FluidAction.EXECUTE);
 				

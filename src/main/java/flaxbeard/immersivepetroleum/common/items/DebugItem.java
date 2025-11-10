@@ -32,6 +32,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -208,7 +209,7 @@ public class DebugItem extends IPItemBase{
 					BlockPos pos = context.getClickedPos();
 					
 					ResourceLocation dimensionRL = world.dimension().location();
-					ResourceLocation biomeRL = RegistryUtils.getRegistryNameOf(world.getBiome(pos).value());
+					ResourceLocation biomeRL = RegistryUtils.getRegistryNameOf(world.getBiome(pos));
 					
 					player.displayClientMessage(Component.literal(dimensionRL.toString()), false);
 					

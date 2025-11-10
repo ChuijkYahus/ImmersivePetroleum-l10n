@@ -12,8 +12,6 @@ import blusunrize.immersiveengineering.api.multiblocks.blocks.util.CapabilityPos
 import blusunrize.immersiveengineering.api.multiblocks.blocks.util.MultiblockFace;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.util.RelativeBlockFace;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.util.ShapeType;
-import blusunrize.immersiveengineering.api.multiblocks.blocks.util.StoredCapability;
-import blusunrize.immersiveengineering.api.utils.CapabilityReference;
 import blusunrize.immersiveengineering.common.blocks.multiblocks.process.MultiblockProcess;
 import blusunrize.immersiveengineering.common.blocks.multiblocks.process.MultiblockProcessInMachine;
 import blusunrize.immersiveengineering.common.blocks.multiblocks.process.MultiblockProcessor;
@@ -25,25 +23,23 @@ import flaxbeard.immersivepetroleum.common.blocks.multiblocks.shapes.HydroTreate
 import flaxbeard.immersivepetroleum.common.util.FluidHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.energy.IEnergyStorage;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.FluidUtil;
-import net.minecraftforge.fluids.IFluidTank;
-import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.fluids.capability.templates.FluidTank;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.energy.IEnergyStorage;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidUtil;
+import net.neoforged.neoforge.fluids.IFluidTank;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 
 import java.util.function.Function;
 
 import static flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.hydro_treater.HydroTreaterLogic.State;
 
-// TODO
 public class HydroTreaterLogic implements IMultiblockLogic<State>, IServerTickableComponent<State>, IClientTickableComponent<State>{
 	/** Primary Fluid Input Tank<br> */
 	public static final int TANK_INPUT_A = 0;
@@ -144,27 +140,21 @@ public class HydroTreaterLogic implements IMultiblockLogic<State>, IServerTickab
 			context.markDirtyAndSync();
 		}
 	}
-	
 	@Override
-	public <T> LazyOptional<T> getCapability(IMultiblockContext<State> ctx, CapabilityPosition position, Capability<T> cap){
-		final State state = ctx.getState();
-		
-		if(cap == ForgeCapabilities.ENERGY){
-			if(position.equalsOrNullFace(Energy_IN))
-				return state.energyCap.cast(ctx);
+	public void registerCapabilities(CapabilityRegistrar<State> register){
+		register.registerAtOrNull(Capabilities.EnergyStorage.BLOCK, Energy_IN, state -> state.energy);
+		register.register(Capabilities.FluidHandler.BLOCK, (state, pos) -> {
+			if(Fluid_IN_A.equalsOrNullFace(pos))
+				return state.fluidInputMain;
 			
-		}else if(cap == ForgeCapabilities.FLUID_HANDLER){
-			if(position.equalsOrNullFace(Fluid_IN_A))
-				return state.fluidInputMain.cast(ctx);
+			if(Fluid_IN_B.equalsOrNullFace(pos))
+				return state.fluidInputSecondary;
 			
-			else if(position.equalsOrNullFace(Fluid_IN_B))
-				return state.fluidInputSecondary.cast(ctx);
+			if(Fluid_OUT.equalsOrNullFace(pos))
+				return state.fluidOutput;
 			
-			else if(position.equalsOrNullFace(Fluid_OUT))
-				return state.fluidOutput.cast(ctx);
-		}
-		
-		return LazyOptional.empty();
+			return null;
+		});
 	}
 	
 	public static HighPressureRefineryRecipe getRecipeForId(Level level, ResourceLocation id){
@@ -185,46 +175,45 @@ public class HydroTreaterLogic implements IMultiblockLogic<State>, IServerTickab
 		
 		public final MultiblockProcessor.InMachineProcessor<HighPressureRefineryRecipe> processor;
 		
-		private final StoredCapability<IEnergyStorage> energyCap = new StoredCapability<>(this.energy);
-		private final StoredCapability<IFluidHandler> fluidInputMain;
-		private final StoredCapability<IFluidHandler> fluidInputSecondary;
-		private final StoredCapability<IFluidHandler> fluidOutput;
+		private final IFluidHandler fluidInputMain;
+		private final IFluidHandler fluidInputSecondary;
+		private final IFluidHandler fluidOutput;
 		
-		private final CapabilityReference<IFluidHandler> outputRef;
+		private final IFluidHandler outputRef;
 		
 		public State(IInitialMultiblockContext<State> context){
 			this.processor = new MultiblockProcessor.InMachineProcessor<>(1, 0, 1, context.getMarkDirtyRunnable(), HydroTreaterLogic::getRecipeForId);
 			
-			this.outputRef = context.getCapabilityAt(ForgeCapabilities.FLUID_HANDLER, FLUID_OUT);
-			this.fluidInputMain = new StoredCapability<>(ArrayFluidHandler.fillOnly(tanks.primary(), context.getMarkDirtyRunnable()));
-			this.fluidInputSecondary = new StoredCapability<>(ArrayFluidHandler.fillOnly(tanks.secondary(), context.getMarkDirtyRunnable()));
-			this.fluidOutput = new StoredCapability<>(ArrayFluidHandler.drainOnly(tanks.output(), context.getMarkDirtyRunnable()));
+			this.outputRef = context.getCapabilityAt(Capabilities.FluidHandler.BLOCK, FLUID_OUT).get();
+			this.fluidInputMain = ArrayFluidHandler.fillOnly(tanks.primary(), context.getMarkDirtyRunnable());
+			this.fluidInputSecondary = ArrayFluidHandler.fillOnly(tanks.secondary(), context.getMarkDirtyRunnable());
+			this.fluidOutput = ArrayFluidHandler.drainOnly(tanks.output(), context.getMarkDirtyRunnable());
 		}
 		
 		@Override
-		public void writeSaveNBT(CompoundTag nbt){
-			nbt.put("tanks", this.tanks.writeNBT());
-			nbt.put("energy", this.energy.serializeNBT());
-			nbt.put("processor", this.processor.toNBT());
-			this.rsState.writeSaveNBT(nbt);
+		public void writeSaveNBT(CompoundTag nbt, HolderLookup.Provider provider){
+			nbt.put("tanks", this.tanks.writeNBT(provider));
+			nbt.put("energy", this.energy.serializeNBT(provider));
+			nbt.put("processor", this.processor.toNBT(provider));
+			this.rsState.writeSaveNBT(nbt, provider);
 		}
 		
 		@Override
-		public void readSaveNBT(CompoundTag nbt){
-			this.tanks.readNBT(nbt.getCompound("tanks"));
-			this.energy.deserializeNBT(nbt.getCompound("energy"));
+		public void readSaveNBT(CompoundTag nbt, HolderLookup.Provider provider){
+			this.tanks.readNBT(nbt.getCompound("tanks"), provider);
+			this.energy.deserializeNBT(provider, nbt.getCompound("energy"));
 			this.processor.fromNBT(nbt.get("processor"), HydroTreaterProcess::new);
-			this.rsState.readSaveNBT(nbt);
+			this.rsState.readSaveNBT(nbt, provider);
 		}
 		
 		@Override
-		public void writeSyncNBT(CompoundTag nbt){
-			writeSaveNBT(nbt);
+		public void writeSyncNBT(CompoundTag nbt, HolderLookup.Provider provider){
+			writeSaveNBT(nbt, provider);
 		}
 		
 		@Override
-		public void readSyncNBT(CompoundTag nbt){
-			readSaveNBT(nbt);
+		public void readSyncNBT(CompoundTag nbt, HolderLookup.Provider provider){
+			readSaveNBT(nbt, provider);
 		}
 		
 		@Override
@@ -253,9 +242,14 @@ public class HydroTreaterLogic implements IMultiblockLogic<State>, IServerTickab
 		}
 	}
 	
-	public static record Tanks(FluidTank primary, FluidTank secondary, FluidTank output) implements IReadWriteNBT{
+	// TODO Rewrite this
+	public record Tanks(FluidTank primary, FluidTank secondary, FluidTank output) implements IReadWriteNBT{
 		public Tanks(){
-			this(new FluidTank(12000, fluidStack -> HighPressureRefineryRecipe.hasRecipeWithInput(fluidStack, true)), new FluidTank(12000, fluidStack -> HighPressureRefineryRecipe.hasRecipeWithSecondaryInput(fluidStack, true)), new FluidTank(12000));
+			this(
+				new FluidTank(12000, fluidStack -> HighPressureRefineryRecipe.hasRecipeWithInput(fluidStack, true)),
+				new FluidTank(12000, fluidStack -> HighPressureRefineryRecipe.hasRecipeWithSecondaryInput(fluidStack, true)),
+				new FluidTank(12000)
+			);
 		}
 		
 		public IFluidTank[] asArray(){
@@ -263,18 +257,18 @@ public class HydroTreaterLogic implements IMultiblockLogic<State>, IServerTickab
 		}
 		
 		@Override
-		public void readNBT(CompoundTag nbt){
-			this.primary.readFromNBT(nbt.getCompound("primary"));
-			this.secondary.readFromNBT(nbt.getCompound("secondary"));
-			this.output.readFromNBT(nbt.getCompound("output"));
+		public void readNBT(CompoundTag nbt, HolderLookup.Provider provider){
+			this.primary.readFromNBT(provider, nbt.getCompound("primary"));
+			this.secondary.readFromNBT(provider, nbt.getCompound("secondary"));
+			this.output.readFromNBT(provider, nbt.getCompound("output"));
 		}
 		
 		@Override
-		public CompoundTag writeNBT(){
+		public CompoundTag writeNBT(HolderLookup.Provider provider){
 			CompoundTag nbt = new CompoundTag();
-			nbt.put("primary", this.primary.writeToNBT(new CompoundTag()));
-			nbt.put("secondary", this.secondary.writeToNBT(new CompoundTag()));
-			nbt.put("output", this.output.writeToNBT(new CompoundTag()));
+			nbt.put("primary", this.primary.writeToNBT(provider, new CompoundTag()));
+			nbt.put("secondary", this.secondary.writeToNBT(provider, new CompoundTag()));
+			nbt.put("output", this.output.writeToNBT(provider, new CompoundTag()));
 			return nbt;
 		}
 	}

@@ -19,7 +19,7 @@ import java.util.function.Supplier;
 
 public class WellBlock extends IPBlockBase implements EntityBlock{
 	public WellBlock(){
-		super(Block.Properties.copy(Blocks.STONE)
+		super(Block.Properties.ofFullCopy(Blocks.STONE)
 			.strength(-1.0F, 3600000.0F)
 			.noLootTable()
 			.isValidSpawn((s, r, p, e) -> false)

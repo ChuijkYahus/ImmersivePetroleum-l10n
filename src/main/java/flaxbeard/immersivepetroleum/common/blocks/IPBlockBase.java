@@ -9,6 +9,7 @@ import flaxbeard.immersivepetroleum.common.blocks.ticking.IPServerTickableTile;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
@@ -23,7 +24,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.registries.RegistryObject;
+import net.neoforged.neoforge.registries.DeferredHolder;
 
 import javax.annotation.Nullable;
 import java.util.function.Supplier;
@@ -40,6 +41,16 @@ public class IPBlockBase extends Block implements IPCreativeTab.IMightShowUpInCr
 	private final boolean isEntityBlock = this instanceof EntityBlock;
 	
 	@Override
+	protected InteractionResult useWithoutItem(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, BlockHitResult pHit){
+		return use(pState, pLevel, pPos, pPlayer, pPlayer.getUsedItemHand(), pHit);
+	}
+	
+	@Override
+	protected ItemInteractionResult useItemOn(ItemStack pStack, BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, InteractionHand pHand, BlockHitResult pHit){
+		// TODO This too maybe?
+		return super.useItemOn(pStack, pState, pLevel, pPos, pPlayer, pHand, pHit);
+	}
+	
 	public InteractionResult use(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, InteractionHand pHand, BlockHitResult pHit){
 		if(this.isEntityBlock){
 			if(pLevel.getBlockEntity(pPos) instanceof IPlayerInteraction inst){
@@ -60,7 +71,7 @@ public class IPBlockBase extends Block implements IPCreativeTab.IMightShowUpInCr
 	}
 	
 	@Nullable
-	public static <E extends BlockEntity & IPCommonTickableTile, A extends BlockEntity> BlockEntityTicker<A> createCommonTicker(boolean isClient, BlockEntityType<A> actual, RegistryObject<BlockEntityType<E>> expected){
+	public static <E extends BlockEntity & IPCommonTickableTile, A extends BlockEntity> BlockEntityTicker<A> createCommonTicker(boolean isClient, BlockEntityType<A> actual, DeferredHolder<BlockEntityType<?>, BlockEntityType<E>> expected){
 		return createCommonTicker(isClient, actual, expected.get());
 	}
 	

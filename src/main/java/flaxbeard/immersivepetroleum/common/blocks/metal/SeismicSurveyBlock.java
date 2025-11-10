@@ -32,8 +32,8 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -98,8 +98,9 @@ public class SeismicSurveyBlock extends IPBlockBase implements EntityBlock{
 		return createCommonTicker(level.isClientSide, type, IPTileTypes.SEISMIC_SURVEY);
 	}
 	
+	@Nonnull
 	@Override
-	public void playerWillDestroy(@Nonnull Level world, @Nonnull BlockPos pos, BlockState state, @Nonnull Player player){
+	public BlockState playerWillDestroy(@Nonnull Level world, @Nonnull BlockPos pos, BlockState state, @Nonnull Player player){
 		if(state.getValue(SLAVE)){
 			// Find the master block
 			for(int i = 1;i < 3;i++){
@@ -118,7 +119,7 @@ public class SeismicSurveyBlock extends IPBlockBase implements EntityBlock{
 			world.destroyBlock(pos.offset(0, 2, 0), false);
 		}
 		
-		super.playerWillDestroy(world, pos, state, player);
+		return super.playerWillDestroy(world, pos, state, player);
 	}
 	
 	@SuppressWarnings("deprecation")

@@ -13,7 +13,6 @@ import blusunrize.immersiveengineering.api.multiblocks.blocks.logic.IMultiblockS
 import blusunrize.immersiveengineering.api.multiblocks.blocks.util.CapabilityPosition;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.util.RelativeBlockFace;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.util.ShapeType;
-import blusunrize.immersiveengineering.api.multiblocks.blocks.util.StoredCapability;
 import blusunrize.immersiveengineering.common.blocks.multiblocks.blockimpl.InitialMultiblockContext;
 import blusunrize.immersiveengineering.common.fluids.ArrayFluidHandler;
 import flaxbeard.immersivepetroleum.api.reservoir.ReservoirHandler;
@@ -32,9 +31,11 @@ import flaxbeard.immersivepetroleum.common.util.Utils;
 import net.minecraft.ResourceLocationException;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
@@ -48,16 +49,10 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.energy.IEnergyStorage;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.fluids.capability.templates.FluidTank;
-import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.ItemStackHandler;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
+import net.neoforged.neoforge.items.ItemStackHandler;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -68,6 +63,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.DerrickLogic.State;
+import static net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage;
+import static net.neoforged.neoforge.capabilities.Capabilities.FluidHandler;
 
 public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableComponent<State>, IClientTickableComponent<State>{
 	public static final int REQUIRED_WATER_AMOUNT = 125;
@@ -412,9 +409,9 @@ public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableCom
 			if(target != null){
 				boolean isIEPipe = target instanceof IFluidPipe;
 				
-				LazyOptional<IFluidHandler> output = target.getCapability(ForgeCapabilities.FLUID_HANDLER, mirrored ? front.getClockWise() : front.getCounterClockWise());
+				IFluidHandler output = level.getRawLevel().getCapability(FluidHandler.BLOCK, outPos, mirrored ? front.getClockWise() : front.getCounterClockWise());
 				
-				state.spilling = output.map(out -> iterativeOutput(out, extracted, isIEPipe)).orElse(true);
+				state.spilling = iterativeOutput(output, extracted, isIEPipe);
 				
 			}else{
 				state.spilling = true;
@@ -504,23 +501,18 @@ public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableCom
 		
 		return new FluidStack(extractedFluid, extractedAmount);
 	}
-	
 	@Override
-	public <T> LazyOptional<T> getCapability(IMultiblockContext<State> ctx, CapabilityPosition position, Capability<T> cap){
-		final State state = ctx.getState();
-		
-		if(cap == ForgeCapabilities.FLUID_HANDLER){
-			if(position.equalsOrNullFace(Fluid_IN))
-				return state.fluidHandler.cast(ctx);
-				
-			else if(position.equalsOrNullFace(FLUID_OUT))
-				return state.emptyHandler.cast(ctx);
+	public void registerCapabilities(CapabilityRegistrar<State> register){
+		register.registerAtOrNull(EnergyStorage.BLOCK, Energy_IN, state -> state.energy);
+		register.register(FluidHandler.BLOCK, (state, pos) -> {
+			if(Fluid_IN.equalsOrNullFace(pos))
+				return state.fluidHandler;
 			
-		}else if(cap == ForgeCapabilities.ENERGY)
-			if(position.equalsOrNullFace(Energy_IN))
-				return state.energyHandler.cast(ctx);
-		
-		return LazyOptional.empty();
+			if(FLUID_OUT.equalsOrNullFace(pos))
+				return state.emptyHandler;
+			
+			return null;
+		});
 	}
 	
 	@Override
@@ -528,9 +520,7 @@ public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableCom
 		return DerrickShape.GETTER;
 	}
 	
-	// TODO
 	public static class State implements IMultiblockState{
-		
 		public final AveragingEnergyStorage energy = new AveragingEnergyStorage(16000);
 		public final RedstoneControl.RSState rsState = RedstoneControl.RSState.enabledByDefault();
 		
@@ -550,29 +540,28 @@ public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableCom
 		private Supplier<Level> level;
 		public BlockPos originPos;
 		
-		private final StoredCapability<IEnergyStorage> energyHandler = new StoredCapability<>(this.energy);
-		private final StoredCapability<IFluidHandler> fluidHandler;
-		private final StoredCapability<IFluidHandler> emptyHandler;
-		private final StoredCapability<IItemHandler> itemHandler;
+		private final ArrayFluidHandler fluidHandler;
+		private final ArrayFluidHandler emptyHandler;
+		private final ItemStackHandler itemHandler;
 		
 		public State(IInitialMultiblockContext<State> context, BlockPos pos){
-			this.emptyHandler = new StoredCapability<>(ArrayFluidHandler.drainOnly(DUMMY_TANK, context.getMarkDirtyRunnable()));
-			this.itemHandler = new StoredCapability<>(new ItemStackHandler(this.inventory));
+			this.emptyHandler = ArrayFluidHandler.drainOnly(DUMMY_TANK, context.getMarkDirtyRunnable());
+			this.itemHandler = new ItemStackHandler(this.inventory);
 			this.level = context.levelSupplier();
 			this.originPos = pos;
 			this.tank = new FluidTank(8000, fluidStack -> acceptsFluid(level, this, pos, fluidStack));
-			this.fluidHandler = new StoredCapability<>(ArrayFluidHandler.fillOnly(tank, context.getMarkDirtyRunnable()));
+			this.fluidHandler = ArrayFluidHandler.fillOnly(tank, context.getMarkDirtyRunnable());
 			
 		}
 		
 		@Override
-		public void readSaveNBT(CompoundTag nbt){
+		public void readSaveNBT(CompoundTag nbt, HolderLookup.Provider provider){
 			this.drilling = nbt.getBoolean("drilling");
 			this.spilling = nbt.getBoolean("spilling");
 			this.clientFlow = nbt.getInt("spillflow");
 			
 			try{
-				this.fluidSpilled = ForgeRegistries.FLUIDS.getValue(ResourceLocation.parse(nbt.getString("spillingfluid")));
+				this.fluidSpilled = BuiltInRegistries.FLUID.get(ResourceLocation.parse(nbt.getString("spillingfluid")));
 			}catch(ResourceLocationException rle){
 				this.fluidSpilled = Fluids.EMPTY;
 			}
@@ -581,39 +570,39 @@ public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableCom
 				this.gridStorage = PipeConfig.Grid.fromCompound(nbt.getCompound("grid"));
 			}
 			
-			this.tank.readFromNBT(nbt.getCompound("tank"));
+			this.tank.readFromNBT(provider, nbt.getCompound("tank"));
 			
-			this.rsState.readSaveNBT(nbt);
+			this.rsState.readSaveNBT(nbt, provider);
 			
-			ContainerHelper.loadAllItems(nbt, this.inventory);
+			ContainerHelper.loadAllItems(nbt, this.inventory, provider);
 		}
 		
 		@Override
-		public void writeSaveNBT(CompoundTag nbt){
+		public void writeSaveNBT(CompoundTag nbt, HolderLookup.Provider provider){
 			nbt.putBoolean("drilling", this.drilling);
 			nbt.putBoolean("spilling", this.spilling);
 			nbt.putInt("spillflow", getReservoirFlow());
 			nbt.putString("spillingfluid", RegistryUtils.getRegistryNameOf(this.fluidSpilled).toString());
 			
-			nbt.put("tank", this.tank.writeToNBT(new CompoundTag()));
+			nbt.put("tank", this.tank.writeToNBT(provider, new CompoundTag()));
 			
 			if(this.gridStorage != null){
 				nbt.put("grid", this.gridStorage.toCompound());
 			}
 			
-			this.rsState.writeSaveNBT(nbt);
+			this.rsState.writeSaveNBT(nbt, provider);
 			
-			ContainerHelper.saveAllItems(nbt, this.inventory);
+			ContainerHelper.saveAllItems(nbt, this.inventory, provider);
 		}
 		
 		@Override
-		public void readSyncNBT(CompoundTag nbt){
-			readSaveNBT(nbt);
+		public void readSyncNBT(CompoundTag nbt, HolderLookup.Provider provider){
+			readSaveNBT(nbt, provider);
 		}
 		
 		@Override
-		public void writeSyncNBT(CompoundTag nbt){
-			writeSaveNBT(nbt);
+		public void writeSyncNBT(CompoundTag nbt, HolderLookup.Provider provider){
+			writeSaveNBT(nbt, provider);
 		}
 		
 		private int getReservoirFlow(){

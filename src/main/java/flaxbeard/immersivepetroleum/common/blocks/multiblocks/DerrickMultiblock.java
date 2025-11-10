@@ -14,7 +14,7 @@ import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.client.model.data.ModelData;
+import net.neoforged.neoforge.client.model.data.ModelData;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -67,7 +67,7 @@ public class DerrickMultiblock extends IPTemplateMultiblock{
 			PoseStack.Pose last = matrix.last();
 			VertexConsumer solid = bufferIn.getBuffer(RenderType.solid());
 			for(BakedQuad quad: quads){
-				solid.putBulkData(last, quad, 1.0F, 1.0F, 1.0F, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
+				solid.putBulkData(last, quad, 1.0F, 1.0F, 1.0F, 1.0F, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, false);
 			}
 		}
 	}

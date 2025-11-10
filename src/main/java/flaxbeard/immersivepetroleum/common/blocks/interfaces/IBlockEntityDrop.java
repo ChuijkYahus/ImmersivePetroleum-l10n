@@ -11,6 +11,6 @@ public interface IBlockEntityDrop{
 	List<ItemStack> getBlockEntityDrop(LootContext context);
 	
 	default ItemStack getFirstBlockEntityDrop(){
-		return getBlockEntityDrop(null).get(0);
+		return getBlockEntityDrop(null).getFirst();
 	}
 }

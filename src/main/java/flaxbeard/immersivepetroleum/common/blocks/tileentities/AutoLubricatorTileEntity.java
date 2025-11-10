@@ -1,10 +1,8 @@
 package flaxbeard.immersivepetroleum.common.blocks.tileentities;
 
 import blusunrize.immersiveengineering.api.Lib;
-import blusunrize.immersiveengineering.api.multiblocks.blocks.env.IMultiblockBEHelper;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.env.IMultiblockBEHelperMaster;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.logic.IMultiblockBE;
-import blusunrize.immersiveengineering.api.multiblocks.blocks.registry.MultiblockBlockEntityMaster;
 import blusunrize.immersiveengineering.common.blocks.IEBlockInterfaces;
 import flaxbeard.immersivepetroleum.api.crafting.LubricantHandler;
 import flaxbeard.immersivepetroleum.api.crafting.LubricatedHandler;
@@ -19,6 +17,7 @@ import flaxbeard.immersivepetroleum.common.util.Utils;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -28,22 +27,17 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.fluids.FluidUtil;
-import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.fluids.capability.IFluidHandler.FluidAction;
-import net.minecraftforge.fluids.capability.templates.FluidTank;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.fluids.FluidUtil;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -66,32 +60,32 @@ public class AutoLubricatorTileEntity extends IPTileEntityBase implements IPComm
 	}
 	
 	@Override
-	protected void readCustom(CompoundTag compound){
+	protected void readCustom(CompoundTag compound, HolderLookup.Provider provider){
 		this.isSlave = compound.getBoolean("slave");
 		
 		Direction facing = Direction.byName(compound.getString("facing"));
 		this.facing = facing.get2DDataValue() == -1 ? Direction.NORTH : facing;
 		
-		this.tank.readFromNBT(compound.getCompound("tank"));
+		this.tank.readFromNBT(provider, compound.getCompound("tank"));
 	}
 	
 	@Override
-	protected void writeCustom(CompoundTag compound){
+	protected void writeCustom(CompoundTag compound, HolderLookup.Provider provider){
 		compound.putBoolean("slave", this.isSlave);
 		compound.putString("facing", this.facing.getName());
 		compound.putInt("count", this.count);
 		
-		CompoundTag tank = this.tank.writeToNBT(new CompoundTag());
+		CompoundTag tank = this.tank.writeToNBT(provider, new CompoundTag());
 		compound.put("tank", tank);
 	}
 	
-	public void readTank(CompoundTag nbt){
-		this.tank.readFromNBT(nbt.getCompound("tank"));
+	public void readTank(CompoundTag nbt, HolderLookup.Provider provider){
+		this.tank.readFromNBT(provider, nbt.getCompound("tank"));
 	}
 	
-	public void writeTank(CompoundTag nbt, boolean toItem){
+	public void writeTank(CompoundTag nbt, HolderLookup.Provider provider, boolean toItem){
 		boolean write = this.tank.getFluidAmount() > 0;
-		CompoundTag tankTag = this.tank.writeToNBT(new CompoundTag());
+		CompoundTag tankTag = this.tank.writeToNBT(provider, new CompoundTag());
 		if(!toItem || write)
 			nbt.put("tank", tankTag);
 	}
@@ -100,7 +94,6 @@ public class AutoLubricatorTileEntity extends IPTileEntityBase implements IPComm
 	public void readOnPlacement(LivingEntity placer, ItemStack stack){
 		if(stack.hasTag())
 			readTank(stack.getTag());
-		
 		
 		if(placer instanceof Player player){
 			BlockPos target = this.worldPosition.relative(this.facing);
@@ -139,10 +132,9 @@ public class AutoLubricatorTileEntity extends IPTileEntityBase implements IPComm
 	
 	private LazyOptional<IFluidHandler> outputHandler;
 	
-	@Override
 	@Nonnull
 	public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, Direction side){
-		if(cap == ForgeCapabilities.FLUID_HANDLER){
+		if(cap == Capabilities.FLUID_HANDLER){
 			if(this.isSlave && (side == null || side == Direction.UP)){
 				AutoLubricatorTileEntity master = master();
 				if(master == null){
@@ -191,7 +183,6 @@ public class AutoLubricatorTileEntity extends IPTileEntityBase implements IPComm
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	@Override
 	public AABB getRenderBoundingBox(){
 		BlockPos pos = getBlockPos();
 		return new AABB(pos.offset(-3, -3, -3), pos.offset(3, 3, 3));
@@ -287,7 +278,7 @@ public class AutoLubricatorTileEntity extends IPTileEntityBase implements IPComm
 						handler.lubricateServer((ServerLevel) this.level, this.tank.getFluid().getFluid(), this.count, masterHelper);
 						
 						if(this.count++ % 4 == 0){
-							this.tank.drain(LubricantHandler.getLubeAmount(this.tank.getFluid()), FluidAction.EXECUTE);
+							this.tank.drain(LubricantHandler.getLubeAmount(this.tank.getFluid()), IFluidHandler.FluidAction.EXECUTE);
 						}
 						
 						setChanged();

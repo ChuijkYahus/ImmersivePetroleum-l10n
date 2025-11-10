@@ -1,6 +1,7 @@
 package flaxbeard.immersivepetroleum.common.blocks.tileentities;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -24,40 +25,39 @@ public abstract class IPTileEntityBase extends BlockEntity{
 	
 	@Override
 	public ClientboundBlockEntityDataPacket getUpdatePacket(){
-		return ClientboundBlockEntityDataPacket.create(this, b -> getUpdateTag());
+		return ClientboundBlockEntityDataPacket.create(this, (b, p) -> getUpdateTag(p));
 	}
 	
 	@Override
-	public void handleUpdateTag(CompoundTag tag){
-		load(tag);
+	public void handleUpdateTag(@Nonnull CompoundTag tag, @Nonnull HolderLookup.Provider provider){
+		loadAdditional(tag, provider);
 	}
 	
 	@Override
 	@Nonnull
-	public CompoundTag getUpdateTag(){
+	public CompoundTag getUpdateTag(@Nonnull HolderLookup.Provider provider){
 		CompoundTag nbt = new CompoundTag();
-		saveAdditional(nbt);
+		saveAdditional(nbt, provider);
 		return nbt;
 	}
 	
 	@Override
-	public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt){
-		if(pkt.getTag() != null)
-			load(pkt.getTag());
+	public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt, HolderLookup.Provider provider){
+		loadAdditional(pkt.getTag(), provider);
 	}
 	
 	@Override
-	public void saveAdditional(@Nonnull CompoundTag compound){
-		writeCustom(compound);
+	protected void saveAdditional(@Nonnull CompoundTag nbt, @Nonnull HolderLookup.Provider provider){
+		writeCustom(nbt, provider);
 	}
 	
 	@Override
-	public void load(@Nonnull CompoundTag compound){
-		super.load(compound);
-		readCustom(compound);
+	protected void loadAdditional(CompoundTag nbt, HolderLookup.Provider provider){
+		super.loadAdditional(nbt, provider);
+		readCustom(nbt, provider);
 	}
 	
-	protected abstract void writeCustom(CompoundTag compound);
+	protected abstract void writeCustom(CompoundTag compound, HolderLookup.Provider provider);
 	
-	protected abstract void readCustom(CompoundTag compound);
+	protected abstract void readCustom(CompoundTag compound, HolderLookup.Provider provider);
 }

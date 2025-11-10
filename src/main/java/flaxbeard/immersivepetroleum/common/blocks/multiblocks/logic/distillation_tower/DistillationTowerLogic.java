@@ -14,7 +14,6 @@ import blusunrize.immersiveengineering.api.multiblocks.blocks.util.CapabilityPos
 import blusunrize.immersiveengineering.api.multiblocks.blocks.util.MultiblockOrientation;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.util.RelativeBlockFace;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.util.ShapeType;
-import blusunrize.immersiveengineering.api.multiblocks.blocks.util.StoredCapability;
 import blusunrize.immersiveengineering.common.blocks.multiblocks.process.MultiblockProcess;
 import blusunrize.immersiveengineering.common.blocks.multiblocks.process.MultiblockProcessInMachine;
 import blusunrize.immersiveengineering.common.blocks.multiblocks.process.MultiblockProcessor;
@@ -28,6 +27,7 @@ import flaxbeard.immersivepetroleum.common.blocks.multiblocks.shapes.Distillatio
 import flaxbeard.immersivepetroleum.common.util.FluidHelper;
 import flaxbeard.immersivepetroleum.common.util.inventory.MultiFluidTankFiltered;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -35,15 +35,12 @@ import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.energy.IEnergyStorage;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.FluidType;
-import net.minecraftforge.fluids.FluidUtil;
-import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.items.ItemHandlerHelper;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidType;
+import net.neoforged.neoforge.fluids.FluidUtil;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.items.ItemHandlerHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -227,21 +224,17 @@ public class DistillationTowerLogic implements IMultiblockLogic<State>, IServerT
 	}
 	
 	@Override
-	public <T> LazyOptional<T> getCapability(IMultiblockContext<State> ctx, CapabilityPosition position, Capability<T> cap){
-		final State state = ctx.getState();
-		
-		if(cap == ForgeCapabilities.FLUID_HANDLER){
-			if(position.equalsOrNullFace(Fluid_IN))
-				return state.fluidInput.cast(ctx);
+	public void registerCapabilities(CapabilityRegistrar<State> register){
+		register.registerAtOrNull(Capabilities.EnergyStorage.BLOCK, ENERGY_IN, state -> state.energy);
+		register.register(Capabilities.FluidHandler.BLOCK, (state, pos) -> {
+			if(Fluid_IN.equalsOrNullFace(pos))
+				return state.fluidInput;
 			
-			else if(position.equalsOrNullFace(Fluid_OUT))
-				return state.fluidOutput.cast(ctx);
+			if(Fluid_OUT.equalsOrNullFace(pos))
+				return state.fluidOutput;
 			
-		}else if(cap == ForgeCapabilities.ENERGY)
-			if(position.equalsOrNullFace(ENERGY_IN))
-				return state.energyHandler.cast(ctx);
-		
-		return LazyOptional.empty();
+			return null;
+		});
 	}
 	
 	@Override
@@ -263,16 +256,15 @@ public class DistillationTowerLogic implements IMultiblockLogic<State>, IServerT
 		public int cooldownTicks = 0;
 		public boolean wasActive = false;
 		
-		private final StoredCapability<IEnergyStorage> energyHandler = new StoredCapability<>(energy);
-		private final StoredCapability<IFluidHandler> fluidInput;
-		private final StoredCapability<IFluidHandler> fluidOutput;
+		private final IFluidHandler fluidInput;
+		private final IFluidHandler fluidOutput;
 		
 		public State(IInitialMultiblockContext<State> context){
 			
 			processor = new MultiblockProcessor.InMachineProcessor<>(1, 0, 1, context.getMarkDirtyRunnable(), DistillationTowerLogic::getRecipeForId);
 			
-			fluidInput = new StoredCapability<>(ArrayFluidHandler.fillOnly(tanks.input(), context.getMarkDirtyRunnable()));
-			fluidOutput = new StoredCapability<>(ArrayFluidHandler.drainOnly(tanks.output(), context.getMarkDirtyRunnable()));
+			fluidInput = ArrayFluidHandler.fillOnly(tanks.input(), context.getMarkDirtyRunnable());
+			fluidOutput = ArrayFluidHandler.drainOnly(tanks.output(), context.getMarkDirtyRunnable());
 		}
 		
 		@Override
@@ -301,44 +293,44 @@ public class DistillationTowerLogic implements IMultiblockLogic<State>, IServerT
 		}
 		
 		@Override
-		public void readSaveNBT(CompoundTag nbt){
-			this.tanks.readNBT(nbt.getCompound("tanks"));
-			this.energy.deserializeNBT(nbt.getCompound("energy"));
+		public void readSaveNBT(CompoundTag nbt, HolderLookup.Provider provider){
+			this.tanks.readNBT(nbt.getCompound("tanks"), provider);
+			this.energy.deserializeNBT(provider, nbt.getCompound("energy"));
 			this.cooldownTicks = nbt.getInt("cooldownTicks");
 			this.processor.fromNBT(nbt.getCompound("recipeworker"), DistillationTowerProcess::new);
 			
-			this.inventory = readInventory(nbt.getCompound("inventory"));
-			this.rsState.readSaveNBT(nbt);
+			this.inventory = readInventory(nbt.getCompound("inventory"), provider);
+			this.rsState.readSaveNBT(nbt, provider);
 			
 			this.wasActive = nbt.getBoolean("wasActive");
 		}
 		
 		@Override
-		public void writeSaveNBT(CompoundTag nbt){
-			nbt.put("tanks", this.tanks.writeNBT());
-			nbt.put("energy", this.energy.serializeNBT());
+		public void writeSaveNBT(CompoundTag nbt, HolderLookup.Provider provider){
+			nbt.put("tanks", this.tanks.writeNBT(provider));
+			nbt.put("energy", this.energy.serializeNBT(provider));
 			nbt.putInt("cooldownTicks", this.cooldownTicks);
-			nbt.put("recipeworker", this.processor.toNBT());
+			nbt.put("recipeworker", this.processor.toNBT(provider));
 			
-			nbt.put("inventory", writeInventory(this.inventory));
-			this.rsState.writeSaveNBT(nbt);
+			nbt.put("inventory", writeInventory(this.inventory, provider));
+			this.rsState.writeSaveNBT(nbt, provider);
 			
 			nbt.putBoolean("wasActive", this.wasActive);
 		}
 		
 		@Override
-		public void readSyncNBT(CompoundTag nbt){
-			readSaveNBT(nbt);
+		public void readSyncNBT(CompoundTag nbt, HolderLookup.Provider provider){
+			readSaveNBT(nbt, provider);
 		}
 		
 		@Override
-		public void writeSyncNBT(CompoundTag nbt){
-			writeSaveNBT(nbt);
+		public void writeSyncNBT(CompoundTag nbt, HolderLookup.Provider provider){
+			writeSaveNBT(nbt, provider);
 		}
 		
-		protected NonNullList<ItemStack> readInventory(CompoundTag nbt){
+		protected NonNullList<ItemStack> readInventory(CompoundTag nbt, HolderLookup.Provider provider){
 			NonNullList<ItemStack> list = NonNullList.create();
-			ContainerHelper.loadAllItems(nbt, list);
+			ContainerHelper.loadAllItems(nbt, list, provider);
 			
 			if(list.isEmpty()){ // In case it loaded none
 				list = this.inventory.size() == 4 ? this.inventory : NonNullList.withSize(4, ItemStack.EMPTY);
@@ -349,8 +341,8 @@ public class DistillationTowerLogic implements IMultiblockLogic<State>, IServerT
 			return list;
 		}
 		
-		protected CompoundTag writeInventory(NonNullList<ItemStack> list){
-			return ContainerHelper.saveAllItems(new CompoundTag(), list);
+		protected CompoundTag writeInventory(NonNullList<ItemStack> list, HolderLookup.Provider provider){
+			return ContainerHelper.saveAllItems(new CompoundTag(), list, provider);
 		}
 	}
 	
@@ -366,16 +358,16 @@ public class DistillationTowerLogic implements IMultiblockLogic<State>, IServerT
 		}
 		
 		@Override
-		public void readNBT(CompoundTag nbt){
-			this.input.readFromNBT(nbt.getCompound("input"));
-			this.output.readFromNBT(nbt.getCompound("output"));
+		public void readNBT(CompoundTag nbt, HolderLookup.Provider provider){
+			this.input.readFromNBT(nbt.getCompound("input"), provider);
+			this.output.readFromNBT(nbt.getCompound("output"), provider);
 		}
 		
 		@Override
-		public CompoundTag writeNBT(){
+		public CompoundTag writeNBT(HolderLookup.Provider provider){
 			CompoundTag nbt = new CompoundTag();
-			nbt.put("input", this.input.writeToNBT(new CompoundTag()));
-			nbt.put("output", this.output.writeToNBT(new CompoundTag()));
+			nbt.put("input", this.input.writeToNBT(new CompoundTag(), provider));
+			nbt.put("output", this.output.writeToNBT(new CompoundTag(), provider));
 			return nbt;
 		}
 	}

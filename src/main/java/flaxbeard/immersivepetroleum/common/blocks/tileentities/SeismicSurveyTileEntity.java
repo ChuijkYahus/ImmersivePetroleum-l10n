@@ -13,6 +13,7 @@ import flaxbeard.immersivepetroleum.common.util.survey.ISurveyInfo;
 import flaxbeard.immersivepetroleum.common.util.survey.IslandInfo;
 import flaxbeard.immersivepetroleum.common.util.survey.SurveyScan;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundEvent;
@@ -45,17 +46,17 @@ public class SeismicSurveyTileEntity extends IPTileEntityBase implements IPCommo
 	}
 	
 	@Override
-	protected void writeCustom(CompoundTag tag){
+	protected void writeCustom(CompoundTag tag, HolderLookup.Provider provider){
 		tag.putBoolean("slave", this.isSlave);
 		tag.putInt("timer", this.timer);
-		tag.put("stack", this.stack.save(new CompoundTag()));
+		tag.put("stack", this.stack.save(provider, new CompoundTag()));
 	}
 	
 	@Override
-	protected void readCustom(CompoundTag tag){
+	protected void readCustom(CompoundTag tag, HolderLookup.Provider provider){
 		this.isSlave = tag.getBoolean("slave");
 		this.timer = tag.getInt("timer");
-		this.stack = ItemStack.of(tag.getCompound("stack"));
+		this.stack = ItemStack.parseOptional(provider, tag.getCompound("stack"));
 	}
 	
 	@Override
@@ -121,7 +122,7 @@ public class SeismicSurveyTileEntity extends IPTileEntityBase implements IPCommo
 						final double bZ = (pos.getZ() + 0.5);
 						
 						world.playSound(null, bX, bY, bZ, SoundEvents.ITEM_PICKUP, SoundSource.BLOCKS, 0.5F, 0.25F);
-						world.playSound(null, bX, bY, bZ, SoundEvents.NOTE_BLOCK_IRON_XYLOPHONE.get(), SoundSource.BLOCKS, 0.25F, 0.1F);
+						world.playSound(null, bX, bY, bZ, SoundEvents.NOTE_BLOCK_IRON_XYLOPHONE, SoundSource.BLOCKS, 0.25F, 0.1F);
 					}
 					
 					return true;
@@ -159,7 +160,7 @@ public class SeismicSurveyTileEntity extends IPTileEntityBase implements IPCommo
 				}else{
 					SoundEvent sound = ((BulletItem) ExternalModContent.IE.itemBuckshot()).getType().getSound();
 					if(sound == null){
-						sound = IESounds.revolverFire.get();
+						sound = IESounds.revolverFire.value();
 					}
 					
 					final double bX = (pos.getX() + 0.5);

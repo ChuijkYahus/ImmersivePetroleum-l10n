@@ -13,7 +13,6 @@ import blusunrize.immersiveengineering.api.multiblocks.blocks.logic.IMultiblockS
 import blusunrize.immersiveengineering.api.multiblocks.blocks.util.CapabilityPosition;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.util.RelativeBlockFace;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.util.ShapeType;
-import blusunrize.immersiveengineering.api.multiblocks.blocks.util.StoredCapability;
 import blusunrize.immersiveengineering.common.blocks.multiblocks.blockimpl.InitialMultiblockContext;
 import blusunrize.immersiveengineering.common.fluids.ArrayFluidHandler;
 import blusunrize.immersiveengineering.common.util.Utils;
@@ -22,6 +21,7 @@ import flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.IReadWriteNB
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.shapes.CokerShape;
 import flaxbeard.immersivepetroleum.common.util.FluidHelper;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -31,17 +31,14 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.energy.IEnergyStorage;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.FluidUtil;
-import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.fluids.capability.templates.FluidTank;
-import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.ItemHandlerHelper;
-import net.minecraftforge.items.ItemStackHandler;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidUtil;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
+import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.items.ItemHandlerHelper;
+import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
@@ -277,28 +274,20 @@ public class CokerUnitLogic implements IMultiblockLogic<State>, IServerTickableC
 			context.getLevel().getRawLevel().updateNeighborsAt(p, context.getLevel().getBlockState(p).getBlock());
 		}
 	}
-	
 	@Override
-	public <T> LazyOptional<T> getCapability(IMultiblockContext<State> ctx, CapabilityPosition position, Capability<T> cap){
-		final State state = ctx.getState();
-		
-		if(cap == ForgeCapabilities.ITEM_HANDLER){
-			if(position.equalsOrNullFace(Item_IN))
-				return state.itemInput.cast(ctx);
+	public void registerCapabilities(CapabilityRegistrar<State> register){
+		register.registerAtOrNull(Capabilities.EnergyStorage.BLOCK, Energy_IN[0], state -> state.energy);
+		register.registerAtOrNull(Capabilities.EnergyStorage.BLOCK, Energy_IN[1], state -> state.energy);
+		register.registerAt(Capabilities.ItemHandler.BLOCK, Item_IN, state -> state.itemInput);
+		register.register(Capabilities.FluidHandler.BLOCK, (state, pos) -> {
+			if(Fluid_IN.equalsOrNullFace(pos))
+				return state.fluidInput;
 			
-		}else if(cap == ForgeCapabilities.FLUID_HANDLER){
-			if(position.equalsOrNullFace(Fluid_OUT))
-				return state.fluidOutput.cast(ctx);
+			if(Fluid_OUT.equalsOrNullFace(pos))
+				return state.fluidOutput;
 			
-			else if(position.equalsOrNullFace(Fluid_IN))
-				return state.fluidInput.cast(ctx);
-			
-		}else if(cap == ForgeCapabilities.ENERGY){
-			if(position.equalsOrNullFace(Energy_IN[0]) || position.equalsOrNullFace(Energy_IN[1]))
-				return state.energyCap.cast(ctx);
-		}
-		
-		return LazyOptional.empty();
+			return null;
+		});
 	}
 	
 	@Override
@@ -307,7 +296,6 @@ public class CokerUnitLogic implements IMultiblockLogic<State>, IServerTickableC
 	}
 	
 	public static class State implements IMultiblockState{
-		
 		public final AveragingEnergyStorage energy = new AveragingEnergyStorage(24000);
 		public final RedstoneControl.RSState rsState = RedstoneControl.RSState.enabledByDefault();
 		
@@ -317,50 +305,49 @@ public class CokerUnitLogic implements IMultiblockLogic<State>, IServerTickableC
 		public final BufferTanks bufferTanks = new BufferTanks();
 		public final Chambers chambers = new Chambers();
 		
-		private final StoredCapability<IItemHandler> itemInput = new StoredCapability<>(new FilteredItemStackhandler(this.inventory));
-		private final StoredCapability<IEnergyStorage> energyCap = new StoredCapability<>(this.energy);
-		private final StoredCapability<IFluidHandler> fluidInput;
-		private final StoredCapability<IFluidHandler> fluidOutput;
+		private final IItemHandler itemInput = new FilteredItemStackhandler(this.inventory);
+		private final ArrayFluidHandler fluidInput;
+		private final ArrayFluidHandler fluidOutput;
 		public BlockPos masterPos;
 		
 		public State(IInitialMultiblockContext<State> context, BlockPos pos){
 			this.masterPos = pos;
 			
-			this.fluidInput = new StoredCapability<>(ArrayFluidHandler.fillOnly(this.bufferTanks.input(), context.getMarkDirtyRunnable()));
-			this.fluidOutput = new StoredCapability<>(ArrayFluidHandler.drainOnly(this.bufferTanks.output(), context.getMarkDirtyRunnable()));
+			this.fluidInput = ArrayFluidHandler.fillOnly(this.bufferTanks.input(), context.getMarkDirtyRunnable());
+			this.fluidOutput = ArrayFluidHandler.drainOnly(this.bufferTanks.output(), context.getMarkDirtyRunnable());
 		}
 		
 		@Override
-		public void writeSaveNBT(CompoundTag nbt){
-			nbt.put("buffertanks", this.bufferTanks.writeNBT());
-			nbt.put("chambers", this.chambers.writeNBT());
-			nbt.put("energy", this.energy.serializeNBT());
-			nbt.put("inventory", writeInventory(this.inventory));
-			this.rsState.writeSaveNBT(nbt);
+		public void writeSaveNBT(CompoundTag nbt, HolderLookup.Provider provider){
+			nbt.put("buffertanks", this.bufferTanks.writeNBT(provider));
+			nbt.put("chambers", this.chambers.writeNBT(provider));
+			nbt.put("energy", this.energy.serializeNBT(provider));
+			nbt.put("inventory", writeInventory(this.inventory, provider));
+			this.rsState.writeSaveNBT(nbt, provider);
 		}
 		
 		@Override
-		public void readSaveNBT(CompoundTag nbt){
-			this.bufferTanks.readNBT(nbt.getCompound("buffertanks"));
-			this.chambers.readNBT(nbt.getCompound("chambers"));
-			readInventory(nbt.getCompound("inventory"));
-			this.energy.deserializeNBT(nbt.getCompound("energy"));
-			this.rsState.readSaveNBT(nbt);
+		public void readSaveNBT(CompoundTag nbt, HolderLookup.Provider provider){
+			this.bufferTanks.readNBT(nbt.getCompound("buffertanks"), provider);
+			this.chambers.readNBT(nbt.getCompound("chambers"), provider);
+			readInventory(nbt.getCompound("inventory"), provider);
+			this.energy.deserializeNBT(provider, nbt.getCompound("energy"));
+			this.rsState.readSaveNBT(nbt, provider);
 		}
 		
 		@Override
-		public void writeSyncNBT(CompoundTag nbt){
-			writeSaveNBT(nbt);
+		public void writeSyncNBT(CompoundTag nbt, HolderLookup.Provider provider){
+			writeSaveNBT(nbt, provider);
 		}
 		
 		@Override
-		public void readSyncNBT(CompoundTag nbt){
-			readSaveNBT(nbt);
+		public void readSyncNBT(CompoundTag nbt, HolderLookup.Provider provider){
+			readSaveNBT(nbt, provider);
 		}
 		
-		protected void readInventory(CompoundTag nbt){
+		protected void readInventory(CompoundTag nbt, HolderLookup.Provider provider){
 			NonNullList<ItemStack> list = NonNullList.create();
-			ContainerHelper.loadAllItems(nbt, list);
+			ContainerHelper.loadAllItems(nbt, list, provider);
 			
 			for(int i = 0;i < this.inventory.size();i++){
 				ItemStack stack = ItemStack.EMPTY;
@@ -372,8 +359,8 @@ public class CokerUnitLogic implements IMultiblockLogic<State>, IServerTickableC
 			}
 		}
 		
-		protected CompoundTag writeInventory(NonNullList<ItemStack> list){
-			return ContainerHelper.saveAllItems(new CompoundTag(), list);
+		protected CompoundTag writeInventory(NonNullList<ItemStack> list, HolderLookup.Provider provider){
+			return ContainerHelper.saveAllItems(new CompoundTag(), list, provider);
 		}
 		
 		public ItemStack getInventory(Inventory inv){
@@ -425,16 +412,16 @@ public class CokerUnitLogic implements IMultiblockLogic<State>, IServerTickableC
 		}
 		
 		@Override
-		public void readNBT(CompoundTag nbt){
-			this.input.readFromNBT(nbt.getCompound("input"));
-			this.output.readFromNBT(nbt.getCompound("output"));
+		public void readNBT(CompoundTag nbt, HolderLookup.Provider provider){
+			this.input.readFromNBT(provider, nbt.getCompound("input"));
+			this.output.readFromNBT(provider, nbt.getCompound("output"));
 		}
 		
 		@Override
-		public CompoundTag writeNBT(){
+		public CompoundTag writeNBT(HolderLookup.Provider provider){
 			CompoundTag nbt = new CompoundTag();
-			nbt.put("input", this.input.writeToNBT(new CompoundTag()));
-			nbt.put("output", this.output.writeToNBT(new CompoundTag()));
+			nbt.put("input", this.input.writeToNBT(provider, new CompoundTag()));
+			nbt.put("output", this.output.writeToNBT(provider, new CompoundTag()));
 			return nbt;
 		}
 	}
@@ -458,16 +445,16 @@ public class CokerUnitLogic implements IMultiblockLogic<State>, IServerTickableC
 		}
 		
 		@Override
-		public void readNBT(CompoundTag nbt){
-			this.array[CHAMBER_A].readFromNBT(nbt.getCompound("primary"));
-			this.array[CHAMBER_B].readFromNBT(nbt.getCompound("secondary"));
+		public void readNBT(CompoundTag nbt, HolderLookup.Provider provider){
+			this.array[CHAMBER_A].readFromNBT(nbt.getCompound("primary"), provider);
+			this.array[CHAMBER_B].readFromNBT(nbt.getCompound("secondary"), provider);
 		}
 		
 		@Override
-		public CompoundTag writeNBT(){
+		public CompoundTag writeNBT(HolderLookup.Provider provider){
 			CompoundTag nbt = new CompoundTag();
-			nbt.put("primary", this.array[CHAMBER_A].writeToNBT(new CompoundTag()));
-			nbt.put("secondary", this.array[CHAMBER_B].writeToNBT(new CompoundTag()));
+			nbt.put("primary", this.array[CHAMBER_A].writeToNBT(new CompoundTag(), provider));
+			nbt.put("secondary", this.array[CHAMBER_B].writeToNBT(new CompoundTag(), provider));
 			return nbt;
 		}
 	}

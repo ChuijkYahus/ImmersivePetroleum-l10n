@@ -1,14 +1,14 @@
 package flaxbeard.immersivepetroleum.common;
 
 import flaxbeard.immersivepetroleum.common.util.ResourceUtils;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.material.Fluid;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.RegistryObject;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.registries.DeferredHolder;
 
 import java.util.function.Function;
 
@@ -22,14 +22,14 @@ public class ExternalModContent{
 	 * ImmersiveEngineering
 	 */
 	public static class IE{
-		private static Loader loader = new Loader(ResourceUtils::ie);
+		private static final Loader loader = new Loader(ResourceUtils::ie);
 		
-		private static RegistryObject<Block> BLOCK_REDSTONE_ENGINEERING = loader.block("rs_engineering");
-		private static RegistryObject<Item> ITEM_HAMMER = loader.item("hammer");
-		private static RegistryObject<Item> ITEM_PIPE = loader.item("fluid_pipe");
-		private static RegistryObject<Item> ITEM_BUCKSHOT = loader.item("buckshot");
-		private static RegistryObject<Item> ITEM_EMPTY_SHELL = loader.item("empty_shell");
-		private static RegistryObject<Fluid> FLUID_CONCRETE = loader.fluid("concrete");
+		private static final DeferredHolder<Block, Block> BLOCK_REDSTONE_ENGINEERING = loader.block("rs_engineering");
+		private static final DeferredHolder<Item, Item> ITEM_HAMMER = loader.item("hammer");
+		private static final DeferredHolder<Item, Item> ITEM_PIPE = loader.item("fluid_pipe");
+		private static final DeferredHolder<Item, Item> ITEM_BUCKSHOT = loader.item("buckshot");
+		private static final DeferredHolder<Item, Item> ITEM_EMPTY_SHELL = loader.item("empty_shell");
+		private static final DeferredHolder<Fluid, Fluid> FLUID_CONCRETE = loader.fluid("concrete");
 		
 		public static Fluid fluidConcrete(){
 			return FLUID_CONCRETE.get();
@@ -109,16 +109,16 @@ public class ExternalModContent{
 	
 	/* Not really the best name for this, but better than nothing */
 	private record Loader(Function<String, ResourceLocation> modLoc){
-		public RegistryObject<Block> block(String name){
-			return RegistryObject.create(this.modLoc.apply(name), ForgeRegistries.BLOCKS);
+		public DeferredHolder<Block, Block> block(String name){
+			return DeferredHolder.create(BuiltInRegistries.BLOCK.key(), this.modLoc.apply(name));
 		}
 		
-		public RegistryObject<Item> item(String name){
-			return RegistryObject.create(this.modLoc.apply(name), ForgeRegistries.ITEMS);
+		public DeferredHolder<Item, Item> item(String name){
+			return DeferredHolder.create(BuiltInRegistries.ITEM.key(), this.modLoc.apply(name));
 		}
 		
-		public RegistryObject<Fluid> fluid(String name){
-			return RegistryObject.create(this.modLoc.apply(name), ForgeRegistries.FLUIDS);
+		public DeferredHolder<Fluid, Fluid> fluid(String name){
+			return DeferredHolder.create(BuiltInRegistries.FLUID.key(), this.modLoc.apply(name));
 		}
 	}
 }

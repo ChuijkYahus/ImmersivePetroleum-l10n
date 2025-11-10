@@ -29,26 +29,25 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.Skeleton;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
-import net.minecraftforge.common.util.FakePlayer;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.TickEvent.Phase;
-import net.minecraftforge.event.TickEvent.PlayerTickEvent;
-import net.minecraftforge.event.entity.EntityJoinLevelEvent;
-import net.minecraftforge.event.entity.EntityMountEvent;
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.level.LevelEvent;
-import net.minecraftforge.event.server.ServerStoppedEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.LogicalSide;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.LogicalSide;
+import net.neoforged.neoforge.common.util.FakePlayer;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.entity.EntityMountEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.level.LevelEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -82,29 +81,29 @@ public class CommonEventHandler{
 	}
 	
 	@SubscribeEvent
-	public void handleBoatImmunity(LivingAttackEvent event){
+	public void handleBoatImmunity(LivingDamageEvent.Pre event){
 		Level level = event.getEntity().level();
 		DamageSources dmg = level.damageSources();
 		if(event.getSource() == dmg.lava() || event.getSource() == dmg.onFire() || event.getSource() == dmg.inFire()){
 			LivingEntity entity = event.getEntity();
 			if(entity.getVehicle() instanceof MotorboatEntity boat){
 				if(boat.isFireproof){
-					event.setCanceled(true);
+					event.setNewDamage(0.0F);//event.setCanceled(true); // TODO Check that this works as expected
 					return;
 				}
 			}
 			
-			if(entity.getRemainingFireTicks() > 0 && entity.getEffect(IPEffects.ANTI_DISMOUNT_FIRE.get()) != null){
+			if(entity.getRemainingFireTicks() > 0 && entity.getEffect(IPEffects.ANTI_DISMOUNT_FIRE) != null){
 				entity.clearFire();
-				entity.removeEffect(IPEffects.ANTI_DISMOUNT_FIRE.get());
-				event.setCanceled(true);
+				entity.removeEffect(IPEffects.ANTI_DISMOUNT_FIRE);
+				event.setNewDamage(0.0F);//event.setCanceled(true); // TODO Check that this works as expected
 			}
 		}
 	}
 	
 	@SubscribeEvent
 	public void handleBoatImmunity(PlayerTickEvent event){
-		Player entity = event.player;
+		Player entity = event.getEntity();
 		if(entity.isOnFire() && entity.getVehicle() instanceof MotorboatEntity boat){
 			if(boat.isFireproof){
 				entity.clearFire();
@@ -114,20 +113,16 @@ public class CommonEventHandler{
 	}
 	
 	/**
-	 * Handles dismounting the Speedboat while in lava to trying avoid getting burned
+	 * Handles dismounting the Speedboat while in lava to trying to avoid getting burned
 	 */
 	@SubscribeEvent
 	public void handleDismountingBoat(EntityMountEvent event){
-		if(event.getEntityMounting() == null){
-			return;
-		}
-		
 		if(event.getEntityMounting() instanceof LivingEntity living && event.getEntityBeingMounted() instanceof MotorboatEntity boat){
 			if(event.isDismounting()){
 				if(boat.isFireproof){
 					FluidState fluidstate = event.getLevel().getBlockState(BlockPos.containing(boat.position().add(0.5, 0, 0.5))).getFluidState();
 					if(fluidstate != Fluids.EMPTY.defaultFluidState() && fluidstate.is(FluidTags.LAVA)){
-						living.addEffect(new MobEffectInstance(IPEffects.ANTI_DISMOUNT_FIRE.get(), 1, 0, false, false));
+						living.addEffect(new MobEffectInstance(IPEffects.ANTI_DISMOUNT_FIRE, 1, 0, false, false));
 					}
 				}
 			}
@@ -135,10 +130,8 @@ public class CommonEventHandler{
 	}
 	
 	@SubscribeEvent
-	public void handleLubricatingMachinesServer(TickEvent.LevelTickEvent event){
-		if(event.phase == Phase.END){
-			handleLubricatingMachines(event.level);
-		}
+	public void handleLubricatingMachinesServer(LevelTickEvent.Post event){
+		handleLubricatingMachines(event.getLevel());
 	}
 	
 	static final Random random = new Random();
@@ -235,10 +228,10 @@ public class CommonEventHandler{
 			}
 			
 			if(IPServerConfig.MISCELLANEOUS.autounlock_recipes.get()){
-				List<Recipe<?>> l = new ArrayList<>();
-				Collection<Recipe<?>> recipes = event.getLevel().getRecipeManager().getRecipes();
+				List<RecipeHolder<?>> l = new ArrayList<>();
+				Collection<RecipeHolder<?>> recipes = event.getLevel().getRecipeManager().getRecipes();
 				recipes.forEach(recipe -> {
-					ResourceLocation name = recipe.getId();
+					ResourceLocation name = recipe.id();
 					if(name.getNamespace().equals(ImmersivePetroleum.MODID)){
 						l.add(recipe);
 					}
@@ -255,7 +248,7 @@ public class CommonEventHandler{
 			DamageSource src = event.getSource();
 			if(src.getEntity() instanceof Player player && !player.level().isClientSide){
 				if(player.getVehicle() instanceof MotorboatEntity motorboat && !motorboat.level().isClientSide){
-					if(src.isIndirect() && motorboat.isSpinningFastEnough() && motorboat.hasRudders){
+					if(!src.isDirect() && motorboat.isSpinningFastEnough() && motorboat.hasRudders){
 						Utils.unlockIPAdvancement(player, "main/rudders");
 					}
 				}
@@ -267,35 +260,32 @@ public class CommonEventHandler{
 	public static final Map<ResourceLocation, List<BlockPos>> toRemove = new HashMap<>();
 	
 	@SubscribeEvent
-	public void handleNapalm(TickEvent.LevelTickEvent event){
-		if(event.side == LogicalSide.CLIENT)
+	public void handleNapalm(LevelTickEvent event){
+		if(event.getLevel().isClientSide())
 			return;
 		
-		ResourceLocation d = event.level.dimension().location();
+		ResourceLocation d = event.getLevel().dimension().location();
 		
-		switch(event.phase){
-			case START -> {
-				if(napalmPositions.get(d) != null){
-					List<BlockPos> trList = toRemove.computeIfAbsent(d, f -> new ArrayList<>());
-					
-					new ArrayList<>(napalmPositions.get(d)).forEach(pos -> {
-						BlockState state = event.level.getBlockState(pos);
-						if(state.getBlock() instanceof LiquidBlock fluidBlock && fluidBlock == IPContent.Fluids.NAPALM.block().get()){
-							NapalmFluid.processFire(IPContent.Fluids.NAPALM, event.level, pos);
-						}
-						trList.add(pos);
-					});
-				}
+		if(event instanceof LevelTickEvent.Pre pre){
+			if(napalmPositions.get(d) != null){
+				List<BlockPos> trList = toRemove.computeIfAbsent(d, f -> new ArrayList<>());
 				
+				new ArrayList<>(napalmPositions.get(d)).forEach(pos -> {
+					BlockState state = event.getLevel().getBlockState(pos);
+					if(state.getBlock() instanceof LiquidBlock fluidBlock && fluidBlock == IPContent.Fluids.NAPALM.block().get()){
+						NapalmFluid.processFire(IPContent.Fluids.NAPALM, event.getLevel(), pos);
+					}
+					trList.add(pos);
+				});
 			}
-			case END -> {
-				if(toRemove.get(d) != null && napalmPositions.get(d) != null){
-					List<BlockPos> list = new ArrayList<>(toRemove.get(d));
-					napalmPositions.get(d).removeAll(list);
-					toRemove.get(d).clear();
-				}
-				
+			
+		}else if(event instanceof LevelTickEvent.Post post){
+			if(toRemove.get(d) != null && napalmPositions.get(d) != null){
+				List<BlockPos> list = new ArrayList<>(toRemove.get(d));
+				napalmPositions.get(d).removeAll(list);
+				toRemove.get(d).clear();
 			}
+			
 		}
 	}
 }

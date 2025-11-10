@@ -1,14 +1,12 @@
 package flaxbeard.immersivepetroleum.api.crafting.builders;
 
-import blusunrize.immersiveengineering.api.crafting.FluidTagInput;
 import blusunrize.immersiveengineering.api.crafting.IngredientWithSize;
-import blusunrize.immersiveengineering.api.crafting.builders.IEFinishedRecipe;
 import flaxbeard.immersivepetroleum.common.crafting.Serializers;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.material.Fluid;
-import net.minecraftforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 import java.util.Objects;
 

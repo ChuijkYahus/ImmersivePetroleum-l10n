@@ -19,6 +19,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition.Builder;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.material.MapColor;
+import net.neoforged.neoforge.event.EventHooks;
 
 import javax.annotation.Nonnull;
 import java.util.function.Supplier;
@@ -28,7 +29,7 @@ public class WellPipeBlock extends IPBlockBase implements EntityBlock{
 	public static final BooleanProperty BROKEN = BooleanProperty.create("broken");
 	
 	public WellPipeBlock(){
-		super(Block.Properties.copy(Blocks.STONE)
+		super(Block.Properties.ofFullCopy(Blocks.STONE)
 			.mapColor(MapColor.PODZOL)
 			.strength(75.0F, 10.0F)
 			.sound(SoundType.STONE)
@@ -56,7 +57,7 @@ public class WellPipeBlock extends IPBlockBase implements EntityBlock{
 	}
 	
 	@Override
-	public void onNeighborChange(BlockState state, LevelReader world, BlockPos pos, BlockPos neighbor){
+	public void onNeighborChange(@Nonnull BlockState state, @Nonnull LevelReader world, @Nonnull BlockPos pos, @Nonnull BlockPos neighbor){
 		/*
 		int d = pos.getY() - neighbor.getY();
 		if(d > 0 && world.getBlockState(pos.up()).getBlock() != this){
@@ -79,7 +80,7 @@ public class WellPipeBlock extends IPBlockBase implements EntityBlock{
 		if(f == -1.0F){
 			return 0.0F;
 		}else{
-			int i = net.minecraftforge.common.ForgeHooks.isCorrectToolForDrops(state, player) ? 30 : 100;
+			int i = EventHooks.doPlayerHarvestCheck(player, state, worldIn, pos) ? 30 : 100;
 			return player.getDigSpeed(state, pos) / f / (float) i;
 		}
 	}

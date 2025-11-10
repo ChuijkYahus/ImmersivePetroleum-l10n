@@ -35,6 +35,7 @@ import flaxbeard.immersivepetroleum.common.IPMenuTypes;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.PumpjackLogic;
 import flaxbeard.immersivepetroleum.common.cfg.IPServerConfig;
 import flaxbeard.immersivepetroleum.common.crafting.RecipeReloadListener;
+import flaxbeard.immersivepetroleum.common.util.RegistryUtils;
 import flaxbeard.immersivepetroleum.common.util.ResourceUtils;
 import flaxbeard.immersivepetroleum.common.util.Utils;
 import net.minecraft.client.Minecraft;
@@ -47,6 +48,8 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
@@ -61,13 +64,12 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.model.data.ModelData;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fml.event.lifecycle.ParallelDispatchEvent;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.fml.event.lifecycle.FMLLoadCompleteEvent;
+import net.neoforged.neoforge.client.model.data.ModelData;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -80,14 +82,14 @@ public class ClientProxy extends CommonProxy{
 	
 	@Override
 	public void registerContainersAndScreens(){
-		MenuScreens.register(IPMenuTypes.DISTILLATION_TOWER.getType(), DistillationTowerScreen::new);
-		MenuScreens.register(IPMenuTypes.COKER.getType(), CokerUnitScreen::new);
-		MenuScreens.register(IPMenuTypes.DERRICK.getType(), DerrickScreen::new);
-		MenuScreens.register(IPMenuTypes.HYDROTREATER.getType(), HydrotreaterScreen::new);
+		MenuScreens.create(IPMenuTypes.DISTILLATION_TOWER.getType(), DistillationTowerScreen::new);
+		MenuScreens.create(IPMenuTypes.COKER.getType(), CokerUnitScreen::new);
+		MenuScreens.create(IPMenuTypes.DERRICK.getType(), DerrickScreen::new);
+		MenuScreens.create(IPMenuTypes.HYDROTREATER.getType(), HydrotreaterScreen::new);
 	}
 	
 	@Override
-	public void completed(ParallelDispatchEvent event){
+	public void completed(FMLLoadCompleteEvent event){
 		event.enqueueWork(() -> ManualHelper.addConfigGetter(str -> switch(str){
 			case "distillationtower_operationcost" -> (int) (1024 * IPServerConfig.REFINING.distillationTower_energyModifier.get());
 			case "coker_operationcost" -> (int) (1024 * IPServerConfig.REFINING.cokerUnit_energyModifier.get());
@@ -135,11 +137,11 @@ public class ClientProxy extends CommonProxy{
 	
 	@Override
 	public void init(){
-		MinecraftForge.EVENT_BUS.register(new ClientEventHandler());
-		MinecraftForge.EVENT_BUS.register(new RecipeReloadListener(null));
+		NeoForge.EVENT_BUS.register(new ClientEventHandler());
+		NeoForge.EVENT_BUS.register(new RecipeReloadListener(null));
 		
-		MinecraftForge.EVENT_BUS.register(new DebugRenderHandler());
-		MinecraftForge.EVENT_BUS.register(new SeismicResultRenderer());
+		NeoForge.EVENT_BUS.register(new DebugRenderHandler());
+		NeoForge.EVENT_BUS.register(new SeismicResultRenderer());
 	}
 	
 	@Override
@@ -149,8 +151,8 @@ public class ClientProxy extends CommonProxy{
 		// Crash prevention
 		if(tesr == null)
 			return;
-			
-		if(te instanceof IMultiblockBE<?> multiblockBE && multiblockBE.getHelper().getContext().getState() instanceof PumpjackLogic.State){
+		
+		if(te instanceof IMultiblockBE<?> multiblockBE && multiblockBE.getHelper().getContext() != null && multiblockBE.getHelper().getContext().getState() instanceof PumpjackLogic.State){
 			IMultiblockBEHelper<PumpjackLogic.State> helper = multiblockBE.getHelper().asType(IPContent.Multiblock.PUMPJACK);
 			PumpjackLogic.State state = helper.getState();
 			
@@ -161,7 +163,7 @@ public class ClientProxy extends CommonProxy{
 			float pt = 0;
 			if(MCUtil.getPlayer() != null){
 				state.activeTicks = MCUtil.getPlayer().tickCount;
-				pt = Minecraft.getInstance().getFrameTime();
+				pt = Minecraft.getInstance().getTimer().getGameTimeDeltaTicks(); // TODO Make sure this is correct
 			}
 			
 			tesr.render(te, pt, transform, buffer, 0xF000F0, OverlayTexture.NO_OVERLAY);
@@ -247,14 +249,14 @@ public class ClientProxy extends CommonProxy{
 		builder.readFromFile(location);
 		builder.appendText(() -> {
 			List<Component[]> list = new ArrayList<>();
-			for(TagKey<Fluid> tag:FlarestackHandler.getSet()){
-				for(Fluid fluid:ForgeRegistries.FLUIDS.getValues()){
+			BuiltInRegistries.FLUID.stream().forEach(fluid -> {
+				for(TagKey<Fluid> tag:FlarestackHandler.getSet()){
 					if(fluid.is(tag)){
-						Component[] entry = new Component[]{Component.empty(), new FluidStack(fluid, 1).getDisplayName()};
+						Component[] entry = new Component[]{Component.empty(), new FluidStack(fluid, 1).getHoverName()};
 						list.add(entry);
 					}
 				}
-			}
+			});
 			
 			StringBuilder additionalText = new StringBuilder();
 			List<SpecialElementData> newElements = new ArrayList<>();
@@ -345,8 +347,9 @@ public class ClientProxy extends CommonProxy{
 				StringBuilder strBuilder = new StringBuilder();
 				
 				reservoir.getBiomes().forEach(rl -> {
-					Biome bio = ForgeRegistries.BIOMES.getValue(rl);
-					strBuilder.append((strBuilder.length() > 0) ? ", " : "").append(bio != null ? bio.toString() : rl);
+					Biome biome = RegistryUtils.getBiomeFromRegistryName(rl);
+					strBuilder.append((!strBuilder.isEmpty()) ? ", " : "");
+					strBuilder.append(biome != null ? biome.toString() : rl);
 				});
 				
 				if(reservoir.getBiomes().isBlacklist()){
@@ -361,7 +364,7 @@ public class ClientProxy extends CommonProxy{
 			String fluidName = "";
 			Fluid fluid = reservoir.getFluid();
 			if(fluid != null){
-				fluidName = new FluidStack(fluid, 1).getDisplayName().getString();
+				fluidName = new FluidStack(fluid, 1).getHoverName().getString();
 			}
 			
 			String repRate = "";
@@ -371,13 +374,13 @@ public class ClientProxy extends CommonProxy{
 				else
 					repRate = I18n.get("ie.manual.entry.reservoirs.replenish_depleted", reservoir.residual, fluidName);
 			}
-			contentBuilder.append("<&").append(reservoir.getId().toString()).append(">");
+			contentBuilder.append("<&").append(reservoir.getType().toString()).append(">");
 			contentBuilder.append(I18n.get("ie.manual.entry.reservoirs.content", dimBWList, fluidName, Utils.fDecimal(reservoir.minSize / 1000), Utils.fDecimal(reservoir.maxSize / 1000), repRate, bioBWList));
 			
 			if(i < (reservoirs.length - 1))
 				contentBuilder.append("<np>");
 			
-			itemList.add(new SpecialElementData(reservoir.getId().toString(), 0, new ManualElementItem(ManualHelper.getManual(), new ItemStack(fluid.getBucket()))));
+			itemList.add(new SpecialElementData(reservoir.getType().toString(), 0, new ManualElementItem(ManualHelper.getManual(), new ItemStack(fluid.getBucket()))));
 		}
 	}
 }

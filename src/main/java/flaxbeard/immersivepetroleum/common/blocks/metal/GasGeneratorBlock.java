@@ -35,8 +35,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class GasGeneratorBlock extends IPBlockBase implements EntityBlock{
-	//private static final Material material = new Material(MaterialColor.METAL, false, false, true, true, false, false, PushReaction.BLOCK);
-	
 	public static final DirectionProperty FACING = DirectionProperty.create("facing", Direction.Plane.HORIZONTAL);
 	
 	public GasGeneratorBlock(){

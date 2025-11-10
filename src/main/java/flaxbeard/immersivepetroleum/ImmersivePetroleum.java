@@ -22,20 +22,20 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.AddReloadListenerEvent;
-import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.event.level.LevelEvent;
-import net.minecraftforge.event.server.ServerStartingEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fml.loading.FMLLoader;
+import net.minecraft.world.level.saveddata.SavedData;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.fml.event.lifecycle.FMLLoadCompleteEvent;
+import net.neoforged.fml.loading.FMLLoader;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.AddReloadListenerEvent;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.level.LevelEvent;
+import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -47,45 +47,29 @@ public class ImmersivePetroleum{
 	
 	public static final Logger log = LogManager.getLogger(MODID);
 	
-	// Complete hack: DistExecutor::safeRunForDist intentionally tries to access the "wrong" supplier in dev, which
-	// throws an error (rather than an exception) on J16 due to trying to load a client-only class. So we need to
-	// replace the error with an exception in dev.
-	public static <T> Supplier<T> bootstrapErrorToXCPInDev(Supplier<T> in){
-		if(FMLLoader.isProduction())
-			return in;
-		return () -> {
-			try{
-				return in.get();
-			}catch(BootstrapMethodError e){
-				throw new RuntimeException(e);
-			}
-		};
+	public static final CommonProxy proxy = proxy(() -> FMLLoader.getDist().isClient() ? new ClientProxy() : new CommonProxy());
+	
+	private static CommonProxy proxy(Supplier<CommonProxy> proxy){
+		return proxy.get();
 	}
 	
-	public static final CommonProxy proxy = DistExecutor.safeRunForDist(bootstrapErrorToXCPInDev(() -> ClientProxy::new), bootstrapErrorToXCPInDev(() -> CommonProxy::new));
-	
-	public ImmersivePetroleum(FMLJavaModLoadingContext modContext){
-		modContext.registerConfig(ModConfig.Type.SERVER, IPServerConfig.ALL);
-		modContext.registerConfig(ModConfig.Type.CLIENT, IPClientConfig.ALL);
-		
-		final IEventBus eBus = modContext.getModEventBus();
+	public ImmersivePetroleum(ModContainer container, Dist dist, IEventBus eBus){
+		container.registerConfig(ModConfig.Type.SERVER, IPServerConfig.ALL);
+		container.registerConfig(ModConfig.Type.CLIENT, IPClientConfig.ALL);
 		
 		eBus.addListener(this::setup);
 		eBus.addListener(this::loadComplete);
 		
-		MinecraftForge.EVENT_BUS.addListener(this::worldLoad);
-		MinecraftForge.EVENT_BUS.addListener(this::serverStarting);
-		MinecraftForge.EVENT_BUS.addListener(this::registerCommand);
-		MinecraftForge.EVENT_BUS.addListener(this::addReloadListeners);
+		NeoForge.EVENT_BUS.addListener(this::worldLoad);
+		NeoForge.EVENT_BUS.addListener(this::serverStarting);
+		NeoForge.EVENT_BUS.addListener(this::registerCommand);
+		NeoForge.EVENT_BUS.addListener(this::addReloadListeners);
 		
 		IPRegisters.addRegistersToEventBus(eBus);
 		
 		IPContent.modConstruction(eBus);
 		IPLootFunctions.modConstruction(eBus);
 		IPRecipeTypes.modConstruction(eBus);
-		
-		//MinecraftForge.EVENT_BUS.register(new IPWorldGen());
-		//IPWorldGen.init(eBus);
 	}
 	
 	public void setup(FMLCommonSetupEvent event){
@@ -105,13 +89,15 @@ public class ImmersivePetroleum{
 		
 		IPContent.init(event);
 		
-		MinecraftForge.EVENT_BUS.register(new CommonEventHandler());
+		NeoForge.EVENT_BUS.register(new CommonEventHandler());
 		
 		proxy.init();
 		
-		/*if(ModList.get().isLoaded("computercraft")){
+		/*
+		if(ModList.get().isLoaded("computercraft")){
 			IPPeripheralProvider.init();
-		}*/
+		}
+		*/
 		
 		// ---------------------------------------------------------------------------------------------------------------------------------------------
 		
@@ -142,7 +128,7 @@ public class ImmersivePetroleum{
 	public void worldLoad(LevelEvent.Load event){
 		if(!event.getLevel().isClientSide() && event.getLevel() instanceof ServerLevel world && world.dimension() == Level.OVERWORLD){
 			ReservoirRegionDataStorage.init(world.getDataStorage());
-			world.getDataStorage().computeIfAbsent(IPSaveData::new, IPSaveData::new, IPSaveData.dataName);
+			world.getDataStorage().computeIfAbsent(new SavedData.Factory<>(IPSaveData::new, IPSaveData::new), IPSaveData.dataName);
 		}
 	}
 	

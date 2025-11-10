@@ -7,6 +7,7 @@ import flaxbeard.immersivepetroleum.ImmersivePetroleum;
 import flaxbeard.immersivepetroleum.api.reservoir.ReservoirIsland;
 import flaxbeard.immersivepetroleum.common.util.Utils;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -17,10 +18,11 @@ import net.minecraft.server.level.ColumnPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.storage.DimensionDataStorage;
-import net.minecraftforge.event.level.LevelEvent;
+import net.neoforged.neoforge.event.level.LevelEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.util.HashMap;
@@ -44,11 +46,14 @@ public class ReservoirRegionDataStorage extends SavedData{
 		return active_instance;
 	}
 	
-	public static final void init(final DimensionDataStorage dimData){
-		active_instance = dimData.computeIfAbsent(t -> new ReservoirRegionDataStorage(dimData, t), () -> {
-			log.debug("Creating new ReservoirRegionDataStorage instance.");
+	public static void init(final DimensionDataStorage dimData){
+		dimData.computeIfAbsent(new Factory<SavedData>(() -> {
+			log.debug("Creating ReservoirRegionDataStorage instance.");
 			return new ReservoirRegionDataStorage(dimData);
-		}, DATA_NAME);
+		}, (t, p) -> {
+			log.debug("Creating and Loading Data ReservoirRegionDataStorage instance.");
+			return new ReservoirRegionDataStorage(dimData, t, p);
+		}), DATA_NAME);
 	}
 	
 	// -----------------------------------------------------------------------------
@@ -59,13 +64,15 @@ public class ReservoirRegionDataStorage extends SavedData{
 	public ReservoirRegionDataStorage(DimensionDataStorage dimData){
 		this.dimData = dimData;
 	}
-	public ReservoirRegionDataStorage(DimensionDataStorage dimData, CompoundTag nbt){
+	
+	public ReservoirRegionDataStorage(DimensionDataStorage dimData, CompoundTag nbt, HolderLookup.Provider provider){
 		this.dimData = dimData;
-		load(nbt);
+		load(nbt, provider);
 	}
 	
+	@Nonnull
 	@Override
-	public CompoundTag save(CompoundTag nbt){
+	public CompoundTag save(CompoundTag nbt, @Nonnull HolderLookup.Provider provider){
 		ListTag list = new ListTag();
 		this.regions.forEach((key, entry) -> {
 			CompoundTag tag = new CompoundTag();
@@ -79,7 +86,7 @@ public class ReservoirRegionDataStorage extends SavedData{
 		return nbt;
 	}
 	
-	private void load(CompoundTag nbt){
+	private void load(CompoundTag nbt, HolderLookup.Provider provider){
 		ListTag regions = nbt.getList("regions", Tag.TAG_COMPOUND);
 		for(int i = 0;i < regions.size();i++){
 			CompoundTag tag = regions.getCompound(i);
@@ -181,9 +188,9 @@ public class ReservoirRegionDataStorage extends SavedData{
 	}
 	
 	private RegionData getOrCreateRegionData(RegionPos regionPos){
-		RegionData ret = this.regions.computeIfAbsent(regionPos, p -> {
-			String fn = getRegionFileName(p);
-			RegionData data = this.dimData.computeIfAbsent(t -> new RegionData(p, t), () -> new RegionData(p), fn);
+		RegionData ret = this.regions.computeIfAbsent(regionPos, pos -> {
+			String fn = getRegionFileName(pos);
+			RegionData data = this.dimData.computeIfAbsent(new Factory<>(() -> new RegionData(pos), (t, p) -> new RegionData(pos, t, p)), fn);
 			setDirty();
 			log.debug("Created RegionData[{}, {}]", regionPos.x(), regionPos.z());
 			return data;
@@ -226,21 +233,22 @@ public class ReservoirRegionDataStorage extends SavedData{
 		RegionData(RegionPos regionPos){
 			this.regionPos = regionPos;
 		}
-		RegionData(RegionPos regionPos, CompoundTag nbt){
+		RegionData(RegionPos regionPos, CompoundTag nbt, HolderLookup.Provider provider){
 			this.regionPos = regionPos;
-			load(nbt);
+			load(nbt, provider);
 		}
 		
 		@Override
-		public void save(File pFile){
+		public void save(File pFile, @Nonnull HolderLookup.Provider provider){
 			if(!pFile.getParentFile().exists()){
 				pFile.getParentFile().mkdirs();
 			}
-			super.save(pFile);
+			super.save(pFile, provider);
 		}
 		
+		@Nonnull
 		@Override
-		public CompoundTag save(CompoundTag nbt){
+		public CompoundTag save(@Nonnull CompoundTag nbt, @Nonnull HolderLookup.Provider provider){
 			ListTag reservoirs = new ListTag();
 			synchronized(this.reservoirlist){
 				for(ResourceKey<Level> dimension:this.reservoirlist.keySet()){
@@ -262,7 +270,7 @@ public class ReservoirRegionDataStorage extends SavedData{
 			return nbt;
 		}
 		
-		private void load(CompoundTag nbt){
+		private void load(CompoundTag nbt, HolderLookup.Provider provider){
 			ListTag reservoirs = nbt.getList("reservoirs", Tag.TAG_COMPOUND);
 			if(!reservoirs.isEmpty()){
 				synchronized(this.reservoirlist){

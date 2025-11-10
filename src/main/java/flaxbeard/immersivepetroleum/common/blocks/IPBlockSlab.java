@@ -14,19 +14,18 @@ public class IPBlockSlab<B extends IPBlockBase> extends SlabBlock{
 	private final B base;
 	
 	public IPBlockSlab(B base){
-		super(Properties.copy(base).isSuffocating(causesSuffocation(base)).isRedstoneConductor(isNormalCube(base)));
+		super(Properties.ofFullCopy(base).isSuffocating(causesSuffocation(base)).isRedstoneConductor(isNormalCube(base)));
 		this.base = base;
 	}
 	
 	@Override
-	@SuppressWarnings("deprecation")
 	public int getLightBlock(@Nonnull BlockState state, @Nonnull BlockGetter worldIn, @Nonnull BlockPos pos){
-		return Math.min(base.getLightBlock(state, worldIn, pos), super.getLightBlock(state, worldIn, pos));
+		return Math.min(base.defaultBlockState().getLightBlock(worldIn, pos), super.getLightBlock(state, worldIn, pos));
 	}
 	
 	@Override
 	public boolean propagatesSkylightDown(@Nonnull BlockState state, @Nonnull BlockGetter reader, @Nonnull BlockPos pos){
-		return super.propagatesSkylightDown(state, reader, pos) || base.propagatesSkylightDown(state, reader, pos);
+		return super.propagatesSkylightDown(state, reader, pos) || base.defaultBlockState().propagatesSkylightDown(reader, pos);
 	}
 	
 	public static BlockBehaviour.StatePredicate causesSuffocation(Block base){

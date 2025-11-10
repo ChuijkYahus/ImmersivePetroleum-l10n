@@ -2,12 +2,14 @@ package flaxbeard.immersivepetroleum.common;
 
 import flaxbeard.immersivepetroleum.api.crafting.LubricatedHandler;
 import flaxbeard.immersivepetroleum.api.crafting.LubricatedHandler.LubricatedTileInfo;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.level.saveddata.SavedData;
 
 import javax.annotation.Nonnull;
+import java.util.stream.IntStream;
 
 public class IPSaveData extends SavedData{
 	public static final String dataName = "ImmersivePetroleum-SaveData";
@@ -18,21 +20,14 @@ public class IPSaveData extends SavedData{
 		INSTANCE = this;
 	}
 	
-	public IPSaveData(CompoundTag nbt){
+	public IPSaveData(CompoundTag nbt, HolderLookup.Provider provider){
 		INSTANCE = this;
-		
-		ListTag lubricatedList = nbt.getList("lubricated", Tag.TAG_COMPOUND);
-		LubricatedHandler.lubricatedTiles.clear();
-		for(int i = 0;i < lubricatedList.size();i++){
-			CompoundTag tag = lubricatedList.getCompound(i);
-			LubricatedTileInfo info = new LubricatedTileInfo(tag);
-			LubricatedHandler.lubricatedTiles.add(info);
-		}
+		load(nbt, provider);
 	}
 	
 	@Override
 	@Nonnull
-	public CompoundTag save(@Nonnull CompoundTag nbt){
+	public CompoundTag save(CompoundTag nbt, HolderLookup.Provider provider){
 		ListTag lubricatedList = new ListTag();
 		for(LubricatedTileInfo info: LubricatedHandler.lubricatedTiles){
 			if(info != null){
@@ -43,6 +38,15 @@ public class IPSaveData extends SavedData{
 		nbt.put("lubricated", lubricatedList);
 		
 		return nbt;
+	}
+	
+	private void load(CompoundTag nbt, HolderLookup.Provider provider){
+		ListTag lubricatedList = nbt.getList("lubricated", Tag.TAG_COMPOUND);
+		
+		LubricatedHandler.lubricatedTiles.clear();
+		lubricatedList.stream()
+			.map(tag -> new LubricatedTileInfo((CompoundTag) tag))
+			.forEach(info -> LubricatedHandler.lubricatedTiles.add(info));
 	}
 	
 	public static void markDirty(){

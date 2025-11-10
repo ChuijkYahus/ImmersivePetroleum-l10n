@@ -7,7 +7,7 @@ import flaxbeard.immersivepetroleum.common.blocks.tileentities.SeismicSurveyTile
 import flaxbeard.immersivepetroleum.common.blocks.tileentities.WellPipeTileEntity;
 import flaxbeard.immersivepetroleum.common.blocks.tileentities.WellTileEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraftforge.registries.RegistryObject;
+import net.neoforged.neoforge.registries.DeferredHolder;
 
 public class IPTileTypes{
 	// Multiblocks
@@ -21,13 +21,13 @@ public class IPTileTypes{
 	*/
 	
 	// Normal Blocks
-	public static final RegistryObject<BlockEntityType<GasGeneratorTileEntity>> GENERATOR = IPRegisters.registerTE("gasgenerator", GasGeneratorTileEntity::new, IPContent.Blocks.GAS_GENERATOR);
-	public static final RegistryObject<BlockEntityType<AutoLubricatorTileEntity>> AUTOLUBE = IPRegisters.registerTE("autolubricator", AutoLubricatorTileEntity::new, IPContent.Blocks.AUTO_LUBRICATOR);
-	public static final RegistryObject<BlockEntityType<FlarestackTileEntity>> FLARE = IPRegisters.registerTE("flarestack", FlarestackTileEntity::new, IPContent.Blocks.FLARESTACK);
-	public static final RegistryObject<BlockEntityType<WellTileEntity>> WELL = IPRegisters.registerTE("well", WellTileEntity::new, IPContent.Blocks.WELL);
-	public static final RegistryObject<BlockEntityType<WellPipeTileEntity>> WELL_PIPE = IPRegisters.registerTE("well_pipe", WellPipeTileEntity::new, IPContent.Blocks.WELL_PIPE);
+	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<GasGeneratorTileEntity>> GENERATOR = IPRegisters.registerTE("gasgenerator", GasGeneratorTileEntity::new, IPContent.Blocks.GAS_GENERATOR);
+	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<AutoLubricatorTileEntity>> AUTOLUBE = IPRegisters.registerTE("autolubricator", AutoLubricatorTileEntity::new, IPContent.Blocks.AUTO_LUBRICATOR);
+	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<FlarestackTileEntity>> FLARE = IPRegisters.registerTE("flarestack", FlarestackTileEntity::new, IPContent.Blocks.FLARESTACK);
+	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<WellTileEntity>> WELL = IPRegisters.registerTE("well", WellTileEntity::new, IPContent.Blocks.WELL);
+	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<WellPipeTileEntity>> WELL_PIPE = IPRegisters.registerTE("well_pipe", WellPipeTileEntity::new, IPContent.Blocks.WELL_PIPE);
 	
-	public static final RegistryObject<BlockEntityType<SeismicSurveyTileEntity>> SEISMIC_SURVEY = IPRegisters.registerTE("seismic_survey", SeismicSurveyTileEntity::new, IPContent.Blocks.SEISMIC_SURVEY);
+	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SeismicSurveyTileEntity>> SEISMIC_SURVEY = IPRegisters.registerTE("seismic_survey", SeismicSurveyTileEntity::new, IPContent.Blocks.SEISMIC_SURVEY);
 	
 	public static void forceClassLoad()
 	{ }

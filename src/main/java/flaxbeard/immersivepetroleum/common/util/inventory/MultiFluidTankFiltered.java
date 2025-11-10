@@ -1,7 +1,7 @@
 package flaxbeard.immersivepetroleum.common.util.inventory;
 
 import blusunrize.immersiveengineering.common.util.inventory.MultiFluidTank;
-import net.minecraftforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 import javax.annotation.Nonnull;
 import java.util.function.Function;
