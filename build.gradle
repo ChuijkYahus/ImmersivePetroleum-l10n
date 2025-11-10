@@ -1,50 +1,32 @@
-buildscript {
-	repositories {
-		maven { url = 'https://maven.minecraftforge.net' }
-		jcenter()
-		mavenCentral()
-		maven { url 'https://maven.parchmentmc.org' }
-	}
-	dependencies {
-		classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
-		classpath 'org.parchmentmc:librarian:1.+'
-	}
+plugins {
+	id "java-library"
+	id "maven-publish"
+	id "idea"
+	id "eclipse"
+	id "net.neoforged.moddev" version "$version_mdg"
 }
-apply plugin: 'net.minecraftforge.gradle'
-apply plugin: 'eclipse'
-apply plugin: 'maven-publish'
-apply plugin: 'org.parchmentmc.librarian.forgegradle'
-sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '17'
-//----------------------------------------------------------------------------------------------------------------------
 
-archivesBaseName = "ImmersivePetroleum-${version_minecraft}"
-version = "${version_immersivepetroleum}"
-group = 'flaxbeard.immersivepetroleum'
+tasks.named("wrapper", Wrapper).configure {
+	// Define wrapper values here so as to not have to always do so when updating gradlew.properties.
+	// Switching this to Wrapper.DistributionType.ALL will download the full gradle sources that comes with
+	// documentation attached on cursor hover of gradle classes and methods. However, this comes with increased
+	// file size for Gradle. If you do switch this to ALL, run the Gradle wrapper task twice afterwards.
+	// (Verify by checking gradle/wrapper/gradle-wrapper.properties to see if distributionUrl now points to `-all`)
+	distributionType = Wrapper.DistributionType.BIN
+}
 
-repositories {
-	maven {	name = "BlameJared";	url = "https://maven.blamejared.com/" }			// IE & CT Files
-	maven { name = "DVS1 Maven FS"; url = "https://dvs1.progwml6.com/files/maven" }	// JEI & Tinkers Files
-	maven { name = "CurseMaven";	url = 'https://cfa2.cursemaven.com' }			// Needed for PNC
-	repositories { //CC-Tweaked
-		maven {
-			url "https://squiddev.cc/maven/"
-			content {
-				includeGroup("cc.tweaked")
-			}
-		}
-	}
-	
-	flatDir { dirs 'flatdir' }
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+version = mod_version
+group = mod_group
+
+base {
+	archivesName = "ImmersivePetroleum-"+version_minecraft
 }
 
 sourceSets {
 	main {
-		resources {
-			srcDirs = [
-				"$rootDir/src/main/resources",
-				"$rootDir/src/generated/resources"
-			]
-		}
+		resources.srcDirs = ["$rootDir/src/main/resources", "$rootDir/src/generated/resources"]
 	}
 	datagen {
 		compileClasspath += main.compileClasspath
@@ -54,93 +36,105 @@ sourceSets {
 	}
 }
 
-minecraft {
-	mappings channel: 'parchment', version: version_parchment
-	accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+neoForge {
+	version = project.version_neo
+	
+	/*
+	parchment {
+		minecraftVersion = project.version_minecraft
+		mappingsVersion = project.version_parchment
+	}
+	*/
+	
+	accessTransformers = project.files("src/main/resources/META-INF/accesstransformer.cfg")
 	
 	runs {
+		configureEach {
+			systemProperty "forge.logging.markers", "REGISTRIES"
+
+			logLevel = org.slf4j.event.Level.INFO
+		}
+		
 		client {
-			workingDirectory project.file('run')
-			property 'forge.logging.markers', ''
-			property 'forge.logging.console.level', 'info'
-			property 'fml.earlyprogresswindow', 'false'
-			property 'mixin.env.remapRefMap', 'true'
-			property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
-			mods {
-				immersivepetroleum {
-					source sourceSets.main
-				}
-			}
+			client()
 		}
 		
 		server {
-			workingDirectory project.file('run')
-			property 'forge.logging.markers', ''
-			property 'forge.logging.console.level', 'info'
-			property 'fml.earlyprogresswindow', 'false'
-			property 'mixin.env.remapRefMap', 'true'
-			property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
-			
-			arg '-nogui'
-			
-			mods {
-				immersivepetroleum {
-					source sourceSets.main
-				}
-			}
+			server()
+			programArgument "--nogui"
 		}
 		
 		data {
-			workingDirectory project.file('run')
-			property 'forge.logging.markers', ''
-			property 'forge.logging.console.level', 'info'
-			property 'fml.earlyprogresswindow', 'false'
-			property 'mixin.env.remapRefMap', 'true'
-			property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
-			
-			args '--mod', 'immersivepetroleum',
-				 '--all',
-				 '--output', file('src/generated/resources/'),
-				 '--validate',
-				 '--existing', sourceSets.main.resources.srcDirs[0],
-				 '--existing-mod', 'immersiveengineering'
-			ideaModule project.name+".datagen"
-			
-			mods {
-				immersivepetroleum {
-					source sourceSets.main
-					source sourceSets.datagen
-				}
-			}
+			data()
+			sourceSet = sourceSets.datagen
+			programArguments = [
+					"--mod", "${mod_id}",
+					"--all",
+					"--output", file("src/generated/resources/").toString(),
+					"--validate",
+					"--existing", sourceSets.main.resources.srcDirs[0].toString(),
+					"--existing-mod", "immersiveengineering"
+			]
+		}
+	}
+	
+	mods {
+		"${mod_id}" {
+			sourceSet sourceSets.main
+			sourceSet sourceSets.datagen
 		}
 	}
 }
 
+configurations {
+	runtimeClasspath.extendsFrom localRuntime
+}
+
+repositories {
+	maven {	name = "BlameJared";	url = "https://maven.blamejared.com/" }			// IE & CrT Files
+	maven { name = "DVS1 Maven FS"; url = "https://dvs1.progwml6.com/files/maven" }	// JEI & Tinkers Files
+	maven { name = "CurseMaven";	url = 'https://cfa2.cursemaven.com' }			// Needed for PNC
+	maven { // CC-Tweaked
+		url "https://squiddev.cc/maven/"
+		content {
+			includeGroup("cc.tweaked")
+		}
+	}
+
+	flatDir { dirs 'flatdir' }
+}
+
 dependencies {
-	minecraft "net.minecraftforge:forge:${version_minecraft}-${version_forge}"
+	implementation "blusunrize.immersiveengineering:ImmersiveEngineering:${version_ie}"
+	datagenImplementation "blusunrize.immersiveengineering:ImmersiveEngineering:${version_ie}:datagen"
 	
-	implementation fg.deobf("blusunrize.immersiveengineering:ImmersiveEngineering:${version_ie}")
-	//compile fg.deobf("blusunrize.immersiveengineering:ImmersiveEngineering:${version_ie}:api")
-	datagenImplementation fg.deobf("blusunrize.immersiveengineering:ImmersiveEngineering:${version_ie}:datagen")
+	localRuntime "mezz.jei:jei-${version_minecraft}-neoforge:${version_jei}"
+	compileOnly "mezz.jei:jei-${version_minecraft}-neoforge-api:${version_jei}"
+	compileOnly "mezz.jei:jei-${version_minecraft}-common-api:${version_jei}"
+
+	jarJar(implementation("malte0811:DualCodecs")) {
+		version {
+			strictly "[${version_dualcodecs},1)"
+			prefer "${version_dualcodecs}"
+		}
+	}
 	
-	//implementation fg.deobf("vazkii.patchouli:Patchouli:1.18.2-67")
-	implementation fg.deobf("curse.maven:pneumaticcraft-repressurized-281849:7064978")
+	// Example optional mod dependency with JEI
+	// The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
+	// compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"
+	// compileOnly "mezz.jei:jei-${mc_version}-neoforge-api:${jei_version}"
+	// We add the full version to localRuntime, not runtimeOnly, so that we do not publish a dependency on it
+	// localRuntime "mezz.jei:jei-${mc_version}-neoforge:${jei_version}"
 	
-	compileOnly fg.deobf("com.blamejared.crafttweaker:CraftTweaker-forge-1.20.1:${version_ct}")
-	
-	runtimeOnly fg.deobf("mezz.jei:jei-${version_minecraft}-forge:${version_jei}")
-	compileOnly fg.deobf("mezz.jei:jei-${version_minecraft}-forge-api:${version_jei}")
-	compileOnly fg.deobf("mezz.jei:jei-${version_minecraft}-common-api:${version_jei}")
-	
-	compileOnly("cc.tweaked:cc-tweaked-${version_minecraft}-core-api:${version_cctweaked}")
-	compileOnly(fg.deobf("cc.tweaked:cc-tweaked-${version_minecraft}-forge-api:${version_cctweaked}"))
-	runtimeOnly(fg.deobf("cc.tweaked:cc-tweaked-${version_minecraft}-forge:${version_cctweaked}"))
+	// For more info:
+	// http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
+	// http://www.gradle.org/docs/current/userguide/dependency_management.html
 }
 
 def version_replaces = [
-	'version'		: project.version,
+	'ip_version'	: mod_version,
 	'mc_version'	: version_minecraft,
-	'forge_version'	: version_forge,
+	'neo_version'	: version_neo,
 	'ie_version'	: version_ie,
 ]
 processResources {
@@ -149,29 +143,27 @@ processResources {
 	}
 }
 
-def customGradle = rootProject.file('custom.gradle');
-if(customGradle.exists()){
-	apply from: customGradle;
-}
-
-jar {
-	manifest {
-		attributes([
-			"Specification-Title": "immersivepetroleum",
-			"Specification-Vendor": "flaxbeard",
-			"Specification-Version": "1",
-			"Implementation-Title": project.name,
-			"Implementation-Version": "${version}",
-			"Implementation-Vendor" :"flaxbeard",
-			"Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
-		])
+publishing {
+	publications {
+		register("mavenJava", MavenPublication) {
+			from components.java
+		}
+	}
+	repositories {
+		maven {
+			url "file://${project.projectDir}/repo"
+		}
 	}
 }
 
-def reobfFile = file("$buildDir/reobfJar/output.jar")
-def reobfArtifact = artifacts.add('default', reobfFile){ type 'jar'; builtBy 'reobfJar'; }
+tasks.withType(JavaCompile).configureEach {
+	options.encoding = "UTF-8" // Use the UTF-8 charset for Java compilation
+}
 
-publishing {
-	publications { mavenJava(MavenPublication){ artifact reobfArtifact } }
-	repositories { maven { url "file:///${project.projectDir}/mcmodsrepo" } }
+// IDEA no longer automatically downloads sources/javadoc jars for dependencies, so we need to explicitly enable the behavior.
+idea {
+	module {
+		downloadSources = true
+		downloadJavadoc = true
+	}
 }
