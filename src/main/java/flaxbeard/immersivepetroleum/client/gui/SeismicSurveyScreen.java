@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import flaxbeard.immersivepetroleum.client.render.IPRenderTypes;
+import flaxbeard.immersivepetroleum.client.render.RenderUtils;
 import flaxbeard.immersivepetroleum.client.render.dyn.DynamicTextureWrapper;
 import flaxbeard.immersivepetroleum.common.network.MessageSurveyResultDetails;
 import flaxbeard.immersivepetroleum.common.util.ResourceUtils;
@@ -154,7 +155,7 @@ public class SeismicSurveyScreen extends Screen{
 	}
 	
 	private void renderCursorBox(GuiGraphics guiGraphics, int mouseX, int mouseY, int color){
-		MultiBufferSource.BufferSource buffer = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
+		MultiBufferSource.BufferSource buffer = RenderUtils.immediate();
 		
 		guiGraphics.pose().pushPose();
 		{
@@ -191,7 +192,7 @@ public class SeismicSurveyScreen extends Screen{
 	}
 	
 	private void renderScanTexture(GuiGraphics guiGraphics, DynamicTextureWrapper wrapper){
-		MultiBufferSource.BufferSource buffer = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
+		MultiBufferSource.BufferSource buffer = RenderUtils.immediate();
 		guiGraphics.pose().pushPose();
 		{
 			guiGraphics.pose().scale(this.gridScale, this.gridScale, 1.0F);

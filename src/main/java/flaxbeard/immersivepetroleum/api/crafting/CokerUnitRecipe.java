@@ -1,6 +1,5 @@
 package flaxbeard.immersivepetroleum.api.crafting;
 
-import blusunrize.immersiveengineering.api.crafting.FluidTagInput;
 import blusunrize.immersiveengineering.api.crafting.IERecipeSerializer;
 import blusunrize.immersiveengineering.api.crafting.IngredientWithSize;
 import flaxbeard.immersivepetroleum.common.cfg.IPServerConfig;
@@ -8,8 +7,8 @@ import flaxbeard.immersivepetroleum.common.crafting.Serializers;
 import net.minecraft.core.NonNullList;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.common.util.Lazy;
 import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 
 import javax.annotation.Nonnull;
 import java.util.HashMap;
@@ -40,21 +39,21 @@ public class CokerUnitRecipe extends IPMultiblockRecipe{
 				}
 			}
 		}
+		
 		return false;
 	}
 	
-	public static boolean hasRecipeWithInput(@Nonnull ItemStack stack, boolean ignoreSize){
+	public static boolean hasRecipeWithInput(@Nonnull ItemStack stack, boolean ignoreAmount){
 		Objects.requireNonNull(stack);
 		
 		if(!stack.isEmpty()){
 			for(CokerUnitRecipe recipe: recipes.values()){
-				if(recipe.inputItem != null){
-					if((!ignoreSize && recipe.inputItem.test(stack)) || (ignoreSize && recipe.inputItem.testIgnoringSize(stack))){
-						return true;
-					}
+				if(recipe.inputItem != null && test(recipe.inputItem, stack, ignoreAmount)){
+					return true;
 				}
 			}
 		}
+		
 		return false;
 	}
 	
@@ -63,34 +62,27 @@ public class CokerUnitRecipe extends IPMultiblockRecipe{
 		
 		if(!fluid.isEmpty()){
 			for(CokerUnitRecipe recipe: recipes.values()){
-				if(recipe.inputFluid != null){
-					if((!ignoreAmount && recipe.inputFluid.test(fluid)) || (ignoreAmount && recipe.inputFluid.testIgnoringAmount(fluid))){
-						return true;
-					}
+				if(recipe.inputFluid != null && test(recipe.inputFluid, fluid, ignoreAmount)){
+					return true;
 				}
 			}
 		}
+		
 		return false;
 	}
-	
-	// just a "Reference"
-	// Water Input -> FluidIn
-	// Bitumen Input -> Item In
-	// Coke Output -> Item Out
-	// Diesel Output -> Fluid Out
 	
 	public final ItemStack outputItem;
 	public final FluidStack outputFluid;
 	
 	public final IngredientWithSize inputItem;
-	public final FluidTagInput inputFluid;
+	public final SizedFluidIngredient inputFluid;
 	
-	public CokerUnitRecipe(ResourceLocation id, Lazy<ItemStack> outputItem2, FluidStack outputFluid, IngredientWithSize inputItem, FluidTagInput inputFluid, int energy, int time){
-		super(IPRecipeTypes.COKER, id, time, energy);
+	public CokerUnitRecipe(ItemStack outputItem, FluidStack outputFluid, IngredientWithSize inputItem, SizedFluidIngredient inputFluid, int energy, int time){
+		super(IPRecipeTypes.COKER, time, energy);
+		this.outputFluid = outputFluid;
+		this.outputItem = outputItem;
 		this.inputFluid = inputFluid;
 		this.inputItem = inputItem;
-		this.outputFluid = outputFluid;
-		this.outputItem = outputItem2.get();
 		
 		modifyTimeAndEnergy(IPServerConfig.REFINING.cokerUnit_timeModifier::get, IPServerConfig.REFINING.cokerUnit_energyModifier::get);
 	}

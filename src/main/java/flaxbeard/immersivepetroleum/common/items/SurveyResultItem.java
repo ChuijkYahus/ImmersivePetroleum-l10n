@@ -14,9 +14,9 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.fluids.FluidStack;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -66,7 +66,7 @@ public class SurveyResultItem extends IPItemBase{
 	}
 	
 	@Override
-	public void appendHoverText(ItemStack stack, Level worldIn, @Nonnull List<Component> tooltip, @Nonnull TooltipFlag flagIn){
+	public void appendHoverText(@Nonnull ItemStack stack, @Nonnull TooltipContext ctx, @Nonnull List<Component> tooltip, @Nonnull TooltipFlag flag){
 		if(stack.hasTag() && stack.getTag() != null){
 			ISurveyInfo info = ISurveyInfo.from(stack);
 			
@@ -79,7 +79,7 @@ public class SurveyResultItem extends IPItemBase{
 				
 				tooltip.add(Component.translatable("desc.immersivepetroleum.flavour.surveytool.rightclickme"));
 				
-				if(flagIn == TooltipFlag.Default.ADVANCED){
+				if(flag == TooltipFlag.Default.ADVANCED){
 					tooltip.add(Component.literal("ID: " + (scan.getUuid() != null ? scan.getUuid().toString() : "Null")));
 					tooltip.add(Component.literal("dSize: " + (scan.getData() != null ? scan.getData().length : "Null")));
 				}
@@ -97,7 +97,7 @@ public class SurveyResultItem extends IPItemBase{
 					return;
 				}
 				
-				tooltip.add(Component.translatable(fs.getTranslationKey()).withStyle(ChatFormatting.DARK_GRAY));
+				tooltip.add(Component.translatable(fs.getDescriptionId()).withStyle(ChatFormatting.DARK_GRAY));
 				tooltip.add(Component.translatable("desc.immersivepetroleum.info.survey_result.amount", String.format(Locale.ENGLISH, "%,.3f", amount / 1000D), percentage).withStyle(ChatFormatting.DARK_GRAY));
 				tooltip.add(Component.translatable("desc.immersivepetroleum.info.survey_result.expected", expected).withStyle(ChatFormatting.DARK_GRAY));
 				

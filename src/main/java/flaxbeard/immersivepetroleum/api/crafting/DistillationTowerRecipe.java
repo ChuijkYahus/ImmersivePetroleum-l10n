@@ -1,21 +1,23 @@
 package flaxbeard.immersivepetroleum.api.crafting;
 
 import blusunrize.immersiveengineering.api.crafting.IERecipeSerializer;
-import blusunrize.immersiveengineering.api.crafting.TagOutput;
-import blusunrize.immersiveengineering.api.crafting.TagOutputList;
+import blusunrize.immersiveengineering.api.crafting.StackWithChance;
 import flaxbeard.immersivepetroleum.common.cfg.IPServerConfig;
 import flaxbeard.immersivepetroleum.common.crafting.Serializers;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class DistillationTowerRecipe extends IPMultiblockRecipe{
@@ -27,7 +29,7 @@ public class DistillationTowerRecipe extends IPMultiblockRecipe{
 	public static DistillationTowerRecipe findRecipe(FluidStack input){
 		if(!recipes.isEmpty()){
 			for(DistillationTowerRecipe recipe: recipes.values()){
-				if(recipe.input != null && recipe.input.testIgnoringAmount(input)){
+				if(recipe.input != null && recipe.input.ingredient().test(input)){
 					return recipe;
 				}
 			}
@@ -41,26 +43,25 @@ public class DistillationTowerRecipe extends IPMultiblockRecipe{
 	}
 	
 	@Nullable
-	public static DistillationTowerRecipe loadFromNBT(CompoundTag nbt){
-		FluidStack input = FluidStack.loadFluidStackFromNBT(nbt.getCompound("input"));
+	public static DistillationTowerRecipe loadFromNBT(CompoundTag nbt, HolderLookup.Provider provider){
+		FluidStack input = FluidStack.parseOptional(provider, nbt.getCompound("input"));
 		return findRecipe(input);
 	}
 	
-	protected final FluidTagInput input;
-	protected final FluidStack[] fluidOutput;
-	protected final ItemStack[] itemOutput;
-	protected final double[] chances;
+	public final FluidStack[] fluidOutput;
+	public final @Nullable StackWithChance[] itemOutput;
 	
-	public DistillationTowerRecipe(ResourceLocation id, FluidStack[] fluidOutput, ItemStack[] itemOutput, FluidTagInput input, int energy, int time, double[] chances){
-		super(IPRecipeTypes.DISTILLATION, id, time, energy);
+	public final SizedFluidIngredient input;
+	
+	public DistillationTowerRecipe(FluidStack[] fluidOutput, List<StackWithChance> itemOutput, SizedFluidIngredient input, int energy, int time){
+		super(IPRecipeTypes.DISTILLATION, time, energy);
 		this.fluidOutput = fluidOutput;
-		this.itemOutput = itemOutput;
-		this.chances = chances;
+		
+		this.itemOutput = itemOutput != null ? itemOutput.toArray(StackWithChance[]::new) : null;
 		
 		this.input = input;
 		this.fluidInputList = Collections.singletonList(input);
 		this.fluidOutputList = Arrays.asList(this.fluidOutput);
-		this.outputList = new TagOutputList(new TagOutput(itemOutput)); // TODO
 		
 		modifyTimeAndEnergy(IPServerConfig.REFINING.distillationTower_timeModifier::get, IPServerConfig.REFINING.distillationTower_energyModifier::get);
 	}
@@ -77,24 +78,26 @@ public class DistillationTowerRecipe extends IPMultiblockRecipe{
 	
 	@Override
 	public NonNullList<ItemStack> getActualItemOutputs(){
-		if(this.itemOutput.length == 0 && this.chances.length == 0)
+		if(this.itemOutput == null || this.itemOutput.length == 0)
 			return NonNullList.create();
 		
 		NonNullList<ItemStack> output = NonNullList.create();
-		for(int i = 0;i < this.itemOutput.length;i++){
-			if(RANDOM.nextFloat() <= this.chances[i]){
-				output.add(this.itemOutput[i]);
+		
+		for(StackWithChance chancedStack: this.itemOutput){
+			if(RANDOM.nextFloat() <= chancedStack.chance()){
+				output.add(chancedStack.stack().get());
 			}
 		}
 		
 		return output;
 	}
 	
-	public FluidTagInput getInputFluid(){
+	public SizedFluidIngredient getInputFluid(){
 		return this.input;
 	}
 	
+	@Deprecated(forRemoval = true)
 	public double[] chances(){
-		return this.chances;
+		return new double[0];
 	}
 }

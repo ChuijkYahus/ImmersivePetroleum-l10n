@@ -30,7 +30,7 @@ import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ColumnPos;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 import javax.annotation.Nonnull;
 import java.util.HashSet;
@@ -58,7 +58,7 @@ public class IslandCommand{
 				"chat.immersivepetroleum.command.reservoir.get",
 				island.getAmount(),
 				Utils.fDecimal(island.getAmount() / (double) island.getCapacity() * 100),
-				new FluidStack(island.getFluid(), 1).getDisplayName()
+				new FluidStack(island.getFluid(), 1).getHoverName()
 		);
 		//@formatter:on
 		return Command.SINGLE_SUCCESS;

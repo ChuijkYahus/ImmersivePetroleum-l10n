@@ -6,7 +6,7 @@ import net.minecraft.world.entity.MobCategory;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
 public class IPEntityTypes{
-	public static final DeferredHolder<EntityType<?>, EntityType<?>> MOTORBOAT = IPRegisters.registerEntityType("speedboat", s -> {
+	public static final DeferredHolder<EntityType<?>, EntityType<MotorboatEntity>> MOTORBOAT = IPRegisters.registerEntityType("speedboat", s -> {
 		EntityType<MotorboatEntity> ret = EntityType.Builder.<MotorboatEntity> of(MotorboatEntity::new, MobCategory.MISC)
 			.sized(1.375F, 0.5625F)
 			.clientTrackingRange(10)

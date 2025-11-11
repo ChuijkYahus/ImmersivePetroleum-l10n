@@ -45,7 +45,7 @@ public class MultiblockProjection{
 		this.realWorld = world;
 		
 		List<StructureTemplate.StructureBlockInfo> blocks = multiblock.getStructure(world);
-		this.templateWorld = TemplateWorldCreator.CREATOR.getValue().makeWorld(blocks, pos -> true, world.registryAccess());
+		this.templateWorld = TemplateWorldCreator.CREATOR.get().makeWorld(blocks, pos -> true, world.registryAccess());
 		
 		this.blockcount = blocks.size();
 		blocks.forEach(info -> {

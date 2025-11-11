@@ -4,6 +4,7 @@ import blusunrize.immersiveengineering.api.multiblocks.blocks.env.IMultiblockBEH
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import flaxbeard.immersivepetroleum.client.render.RenderUtils;
 import flaxbeard.immersivepetroleum.client.utils.MCUtil;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.DerrickLogic;
 import flaxbeard.immersivepetroleum.common.cfg.IPClientConfig;
@@ -152,7 +153,7 @@ public class PipeConfig extends Button{
 	
 	@Override
 	public void render(GuiGraphics gui, int mx, int my, float partialTicks){
-		MultiBufferSource.BufferSource buffer = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
+		MultiBufferSource.BufferSource buffer = RenderUtils.immediate();
 		
 		VertexConsumer builder = buffer.getBuffer(this.gridTextureRenderType);
 		gui.pose().pushPose();

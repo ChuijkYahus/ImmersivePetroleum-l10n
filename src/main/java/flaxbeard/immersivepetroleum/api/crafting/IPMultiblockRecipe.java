@@ -1,35 +1,32 @@
 package flaxbeard.immersivepetroleum.api.crafting;
 
 import blusunrize.immersiveengineering.api.crafting.IERecipeTypes;
+import blusunrize.immersiveengineering.api.crafting.IngredientWithSize;
 import blusunrize.immersiveengineering.api.crafting.MultiblockRecipe;
-import net.minecraft.resources.ResourceLocation;
+import blusunrize.immersiveengineering.api.crafting.TagOutput;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
-import net.minecraftforge.common.util.Lazy;
+import net.neoforged.neoforge.common.util.Lazy;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 
 import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 
 public abstract class IPMultiblockRecipe extends MultiblockRecipe{
-	private static final Lazy<ItemStack> DUMMY_OUTPUT = Lazy.of(() -> ItemStack.EMPTY);
+	private static final Supplier<RecipeMultiplier> NONE = () -> null;
 	
 	private final TimeAndEnergy processingCost;
 	
-	protected <T extends Recipe<?>> IPMultiblockRecipe(IERecipeTypes.TypeWithClass<T> type, ResourceLocation id, int time, int energy){
-		super(DUMMY_OUTPUT, type, id);
+	protected <T extends Recipe<?>> IPMultiblockRecipe(IERecipeTypes.TypeWithClass<T> type, int time, int energy){
+		this(TagOutput.EMPTY, type, time, energy);
+	}
+	
+	protected <T extends Recipe<?>> IPMultiblockRecipe(TagOutput outputDummy, IERecipeTypes.TypeWithClass<T> type, int time, int energy){
+		super(outputDummy, type, time, energy, NONE);
 		this.processingCost = new TimeAndEnergy(time, energy);
 	}
 	
-	@Deprecated(forRemoval = true)
-	protected <T extends Recipe<?>> IPMultiblockRecipe(ItemStack outputDummy, IERecipeTypes.TypeWithClass<T> type, ResourceLocation id){
-		super(Lazy.of(() -> outputDummy), type, id);
-		this.processingCost = new TimeAndEnergy(1, 1);
-	}
-	
-	@Deprecated(forRemoval = true)
-	protected void timeAndEnergy(int time, int energy){
-	}
-	
-	@Override
 	public void modifyTimeAndEnergy(DoubleSupplier timeModifier, DoubleSupplier energyModifier){
 		this.processingCost.modifyTimeAndEnergy(timeModifier, energyModifier);
 	}
@@ -42,6 +39,15 @@ public abstract class IPMultiblockRecipe extends MultiblockRecipe{
 	@Override
 	public int getTotalProcessEnergy(){
 		return this.processingCost.getEnergy();
+	}
+	
+	protected static boolean test(IngredientWithSize a, ItemStack b, boolean ignoreAmount){
+		return (!ignoreAmount && a.test(b)) || (ignoreAmount && a.testIgnoringSize(b));
+	}
+	
+	protected static boolean test(SizedFluidIngredient a, FluidStack b, boolean ignoreAmount){
+		boolean equal = a.test(b);
+		return (!ignoreAmount && equal && a.amount() == b.getAmount()) || (ignoreAmount && equal);
 	}
 	
 	private static class TimeAndEnergy{

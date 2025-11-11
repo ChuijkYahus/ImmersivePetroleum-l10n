@@ -1,7 +1,8 @@
 package flaxbeard.immersivepetroleum.common.items;
 
-import blusunrize.immersiveengineering.api.tool.IUpgrade;
-import blusunrize.immersiveengineering.api.tool.IUpgradeableTool;
+import blusunrize.immersiveengineering.api.tool.upgrade.IUpgrade;
+import blusunrize.immersiveengineering.api.tool.upgrade.IUpgradeableTool;
+import blusunrize.immersiveengineering.api.tool.upgrade.UpgradeData;
 import blusunrize.immersiveengineering.api.utils.ItemUtils;
 import blusunrize.immersiveengineering.common.gui.IESlot;
 import flaxbeard.immersivepetroleum.ImmersivePetroleum;
@@ -10,6 +11,7 @@ import flaxbeard.immersivepetroleum.common.util.IPItemStackHandler;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -31,13 +33,11 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.common.capabilities.ICapabilityProvider;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.items.IItemHandler;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.capabilities.ICapabilityProvider;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.items.IItemHandler;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -50,13 +50,14 @@ public class MotorboatItem extends IPItemBase implements IUpgradeableTool{
 		super(new Item.Properties().stacksTo(1));
 	}
 	
-	@Override
+	/*
 	public ICapabilityProvider initCapabilities(ItemStack stack, CompoundTag nbt){
 		return new IPItemStackHandler(4);
 	}
+	*/
 	
 	@Override
-	public CompoundTag getUpgrades(ItemStack stack){
+	public UpgradeData getUpgrades(ItemStack stack){
 		return stack.hasTag() ? stack.getOrCreateTag().getCompound("upgrades") : new CompoundTag();
 	}
 	
@@ -127,16 +128,16 @@ public class MotorboatItem extends IPItemBase implements IUpgradeableTool{
 	}
 	
 	@Override
-	public void finishUpgradeRecalculation(ItemStack stack){
+	public void finishUpgradeRecalculation(ItemStack stack, RegistryAccess registries){
 	}
 	
 	@Override
-	public Slot[] getWorkbenchSlots(AbstractContainerMenu container, ItemStack stack, Level world, Supplier<Player> getPlayer, IItemHandler inv){
+	public Slot[] getWorkbenchSlots(AbstractContainerMenu container, ItemStack stack, Level level, Supplier<Player> getPlayer, IItemHandler inv){
 		if(inv != null){
 			return new Slot[]{
-					new IESlot.Upgrades(container, inv, 0, 78, 35 - 5, UPGRADE_TYPE, stack, true, world, getPlayer),
-					new IESlot.Upgrades(container, inv, 1, 98, 35 + 5, UPGRADE_TYPE, stack, true, world, getPlayer),
-					new IESlot.Upgrades(container, inv, 2, 118, 35 - 5, UPGRADE_TYPE, stack, true, world, getPlayer)
+					new IESlot.Upgrades(container, inv, 0, 78, 35 - 5, UPGRADE_TYPE, stack, true, level, getPlayer),
+					new IESlot.Upgrades(container, inv, 1, 98, 35 + 5, UPGRADE_TYPE, stack, true, level, getPlayer),
+					new IESlot.Upgrades(container, inv, 2, 118, 35 - 5, UPGRADE_TYPE, stack, true, level, getPlayer)
 			};
 		}else{
 			return new Slot[0];
@@ -155,16 +156,15 @@ public class MotorboatItem extends IPItemBase implements IUpgradeableTool{
 		return c;
 	}
 	
-	@OnlyIn(Dist.CLIENT)
 	@Override
-	public void appendHoverText(ItemStack stack, Level worldIn, @Nonnull List<Component> tooltip, @Nonnull TooltipFlag flagIn){
+	public void appendHoverText(@Nonnull ItemStack stack, @Nonnull TooltipContext ctx, @Nonnull List<Component> tooltip, @Nonnull TooltipFlag flag){
 		if(stack.hasTag()){
 			CompoundTag tag = stack.getTag();
 			
 			if(tag.contains("tank")){
 				FluidStack fs = FluidStack.loadFluidStackFromNBT(tag.getCompound("tank"));
 				if(fs != null){
-					tooltip.add(((MutableComponent) fs.getDisplayName()).append(": " + fs.getAmount() + "mB").withStyle(ChatFormatting.GRAY));
+					tooltip.add(((MutableComponent) fs.getHoverName()).append(": " + fs.getAmount() + "mB").withStyle(ChatFormatting.GRAY));
 				}
 			}
 		}
@@ -178,7 +178,7 @@ public class MotorboatItem extends IPItemBase implements IUpgradeableTool{
 			}
 		});
 		
-		super.appendHoverText(stack, worldIn, tooltip, flagIn);
+		super.appendHoverText(stack, ctx, tooltip, flag);
 	}
 	
 	@Override

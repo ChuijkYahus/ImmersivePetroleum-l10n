@@ -2,7 +2,7 @@ package flaxbeard.immersivepetroleum.api.crafting;
 
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.material.Fluid;
-import net.minecraftforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidStack;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nonnull;

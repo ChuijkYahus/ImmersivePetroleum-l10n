@@ -13,16 +13,16 @@ import flaxbeard.immersivepetroleum.common.util.ResourceUtils;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.client.model.data.ModelData;
+import net.minecraft.client.resources.model.ModelResourceLocation;
+import net.neoforged.neoforge.client.model.data.ModelData;
 
 import javax.annotation.Nonnull;
 import java.util.List;
 
 public class DerrickRenderer extends IEBlockEntityRenderer<MultiblockBlockEntityMaster<DerrickLogic.State>>{
-	public static final ResourceLocation DRILL = ResourceUtils.ip("multiblock/dyn/derrick_drill");
-	public static final ResourceLocation PIPE_SEGMENT = ResourceUtils.ip("multiblock/dyn/derrick_pipe_segment");
-	public static final ResourceLocation PIPE_TOP = ResourceUtils.ip("multiblock/dyn/derrick_pipe_top");
+	public static final ModelResourceLocation DRILL = ResourceUtils.ipModel("multiblock/dyn/derrick_drill");
+	public static final ModelResourceLocation PIPE_SEGMENT = ResourceUtils.ipModel("multiblock/dyn/derrick_pipe_segment");
+	public static final ModelResourceLocation PIPE_TOP = ResourceUtils.ipModel("multiblock/dyn/derrick_pipe_top");
 	
 	@Override
 	public boolean shouldRenderOffScreen(@Nonnull MultiblockBlockEntityMaster<DerrickLogic.State> te){
@@ -62,12 +62,12 @@ public class DerrickRenderer extends IEBlockEntityRenderer<MultiblockBlockEntity
 		matrix.popPose();
 	}
 	
-	private void renderObj(ResourceLocation modelRL, @Nonnull MultiBufferSource bufferIn, @Nonnull PoseStack matrix, int light, int overlay){
+	private void renderObj(ModelResourceLocation modelRL, @Nonnull MultiBufferSource bufferIn, @Nonnull PoseStack matrix, int light, int overlay){
 		List<BakedQuad> quads = MCUtil.getModel(modelRL).getQuads(null, null, ApiUtils.RANDOM_SOURCE, ModelData.EMPTY, null);
 		Pose last = matrix.last();
 		VertexConsumer solid = bufferIn.getBuffer(RenderType.solid());
 		for(BakedQuad quad: quads){
-			solid.putBulkData(last, quad, 1.0F, 1.0F, 1.0F, light, overlay);
+			solid.putBulkData(last, quad, 1.0F, 1.0F, 1.0F, 1.0F, light, overlay);
 		}
 	}
 }

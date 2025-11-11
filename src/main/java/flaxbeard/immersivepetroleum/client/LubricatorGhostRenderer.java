@@ -6,6 +6,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import flaxbeard.immersivepetroleum.api.crafting.LubricatedHandler;
+import flaxbeard.immersivepetroleum.client.render.RenderUtils;
 import flaxbeard.immersivepetroleum.client.utils.MCUtil;
 import flaxbeard.immersivepetroleum.common.IPContent;
 import flaxbeard.immersivepetroleum.common.blocks.wooden.AutoLubricatorBlock;
@@ -51,7 +52,7 @@ public class LubricatorGhostRenderer{
 			matrix.pushPose();
 			{
 				BlockRenderDispatcher blockDispatcher = this.minecraft.getBlockRenderer();
-				MultiBufferSource.BufferSource buffer = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
+				MultiBufferSource.BufferSource buffer = RenderUtils.immediate();
 				
 				// Anti-Jiggle when moving
 				Vec3 renderView = MCUtil.getGameRenderer().getMainCamera().getPosition();

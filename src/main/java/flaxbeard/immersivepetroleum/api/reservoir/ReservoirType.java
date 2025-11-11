@@ -3,22 +3,29 @@ package flaxbeard.immersivepetroleum.api.reservoir;
 import blusunrize.immersiveengineering.api.crafting.IERecipeSerializer;
 import blusunrize.immersiveengineering.api.crafting.IESerializableRecipe;
 import blusunrize.immersiveengineering.api.crafting.TagOutput;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import flaxbeard.immersivepetroleum.api.crafting.IPRecipeTypes;
 import flaxbeard.immersivepetroleum.common.crafting.Serializers;
 import flaxbeard.immersivepetroleum.common.util.RegistryUtils;
+import io.netty.buffer.ByteBuf;
+import malte0811.dualcodecs.DualCodec;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.material.Fluid;
 import net.neoforged.neoforge.common.util.Lazy;
 
 import javax.annotation.Nonnull;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -53,7 +60,6 @@ public class ReservoirType extends IESerializableRecipe{
 	 * Creates a new reservoir.
 	 *
 	 * @param name          The name of this reservoir type
-	 * @param id            The "recipeId" of this reservoir
 	 * @param fluidLocation The registry name of the fluid this reservoir is containing
 	 * @param minSize       Minimum amount of fluid in this reservoir
 	 * @param maxSize       Maximum amount of fluid in this reservoir
@@ -61,15 +67,14 @@ public class ReservoirType extends IESerializableRecipe{
 	 * @param equilibrium   Maximum amount of fluid that residuals regenerate at
 	 * @param weight        The weight for this reservoir
 	 */
-	public ReservoirType(String name, ResourceLocation id, ResourceLocation fluidLocation, int minSize, int maxSize, int residual, int equilibrium, int weight){
-		this(name, id, BuiltInRegistries.FLUID.get(fluidLocation), minSize, maxSize, residual, equilibrium, weight);
+	public ReservoirType(String name, ResourceLocation fluidLocation, int minSize, int maxSize, int residual, int equilibrium, int weight){
+		this(name, BuiltInRegistries.FLUID.get(fluidLocation), minSize, maxSize, residual, equilibrium, weight);
 	}
 	
 	/**
 	 * Creates a new reservoir.
 	 * 
 	 * @param name     The name of this reservoir type
-	 * @param id       The "recipeId" of this reservoir
 	 * @param fluid    The fluid this reservoir is containing
 	 * @param minSize  Minimum amount of fluid in this reservoir
 	 * @param maxSize  Maximum amount of fluid in this reservoir
@@ -77,7 +82,7 @@ public class ReservoirType extends IESerializableRecipe{
 	 * @param equilibrium   Maximum amount of fluid that residuals regenerate at
 	 * @param weight   The weight for this reservoir
 	 */
-	public ReservoirType(String name, ResourceLocation id, Fluid fluid, int minSize, int maxSize, int residual, int equilibrium, int weight){
+	public ReservoirType(String name, Fluid fluid, int minSize, int maxSize, int residual, int equilibrium, int weight){
 		super(EMPTY, IPRecipeTypes.RESERVOIR);
 		this.name = name;
 		this.fluidLocation = RegistryUtils.getRegistryNameOf(fluid);
@@ -140,7 +145,11 @@ public class ReservoirType extends IESerializableRecipe{
 	}
 	
 	public void setBiomes(boolean blacklist, List<ResourceLocation> names){
-		this.biomes = new BWList(new HashSet<>(names), blacklist);
+		setBiomes(new BWList(new HashSet<>(names), blacklist));
+	}
+	
+	public void setBiomes(BWList list){
+		this.biomes = list;
 	}
 	
 	public void setDimensions(boolean blacklist, ResourceLocation... names){
@@ -148,7 +157,11 @@ public class ReservoirType extends IESerializableRecipe{
 	}
 	
 	public void setDimensions(boolean blacklist, List<ResourceLocation> names){
-		this.dimensions = new BWList(new HashSet<>(names), blacklist);
+		setDimensions(new BWList(new HashSet<>(names), blacklist));
+	}
+	
+	public void setDimensions(BWList list){
+		this.dimensions = list;
 	}
 	
 	public Set<ResourceLocation> getBiomeList(){
@@ -208,8 +221,43 @@ public class ReservoirType extends IESerializableRecipe{
 	 * @author TwistedGate
 	 */
 	public static class BWList{
-		private Set<ResourceLocation> set;
-		private boolean isBlacklist;
+		//@formatter:off
+		public static final Codec<BWList> CODEC = RecordCodecBuilder.create(inst -> inst.group(
+			ResourceLocation.CODEC.listOf().fieldOf("list")
+				.xmap(resourceLocations -> {
+					Set<ResourceLocation> set = new HashSet<>(resourceLocations.size());
+					set.addAll(resourceLocations);
+					return set;
+				}, ArrayList::new)
+				.forGetter(BWList::getSet),
+			Codec.BOOL.fieldOf("isBlacklist").forGetter(BWList::isBlacklist)
+		).apply(inst, BWList::new));
+		//@formatter:on
+		
+		public static final StreamCodec<RegistryFriendlyByteBuf, BWList> CODEC_STREAM = new StreamCodec<>(){
+			@Nonnull
+			@Override
+			public BWList decode(RegistryFriendlyByteBuf buf){
+				int size = buf.readInt();
+				Set<ResourceLocation> set = new HashSet<>();
+				for(int i = 0;i < size;i++)
+					set.add(ResourceLocation.STREAM_CODEC.decode(buf));
+				boolean isBlacklist = buf.readBoolean();
+				return new BWList(set, isBlacklist);
+			}
+			
+			@Override
+			public void encode(RegistryFriendlyByteBuf buf, BWList bwList){
+				buf.writeInt(bwList.set.size());
+				bwList.set.forEach(rl -> ResourceLocation.STREAM_CODEC.encode(buf, rl));
+				buf.writeBoolean(bwList.isBlacklist());
+			}
+		};
+		
+		public static final DualCodec<RegistryFriendlyByteBuf, BWList> CODECS = new DualCodec<>(CODEC, CODEC_STREAM);
+		
+		private final Set<ResourceLocation> set;
+		private final boolean isBlacklist;
 		public BWList(boolean isBlacklist){
 			this(new HashSet<>(), isBlacklist);
 		}
@@ -226,7 +274,7 @@ public class ReservoirType extends IESerializableRecipe{
 				ListTag list = tag.getList("list", Tag.TAG_STRING);
 				
 				Set<ResourceLocation> set = new HashSet<>();
-				if(list.size() > 0){
+				if(!list.isEmpty()){
 					list.forEach(t -> {
 						if(t instanceof StringTag){
 							set.add(ResourceLocation.parse(t.getAsString()));
@@ -252,7 +300,7 @@ public class ReservoirType extends IESerializableRecipe{
 		}
 		
 		public boolean hasEntries(){
-			return this.set.size() > 0;
+			return !this.set.isEmpty();
 		}
 		
 		public boolean valid(ResourceLocation rl){

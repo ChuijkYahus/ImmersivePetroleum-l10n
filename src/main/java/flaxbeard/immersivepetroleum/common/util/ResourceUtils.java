@@ -1,18 +1,22 @@
 package flaxbeard.immersivepetroleum.common.util;
 
 import blusunrize.immersiveengineering.api.Lib;
-import com.blamejared.crafttweaker.api.CraftTweakerConstants;
 import flaxbeard.immersivepetroleum.ImmersivePetroleum;
+import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.versions.forge.ForgeVersion;
+import net.neoforged.neoforge.internal.versions.neoforge.NeoForgeVersion;
 
 public class ResourceUtils{
 	public static ResourceLocation ip(String str){
 		return ResourceLocation.fromNamespaceAndPath(ImmersivePetroleum.MODID, str);
 	}
 	
+	public static ModelResourceLocation ipModel(String str){
+		return ModelResourceLocation.standalone(ip(str));
+	}
+	
 	public static ResourceLocation ct(String str){
-		return ResourceLocation.fromNamespaceAndPath(CraftTweakerConstants.MOD_ID, str);
+		return ResourceLocation.fromNamespaceAndPath("crafttweaker", str);
 	}
 	
 	public static ResourceLocation ie(String str){
@@ -20,7 +24,7 @@ public class ResourceUtils{
 	}
 	
 	public static ResourceLocation forge(String str){
-		return ResourceLocation.fromNamespaceAndPath(ForgeVersion.MOD_ID, str);
+		return ResourceLocation.fromNamespaceAndPath(NeoForgeVersion.MOD_ID, str);
 	}
 	
 	public static ResourceLocation mc(String str){

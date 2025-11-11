@@ -14,10 +14,11 @@ import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.HitResult;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 /**
  * Central place for Minecraft instance related stuff.<br>
@@ -52,7 +53,7 @@ public class MCUtil{
 	
 	public static TextureManager getTextureManager(){
 		Minecraft mc = Minecraft.getInstance();
-		return mc.textureManager;
+		return mc.getTextureManager();
 	}
 	
 	public static BlockRenderDispatcher getBlockRenderer(){
@@ -60,7 +61,7 @@ public class MCUtil{
 		return mc.getBlockRenderer();
 	}
 	
-	public static BakedModel getModel(ResourceLocation modelLocation){
+	public static BakedModel getModel(ModelResourceLocation modelLocation){
 		Minecraft mc = Minecraft.getInstance();
 		return mc.getBlockRenderer().getBlockModelShaper().getModelManager().getModel(modelLocation);
 	}

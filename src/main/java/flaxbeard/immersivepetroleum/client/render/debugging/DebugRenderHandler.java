@@ -1,17 +1,15 @@
 package flaxbeard.immersivepetroleum.client.render.debugging;
 
-import blusunrize.immersiveengineering.api.multiblocks.blocks.MultiblockRegistration;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.env.IMultiblockBEHelper;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.env.IMultiblockBEHelperMaster;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.env.IMultiblockLevel;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.logic.IMultiblockBE;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.logic.IMultiblockState;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.registry.MultiblockBlockEntityMaster;
-import blusunrize.immersiveengineering.api.multiblocks.blocks.util.RelativeBlockFace;
-import blusunrize.immersiveengineering.client.utils.GuiHelper;
 import blusunrize.immersiveengineering.common.blocks.multiblocks.process.ProcessContext;
 import blusunrize.immersiveengineering.common.util.inventory.MultiFluidTank;
 import com.google.common.collect.Multimap;
+import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -21,6 +19,7 @@ import flaxbeard.immersivepetroleum.api.reservoir.AxisAlignedIslandBB;
 import flaxbeard.immersivepetroleum.api.reservoir.ReservoirHandler;
 import flaxbeard.immersivepetroleum.api.reservoir.ReservoirIsland;
 import flaxbeard.immersivepetroleum.client.render.IPRenderTypes;
+import flaxbeard.immersivepetroleum.client.render.RenderUtils;
 import flaxbeard.immersivepetroleum.client.utils.MCUtil;
 import flaxbeard.immersivepetroleum.common.IPContent;
 import flaxbeard.immersivepetroleum.common.ReservoirRegionDataStorage;
@@ -67,18 +66,15 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.client.event.RenderGuiOverlayEvent;
-import net.minecraftforge.client.event.RenderLevelStageEvent;
-import net.minecraftforge.client.event.RenderLevelStageEvent.Stage;
-import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.energy.IEnergyStorage;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.IFluidTank;
-import net.minecraftforge.fluids.capability.templates.FluidTank;
-import org.joml.Matrix3f;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.client.event.RenderGuiLayerEvent;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent.Stage;
+import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
+import net.neoforged.neoforge.energy.IEnergyStorage;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.IFluidTank;
+import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 import org.joml.Matrix4f;
 
 import java.util.ArrayList;
@@ -98,10 +94,10 @@ public class DebugRenderHandler{
 	}
 	
 	@SubscribeEvent
-	public void renderDebuggingOverlay(RenderGuiOverlayEvent.Post event){
+	public void renderDebuggingOverlay(RenderGuiLayerEvent.Post event){
 		Minecraft mc = Minecraft.getInstance();
 		
-		if(mc.player != null && event.getOverlay().id() == VanillaGuiOverlay.DEBUG_TEXT.id()){
+		if(mc.player != null && event.getOverlay().id() == VanillaGuiLayers.DEBUG_OVERLAY){
 			Player player = mc.player;
 			
 			if(isHoldingDebugItem(player)){
@@ -132,7 +128,7 @@ public class DebugRenderHandler{
 										debugOut.add(toText("isSlave").withStyle(autolube.isSlave ? ChatFormatting.GREEN : ChatFormatting.RED));
 										if(!autolube.isSlave){
 											debugOut.add(toText("Facing: " + autolube.facing.getName()));
-											debugOut.add(toText("Tank: " + (fs.getAmount() + "/" + tank.getCapacity() + "mB " + (fs.isEmpty() ? "" : "(" + fs.getDisplayName().getString() + ")"))));
+											debugOut.add(toText("Tank: " + (fs.getAmount() + "/" + tank.getCapacity() + "mB " + (fs.isEmpty() ? "" : "(" + fs.getHoverName().getString() + ")"))));
 										}
 										
 									}else if(te instanceof FlarestackTileEntity flare){
@@ -209,13 +205,13 @@ public class DebugRenderHandler{
 								
 								List<Component> debugOut = new ArrayList<>();
 								
-								debugOut.add(toText("").append(boat.getDisplayName()).withStyle(ChatFormatting.GOLD));
+								debugOut.add(toText("").append(boat.getContainedFluid().getHoverName()).withStyle(ChatFormatting.GOLD));
 								
 								FluidStack fluid = boat.getContainedFluid();
 								if(fluid == FluidStack.EMPTY){
 									debugOut.add(toText("Tank: Empty"));
 								}else{
-									debugOut.add(toText("Tank: " + fluid.getAmount() + "/" + boat.getMaxFuel() + "mB of ").append(fluid.getDisplayName()));
+									debugOut.add(toText("Tank: " + fluid.getAmount() + "/" + boat.getMaxFuel() + "mB of ").append(fluid.getHoverName()));
 								}
 								
 								NonNullList<ItemStack> upgrades = boat.getUpgrades();
@@ -312,7 +308,7 @@ public class DebugRenderHandler{
 					
 					matrix.pushPose();
 					{
-						MultiBufferSource.BufferSource buffer = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
+						MultiBufferSource.BufferSource buffer = RenderUtils.immediate();
 						
 						int radius = 12;
 						for(int i = -radius;i <= radius;i++){
@@ -359,10 +355,10 @@ public class DebugRenderHandler{
 												Matrix4f mat = matrix.last().pose();
 												
 												VertexConsumer builder = buffer.getBuffer(IPRenderTypes.TRANSLUCENT_POSITION_COLOR);
-												builder.vertex(mat, 0, 0, 0).color(r, g, b, 127).endVertex();
-												builder.vertex(mat, 0, 0, 1).color(r, g, b, 127).endVertex();
-												builder.vertex(mat, 1, 0, 1).color(r, g, b, 127).endVertex();
-												builder.vertex(mat, 1, 0, 0).color(r, g, b, 127).endVertex();
+												builder.addVertex(mat, 0, 0, 0).setColor(r, g, b, 127);
+												builder.addVertex(mat, 0, 0, 1).setColor(r, g, b, 127);
+												builder.addVertex(mat, 1, 0, 1).setColor(r, g, b, 127);
+												builder.addVertex(mat, 1, 0, 0).setColor(r, g, b, 127);
 											}
 										}
 										matrix.popPose();
@@ -403,7 +399,7 @@ public class DebugRenderHandler{
 						}
 						
 						{
-							MultiBufferSource.BufferSource buffer = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
+							MultiBufferSource.BufferSource buffer = RenderUtils.immediate();
 							
 							if(islands != null && !islands.isEmpty()){
 								float y = 128.0625F;
@@ -423,17 +419,17 @@ public class DebugRenderHandler{
 											
 											VertexConsumer builder = buffer.getBuffer(IPRenderTypes.TRANSLUCENT_LINE);
 											
-											Matrix4f mat = matrix.last().pose();
-											Matrix3f nor = matrix.last().normal();
+											PoseStack.Pose last = matrix.last();
+											Matrix4f mat = last.pose();
 											
-											builder.vertex(mat, minX, y, minZ).color(255, 0, 255, 127).normal(nor, 0, 1, 0).endVertex();
-											builder.vertex(mat, maxX, y, minZ).color(255, 0, 255, 127).normal(nor, 0, 1, 0).endVertex();
-											builder.vertex(mat, minX, y, maxZ).color(255, 0, 255, 127).normal(nor, 0, 1, 0).endVertex();
-											builder.vertex(mat, maxX, y, maxZ).color(255, 0, 255, 127).normal(nor, 0, 1, 0).endVertex();
-											builder.vertex(mat, minX, y, minZ).color(255, 0, 255, 127).normal(nor, 0, 1, 0).endVertex();
-											builder.vertex(mat, minX, y, maxZ).color(255, 0, 255, 127).normal(nor, 0, 1, 0).endVertex();
-											builder.vertex(mat, maxX, y, minZ).color(255, 0, 255, 127).normal(nor, 0, 1, 0).endVertex();
-											builder.vertex(mat, maxX, y, maxZ).color(255, 0, 255, 127).normal(nor, 0, 1, 0).endVertex();
+											builder.addVertex(mat, minX, y, minZ).setColor(255, 0, 255, 127).setNormal(last, 0, 1, 0);
+											builder.addVertex(mat, maxX, y, minZ).setColor(255, 0, 255, 127).setNormal(last, 0, 1, 0);
+											builder.addVertex(mat, minX, y, maxZ).setColor(255, 0, 255, 127).setNormal(last, 0, 1, 0);
+											builder.addVertex(mat, maxX, y, maxZ).setColor(255, 0, 255, 127).setNormal(last, 0, 1, 0);
+											builder.addVertex(mat, minX, y, minZ).setColor(255, 0, 255, 127).setNormal(last, 0, 1, 0);
+											builder.addVertex(mat, minX, y, maxZ).setColor(255, 0, 255, 127).setNormal(last, 0, 1, 0);
+											builder.addVertex(mat, maxX, y, minZ).setColor(255, 0, 255, 127).setNormal(last, 0, 1, 0);
+											builder.addVertex(mat, maxX, y, maxZ).setColor(255, 0, 255, 127).setNormal(last, 0, 1, 0);
 										}
 										matrix.popPose();
 										
@@ -443,8 +439,8 @@ public class DebugRenderHandler{
 											matrix.pushPose();
 											{
 												VertexConsumer builder = buffer.getBuffer(IPRenderTypes.TRANSLUCENT_LINE);
-												Matrix4f mat = matrix.last().pose();
-												Matrix3f nor = matrix.last().normal();
+												PoseStack.Pose last = matrix.last();
+												Matrix4f mat = last.pose();
 												
 												// Draw polygon as line
 												int j = poly.size() - 1;
@@ -453,8 +449,8 @@ public class DebugRenderHandler{
 													ColumnPos b = poly.get(i);
 													float f = i / (float) poly.size();
 													
-													builder.vertex(mat, a.x() + .5F, y, a.z() + .5F).color(f, 0.0F, 1 - f, 0.5F).normal(nor, 0F, 1F, 0F).endVertex();
-													builder.vertex(mat, b.x() + .5F, y, b.z() + .5F).color(f, 0.0F, 1 - f, 0.5F).normal(nor, 0F, 1F, 0F).endVertex();
+													builder.addVertex(mat, a.x() + .5F, y, a.z() + .5F).setColor(f, 0.0F, 1 - f, 0.5F).setNormal(last, 0F, 1F, 0F);
+													builder.addVertex(mat, b.x() + .5F, y, b.z() + .5F).setColor(f, 0.0F, 1 - f, 0.5F).setNormal(last, 0F, 1F, 0F);
 													
 													j = i;
 												}
@@ -462,16 +458,16 @@ public class DebugRenderHandler{
 												// Center Marker
 												{
 													// Y
-													builder.vertex(mat, center.getX() + .5F, 128F, center.getZ() + .5F).color(0.0F, 1.0F, 0.0F, 0.5F).normal(nor, 0F, 1F, 0F).endVertex();
-													builder.vertex(mat, center.getX() + .5F, 129F, center.getZ() + .5F).color(0.0F, 1.0F, 0.0F, 0.5F).normal(nor, 0F, 1F, 0F).endVertex();
+													builder.addVertex(mat, center.getX() + .5F, 128F, center.getZ() + .5F).setColor(0.0F, 1.0F, 0.0F, 0.5F).setNormal(last, 0F, 1F, 0F);
+													builder.addVertex(mat, center.getX() + .5F, 129F, center.getZ() + .5F).setColor(0.0F, 1.0F, 0.0F, 0.5F).setNormal(last, 0F, 1F, 0F);
 													
 													// X
-													builder.vertex(mat, center.getX(), 128.5F, center.getZ() + .5F).color(1.0F, 0.0F, 0.0F, 0.5F).normal(nor, 0F, 1F, 0F).endVertex();
-													builder.vertex(mat, center.getX() + 1, 128.5F, center.getZ() + .5F).color(1.0F, 0.0F, 0.0F, 0.5F).normal(nor, 0F, 1F, 0F).endVertex();
+													builder.addVertex(mat, center.getX(), 128.5F, center.getZ() + .5F).setColor(1.0F, 0.0F, 0.0F, 0.5F).setNormal(last, 0F, 1F, 0F);
+													builder.addVertex(mat, center.getX() + 1, 128.5F, center.getZ() + .5F).setColor(1.0F, 0.0F, 0.0F, 0.5F).setNormal(last, 0F, 1F, 0F);
 													
 													// Z
-													builder.vertex(mat, center.getX() + .5F, 128.5F, center.getZ()).color(0.0F, 0.0F, 1.0F, 0.5F).normal(nor, 0F, 1F, 0F).endVertex();
-													builder.vertex(mat, center.getX() + .5F, 128.5F, center.getZ() + 1).color(0.0F, 0.0F, 1.0F, 0.5F).normal(nor, 0F, 1F, 0F).endVertex();
+													builder.addVertex(mat, center.getX() + .5F, 128.5F, center.getZ()).setColor(0.0F, 0.0F, 1.0F, 0.5F).setNormal(last, 0F, 1F, 0F);
+													builder.addVertex(mat, center.getX() + .5F, 128.5F, center.getZ() + 1).setColor(0.0F, 0.0F, 1.0F, 0.5F).setNormal(last, 0F, 1F, 0F);
 												}
 											}
 											matrix.popPose();
@@ -496,7 +492,7 @@ public class DebugRenderHandler{
 		
 		guiGraphics.pose().pushPose();
 		{
-			MultiBufferSource.BufferSource buffer = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
+			MultiBufferSource.BufferSource buffer = RenderUtils.immediate();
 			for(int i = 0;i < debugOut.size();i++){
 				int w = mc.font.width(debugOut.get(i).getString());
 				int yOff = i * (mc.font.lineHeight + 2);
@@ -504,7 +500,7 @@ public class DebugRenderHandler{
 				guiGraphics.pose().pushPose();
 				{
 					guiGraphics.pose().translate(0, 0, 1);
-					GuiHelper.drawColouredRect(1, 1 + yOff, w + 1, 10, 0xAF_000000, buffer, guiGraphics.pose());
+					RenderUtils.drawColouredRect(guiGraphics, 1, 1 + yOff, w + 1, 10);
 					buffer.endBatch();
 					// Draw string without shadow
 					guiGraphics.drawString(mc.font, debugOut.get(i), 2, 2 + yOff, -1, false);
@@ -525,7 +521,7 @@ public class DebugRenderHandler{
 			if(!tank.fluids.isEmpty()){
 				for(int j = 0;j < tank.fluids.size();j++){
 					FluidStack fs = tank.fluids.get(j);
-					text.add(toText("  " + fs.getDisplayName().getString() + " (" + fs.getAmount() + "mB)"));
+					text.add(toText("  " + fs.getHoverName().getString() + " (" + fs.getAmount() + "mB)"));
 				}
 			}else{
 				text.add(toText("  Empty"));
@@ -539,13 +535,13 @@ public class DebugRenderHandler{
 		{
 			FluidTank tank = coker.getState().bufferTanks.input();
 			FluidStack fs = tank.getFluid();
-			text.add(toText("In Buffer: " + (fs.getAmount() + "/" + tank.getCapacity() + "mB " + (fs.isEmpty() ? "" : "(" + fs.getDisplayName().getString() + ")"))));
+			text.add(toText("In Buffer: " + (fs.getAmount() + "/" + tank.getCapacity() + "mB " + (fs.isEmpty() ? "" : "(" + fs.getHoverName().getString() + ")"))));
 		}
 		
 		{
 			FluidTank tank = coker.getState().bufferTanks.output();
 			FluidStack fs = tank.getFluid();
-			text.add(toText("Out Buffer: " + (fs.getAmount() + "/" + tank.getCapacity() + "mB " + (fs.isEmpty() ? "" : "(" + fs.getDisplayName().getString() + ")"))));
+			text.add(toText("Out Buffer: " + (fs.getAmount() + "/" + tank.getCapacity() + "mB " + (fs.isEmpty() ? "" : "(" + fs.getHoverName().getString() + ")"))));
 		}
 		
 		for(int i = 0;i < coker.getState().chambers.get().length;i++){
@@ -557,7 +553,7 @@ public class DebugRenderHandler{
 			
 			text.add(toText("Chamber " + i).withStyle(ChatFormatting.UNDERLINE, ChatFormatting.AQUA));
 			text.add(toText("State: " + chamber.getState().toString()));
-			text.add(toText("  Tank: " + (fs.getAmount() + "/" + tank.getCapacity() + "mB " + (fs.isEmpty() ? "" : "(" + fs.getDisplayName().getString() + ")"))));
+			text.add(toText("  Tank: " + (fs.getAmount() + "/" + tank.getCapacity() + "mB " + (fs.isEmpty() ? "" : "(" + fs.getHoverName().getString() + ")"))));
 			text.add(toText("  Content: " + chamber.getTotalAmount() + " / " + chamber.getCapacity()).append(" (" + chamber.getInputItem().getHoverName().getString() + ")"));
 			text.add(toText("  Out: " + chamber.getOutputItem().getHoverName().getString()));
 			text.add(toText("  " + Mth.floor(completed) + "% Completed. (Raw: " + completed + ")"));
@@ -571,7 +567,7 @@ public class DebugRenderHandler{
 		if(tanks != null && tanks.length > 0){
 			for(int i = 0;i < tanks.length;i++){
 				FluidStack fs = tanks[i].getFluid();
-				text.add(toText("Tank " + i + ": " + (fs.getAmount() + "/" + tanks[i].getCapacity() + "mB " + (fs.isEmpty() ? "" : "(" + fs.getDisplayName().getString() + ")"))));
+				text.add(toText("Tank " + i + ": " + (fs.getAmount() + "/" + tanks[i].getCapacity() + "mB " + (fs.isEmpty() ? "" : "(" + fs.getHoverName().getString() + ")"))));
 			}
 		}
 	}
@@ -598,7 +594,7 @@ public class DebugRenderHandler{
 		}
 		
 		FluidStack fs = tank.getState().tank.getFluid();
-		text.add(toText("Fluid: " + (fs.getAmount() + "/" + tank.getState().tank.getCapacity() + "mB " + (fs.isEmpty() ? "" : "(" + fs.getDisplayName().getString() + ")"))));
+		text.add(toText("Fluid: " + (fs.getAmount() + "/" + tank.getState().tank.getCapacity() + "mB " + (fs.isEmpty() ? "" : "(" + fs.getHoverName().getString() + ")"))));
 	}
 	
 	private static void derrick(List<Component> text, IMultiblockBEHelper<DerrickLogic.State> derrick){
@@ -606,7 +602,7 @@ public class DebugRenderHandler{
 		
 		IFluidTank tanks = derrick.getState().tank;
 		FluidStack fs = tanks.getFluid();
-		text.add(toText("Tank : " + (fs.getAmount() + "/" + tanks.getCapacity() + "mB " + (fs.isEmpty() ? "" : "(" + fs.getDisplayName().getString() + ")"))));
+		text.add(toText("Tank : " + (fs.getAmount() + "/" + tanks.getCapacity() + "mB " + (fs.isEmpty() ? "" : "(" + fs.getHoverName().getString() + ")"))));
 	}
 	
 	private static <State extends IMultiblockState, H extends IMultiblockBEHelper<State>> H masterOf(H helper){

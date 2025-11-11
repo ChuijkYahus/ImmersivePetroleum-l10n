@@ -15,10 +15,9 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.fluids.capability.IFluidHandler.FluidAction;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
 
 public class GasolineBottleItem extends IPItemBase{
 	/** How much gasoline a filled bottle contains in mB. */
@@ -87,7 +86,7 @@ public class GasolineBottleItem extends IPItemBase{
 		float f5 = Mth.sin(-f * ((float) Math.PI / 180F));
 		float f6 = f3 * f4;
 		float f7 = f2 * f4;
-		double d0 = player.getBlockReach();
+		double d0 = player.blockInteractionRange();
 		Vec3 vec31 = vec3.add((double) f6 * d0, (double) f5 * d0, (double) f7 * d0);
 		return level.clip(new ClipContext(vec3, vec31, blockMode, ClipContext.Fluid.NONE, player));
 	}

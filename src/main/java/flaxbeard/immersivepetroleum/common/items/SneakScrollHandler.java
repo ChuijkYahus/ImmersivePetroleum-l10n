@@ -4,38 +4,34 @@ import flaxbeard.immersivepetroleum.ImmersivePetroleum;
 import flaxbeard.immersivepetroleum.client.utils.MCUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.event.InputEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.TickEvent.Phase;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.InputEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 @OnlyIn(Dist.CLIENT)
-@Mod.EventBusSubscriber(modid = ImmersivePetroleum.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = ImmersivePetroleum.MODID, value = Dist.CLIENT)
 public class SneakScrollHandler{
 	private static boolean sneaking = false;
 	
 	@SubscribeEvent
-	public static void onPlayerTick(TickEvent.PlayerTickEvent event){
-		if(event.side == LogicalSide.CLIENT && event.player != null && event.player == Minecraft.getInstance().getCameraEntity()){
-			if(event.phase == Phase.END){
-				sneaking = event.player.isShiftKeyDown();
-			}
+	public static void onPlayerTick(PlayerTickEvent.Post event){
+		if(event.getEntity() == Minecraft.getInstance().getCameraEntity()){
+			sneaking = event.getEntity().isShiftKeyDown();
 		}
 	}
 	
 	@SubscribeEvent
 	public static void handleScroll(InputEvent.MouseScrollingEvent event){
-		double delta = event.getScrollDelta();
+		double delta = event.getScrollDeltaY();
 		
 		if(sneaking && delta != 0.0){
 			Player player = MCUtil.getPlayer();
 			
-			DebugItem.ClientInputHandler.onSneakScrolling(event, player, delta, sneaking);
-			ProjectorItem.ClientInputHandler.onSneakScrolling(event, player, delta, sneaking);
+			DebugItem.ClientInputHandler.onSneakScrolling(event, player, delta);
+			ProjectorItem.ClientInputHandler.onSneakScrolling(event, player, delta);
 		}
 	}
 }

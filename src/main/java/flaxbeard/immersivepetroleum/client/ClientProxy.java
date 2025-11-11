@@ -13,7 +13,6 @@ import blusunrize.lib.manual.ManualEntry.SpecialElementData;
 import blusunrize.lib.manual.ManualInstance;
 import com.electronwill.nightconfig.core.Config;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.math.Axis;
@@ -26,6 +25,7 @@ import flaxbeard.immersivepetroleum.client.gui.DerrickScreen;
 import flaxbeard.immersivepetroleum.client.gui.DistillationTowerScreen;
 import flaxbeard.immersivepetroleum.client.gui.HydrotreaterScreen;
 import flaxbeard.immersivepetroleum.client.particle.FluidParticleData;
+import flaxbeard.immersivepetroleum.client.render.RenderUtils;
 import flaxbeard.immersivepetroleum.client.render.SeismicResultRenderer;
 import flaxbeard.immersivepetroleum.client.render.debugging.DebugRenderHandler;
 import flaxbeard.immersivepetroleum.client.utils.MCUtil;
@@ -48,7 +48,6 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -186,7 +185,7 @@ public class ClientProxy extends CommonProxy{
 		BlockState state = IEBlocks.MetalDecoration.STEEL_SCAFFOLDING.get(MetalScaffoldingType.STANDARD).defaultBlockState();
 		BakedModel model = blockRenderer.getBlockModelShaper().getBlockModel(state);
 		
-		MultiBufferSource.BufferSource buffers = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
+		MultiBufferSource.BufferSource buffers = RenderUtils.immediate();
 		
 		transform.pushPose();
 		transform.translate(0.0F, 0.5F, 1.0F);

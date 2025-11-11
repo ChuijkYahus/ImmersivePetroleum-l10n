@@ -10,8 +10,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.Fluid;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 import javax.annotation.Nonnull;
 
@@ -35,7 +34,7 @@ public class IslandInfo implements ISurveyInfo{
 			try{
 				ResourceLocation fluidRL = ResourceLocation.parse(tag.getString("fluid"));
 				
-				Fluid fluid = ForgeRegistries.FLUIDS.getValue(fluidRL);
+				Fluid fluid = RegistryUtils.getFluidFromRegistryName(fluidRL);
 				if(fluid != null){
 					this.fluidStack = new FluidStack(fluid, 1);
 				}

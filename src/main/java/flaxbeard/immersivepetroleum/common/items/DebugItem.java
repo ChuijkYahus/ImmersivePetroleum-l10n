@@ -28,10 +28,10 @@ import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.InputEvent;
-import net.minecraftforge.fluids.FluidStack;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.fluids.FluidStack;
 
 import javax.annotation.Nonnull;
@@ -67,9 +67,8 @@ public class DebugItem extends IPItemBase{
 		return Component.literal("IP Debugging Tool").withStyle(ChatFormatting.LIGHT_PURPLE);
 	}
 	
-	@OnlyIn(Dist.CLIENT)
 	@Override
-	public void appendHoverText(@Nonnull ItemStack stack, Level worldIn, List<Component> tooltip, @Nonnull TooltipFlag flagIn){
+	public void appendHoverText(@Nonnull ItemStack stack, @Nonnull TooltipContext ctx, List<Component> tooltip, @Nonnull TooltipFlag flag){
 		tooltip.add(Component.literal("[Shift + Scroll-UP/DOWN] Change mode.").withStyle(ChatFormatting.GRAY));
 		Modes mode = getMode(stack);
 		if(mode == Modes.DISABLED){
@@ -79,7 +78,7 @@ public class DebugItem extends IPItemBase{
 		}
 		
 		tooltip.add(Component.literal("You're not supposed to have this.").withStyle(ChatFormatting.DARK_RED));
-		super.appendHoverText(stack, worldIn, tooltip, flagIn);
+		super.appendHoverText(stack, ctx, tooltip, flag);
 	}
 	
 	@Override
@@ -153,7 +152,7 @@ public class DebugItem extends IPItemBase{
 								island.getCapacity(),
 								pressure,
 								ReservoirIsland.getFlow(pressure),
-								new FluidStack(island.getFluid(), 1).getDisplayName().getString());
+								new FluidStack(island.getFluid(), 1).getHoverName().getString());
 						
 						playerIn.displayClientMessage(Component.literal(out), true);
 						
@@ -303,7 +302,7 @@ public class DebugItem extends IPItemBase{
 	
 	public static class ClientInputHandler{
 		
-		public static void onSneakScrolling(InputEvent.MouseScrollingEvent event, Player player, double scrollDelta, boolean isSneaking){
+		public static void onSneakScrolling(InputEvent.MouseScrollingEvent event, Player player, double scrollDelta){
 			ItemStack mainItem = player.getMainHandItem();
 			ItemStack secondItem = player.getOffhandItem();
 			boolean main = !mainItem.isEmpty() && mainItem.getItem() == IPContent.DEBUGITEM.get();

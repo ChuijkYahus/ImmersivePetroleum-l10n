@@ -17,6 +17,8 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
 
+import javax.annotation.Nonnull;
+
 public class MolotovItem extends IPItemBase{
 	private static final int SECONDS = 15;
 	
@@ -40,7 +42,7 @@ public class MolotovItem extends IPItemBase{
 	}
 	
 	@Override
-	public void inventoryTick(ItemStack pStack, Level pLevel, Entity pEntity, int pSlotId, boolean pIsSelected){
+	public void inventoryTick(@Nonnull ItemStack pStack, @Nonnull Level pLevel, @Nonnull Entity pEntity, int pSlotId, boolean pIsSelected){
 		super.inventoryTick(pStack, pLevel, pEntity, pSlotId, pIsSelected);
 		
 		if(this.isLit && pEntity instanceof Player player){
@@ -65,8 +67,9 @@ public class MolotovItem extends IPItemBase{
 		}
 	}
 	
+	@Nonnull
 	@Override
-	public InteractionResultHolder<ItemStack> use(Level pLevel, Player pPlayer, InteractionHand pUsedHand){
+	public InteractionResultHolder<ItemStack> use(@Nonnull Level pLevel, @Nonnull Player pPlayer, @Nonnull InteractionHand pUsedHand){
 		if(this.isLit){
 			ItemStack stack = pPlayer.getItemInHand(pUsedHand);
 			if(stack.isDamaged() && !pLevel.isClientSide){
@@ -95,8 +98,9 @@ public class MolotovItem extends IPItemBase{
 		}
 	}
 	
+	@Nonnull
 	@Override
-	public ItemStack finishUsingItem(ItemStack pStack, Level pLevel, LivingEntity pLivingEntity){
+	public ItemStack finishUsingItem(@Nonnull ItemStack pStack, @Nonnull Level pLevel, @Nonnull LivingEntity pLivingEntity){
 		if(!this.isLit && pLivingEntity instanceof Player player){
 			ItemStack mainStack = player.getItemInHand(InteractionHand.MAIN_HAND);
 			ItemStack offStack = player.getItemInHand(InteractionHand.OFF_HAND);
@@ -116,13 +120,14 @@ public class MolotovItem extends IPItemBase{
 		return pStack;
 	}
 	
+	@Nonnull
 	@Override
-	public UseAnim getUseAnimation(ItemStack pStack){
+	public UseAnim getUseAnimation(@Nonnull ItemStack pStack){
 		return UseAnim.BOW;
 	}
 	
 	@Override
-	public int getUseDuration(ItemStack pStack){
+	public int getUseDuration(@Nonnull ItemStack stack, @Nonnull LivingEntity living){
 		return 20;
 	}
 }

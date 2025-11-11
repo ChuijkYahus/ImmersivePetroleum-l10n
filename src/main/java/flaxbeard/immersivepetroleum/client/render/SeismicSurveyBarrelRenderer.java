@@ -11,15 +11,15 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.client.model.data.ModelData;
+import net.minecraft.client.resources.model.ModelResourceLocation;
+import net.neoforged.neoforge.client.model.data.ModelData;
 
 import javax.annotation.Nonnull;
 import java.util.List;
 
 public class SeismicSurveyBarrelRenderer implements BlockEntityRenderer<SeismicSurveyTileEntity>{
 	
-	public static final ResourceLocation BARREL = ResourceUtils.ip("block/dyn/seismic_survey_tool_barrel");
+	public static final ModelResourceLocation BARREL = ResourceUtils.ipModel("block/dyn/seismic_survey_tool_barrel");
 	
 	@Override
 	public boolean shouldRenderOffScreen(@Nonnull SeismicSurveyTileEntity pBlockEntity){
@@ -43,7 +43,7 @@ public class SeismicSurveyBarrelRenderer implements BlockEntityRenderer<SeismicS
 			Pose last = matrix.last();
 			VertexConsumer solid = buffer.getBuffer(RenderType.solid());
 			for(BakedQuad quad: quads){
-				solid.putBulkData(last, quad, 1.0F, 1.0F, 1.0F, light, overlay);
+				solid.putBulkData(last, quad, 1.0F, 1.0F, 1.0F, 1.0F, light, overlay);
 			}
 		}
 		matrix.popPose();

@@ -13,8 +13,8 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import javax.annotation.Nonnull;
 
@@ -64,19 +64,19 @@ public class MotorboatRenderer extends EntityRenderer<MotorboatEntity>{
 				this.modelBoat.propeller.xRot = entity.propellerXRot * Mth.DEG_TO_RAD;
 				
 				float pr = entity.isEmergency() ? 0F : entity.propellerYRotation;
-				if(entity.isLeftInDown() && !entity.isRightInDown() && pr > -1)
+				if(entity.isLeftDown() && !entity.isRightDown() && pr > -1)
 					pr = pr - 0.1F * partialTicks;
 				
-				if(entity.isRightInDown() && !entity.isLeftInDown() && pr < 1)
+				if(entity.isRightDown() && !entity.isLeftDown() && pr < 1)
 					pr = pr + 0.1F * partialTicks;
 				
-				if(!entity.isLeftInDown() && !entity.isRightInDown())
+				if(!entity.isLeftDown() && !entity.isRightDown())
 					pr = (float) (pr * Math.pow(0.7, partialTicks));
 				
 				this.modelBoat.propellerAssembly.yRot = (float) Math.toRadians(pr * 15);
 			}
 			
-			this.modelBoat.renderToBuffer(matrix, bufferIn.getBuffer(this.modelBoat.renderType(getEntityTexture(entity.isFireproof))), packedLight, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
+			this.modelBoat.renderToBuffer(matrix, bufferIn.getBuffer(this.modelBoat.renderType(getEntityTexture(entity.isFireproof))), packedLight, OverlayTexture.NO_OVERLAY);
 			
 			if(entity.hasPaddles){
 				VertexConsumer vbuilder_normal = bufferIn.getBuffer(this.modelBoat.renderType(texture));
@@ -95,15 +95,15 @@ public class MotorboatRenderer extends EntityRenderer<MotorboatEntity>{
 				this.modelBoat.ruddersBase.render(matrix, vbuilder_armored, packedLight, OverlayTexture.NO_OVERLAY);
 				
 				float pr = entity.propellerYRotation;
-				if(entity.isLeftInDown() && !entity.isRightInDown() && pr > -1){
+				if(entity.isLeftDown() && !entity.isRightDown() && pr > -1){
 					pr = pr - 0.1F * partialTicks;
 				}
 				
-				if(entity.isRightInDown() && !entity.isLeftInDown() && pr < 1){
+				if(entity.isRightDown() && !entity.isLeftDown() && pr < 1){
 					pr = pr + 0.1F * partialTicks;
 				}
 				
-				if(!entity.isLeftInDown() && !entity.isRightInDown()){
+				if(!entity.isLeftDown() && !entity.isRightDown()){
 					pr = (float) (pr * Math.pow(0.7F, partialTicks));
 				}
 				

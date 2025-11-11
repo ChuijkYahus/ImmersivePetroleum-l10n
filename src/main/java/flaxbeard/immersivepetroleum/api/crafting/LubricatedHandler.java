@@ -10,6 +10,7 @@ import blusunrize.immersiveengineering.api.tool.ChemthrowerHandler;
 import blusunrize.immersiveengineering.common.config.IEServerConfig;
 import com.mojang.blaze3d.vertex.PoseStack;
 import flaxbeard.immersivepetroleum.common.blocks.tileentities.AutoLubricatorTileEntity;
+import flaxbeard.immersivepetroleum.common.util.RegistryUtils;
 import flaxbeard.immersivepetroleum.common.util.Utils;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -22,6 +23,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.animal.IronGolem;
 import net.minecraft.world.entity.player.Player;
@@ -30,9 +32,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.HitResult;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -111,7 +113,7 @@ public class LubricatedHandler{
 			this.pos = new BlockPos(x, y, z);
 			this.ticks = ticks;
 			
-			this.lubricant = ForgeRegistries.FLUIDS.getValue(ResourceLocation.parse(lubricantName));
+			this.lubricant = RegistryUtils.getFluidFromRegistryName(ResourceLocation.parse(lubricantName));
 			if(this.lubricant == null){
 				this.lubricant = Fluids.EMPTY;
 			}
@@ -125,7 +127,7 @@ public class LubricatedHandler{
 			tag.putInt("y", this.pos.getY());
 			tag.putInt("z", this.pos.getZ());
 			tag.putString("world", this.world.location().toString());
-			tag.putString("lubricant", ForgeRegistries.FLUIDS.getKey(this.lubricant).toString());
+			tag.putString("lubricant", RegistryUtils.getRegistryNameOf(this.lubricant).toString());
 			
 			return tag;
 		}
@@ -176,7 +178,7 @@ public class LubricatedHandler{
 	
 	public static class LubricantEffect extends ChemthrowerHandler.ChemthrowerEffect{
 		@Override
-		public void applyToEntity(LivingEntity target, Player shooter, ItemStack thrower, Fluid fluid){
+		public void applyToEntity(LivingEntity target, @Nullable Player shooter, @Nullable Entity projectile, ItemStack thrower, Fluid fluid){
 			if(!(target instanceof IronGolem) && !LubricantHandler.isValidLube(fluid))
 				return;
 			
@@ -199,7 +201,7 @@ public class LubricatedHandler{
 		}
 		
 		@Override
-		public void applyToBlock(Level level, HitResult hit, Player shooter, ItemStack thrower, Fluid fluid){
+		public void applyToBlock(Level level, HitResult hit, @Nullable Player shooter, @Nullable Entity projectile, ItemStack thrower, Fluid fluid){
 			if(!LubricantHandler.isValidLube(fluid))
 				return;
 			

@@ -9,6 +9,7 @@ import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.math.Axis;
 import flaxbeard.immersivepetroleum.client.gui.elements.GuiReactiveList;
 import flaxbeard.immersivepetroleum.client.render.IPRenderTypes;
+import flaxbeard.immersivepetroleum.client.render.RenderUtils;
 import flaxbeard.immersivepetroleum.client.utils.MCUtil;
 import flaxbeard.immersivepetroleum.common.util.ResourceUtils;
 import flaxbeard.immersivepetroleum.common.util.projector.Settings;
@@ -218,7 +219,7 @@ public class ProjectorScreen extends Screen{
 		if(this.settings.getMultiblock() != null){
 			IMultiblock mb = this.settings.getMultiblock();
 			
-			MultiBufferSource.BufferSource buffer = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
+			MultiBufferSource.BufferSource buffer = RenderUtils.immediate();
 			try{
 				
 				this.rotation += 1.5F * partialTicks;

@@ -15,6 +15,8 @@ import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import flaxbeard.immersivepetroleum.api.reservoir.ReservoirHandler;
+import flaxbeard.immersivepetroleum.client.render.IPRenderTypes;
+import flaxbeard.immersivepetroleum.client.render.RenderUtils;
 import flaxbeard.immersivepetroleum.client.utils.MCUtil;
 import flaxbeard.immersivepetroleum.common.CommonEventHandler;
 import flaxbeard.immersivepetroleum.common.IPContent;
@@ -22,6 +24,7 @@ import flaxbeard.immersivepetroleum.common.entity.MotorboatEntity;
 import flaxbeard.immersivepetroleum.common.items.DebugItem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
@@ -41,6 +44,7 @@ import net.neoforged.neoforge.client.event.RenderLevelStageEvent.Stage;
 import net.neoforged.neoforge.client.event.RenderPlayerEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.neoforged.neoforge.fluids.FluidStack;
+import org.joml.Matrix4f;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -79,19 +83,18 @@ public class ClientEventHandler{
 			List<Component> debugOut = new ArrayList<>();
 			
 			if(!debugOut.isEmpty()){
-				PoseStack matrix = event.getGuiGraphics().pose();
+				GuiGraphics guiGraphics = event.getGuiGraphics();
+				PoseStack matrix = guiGraphics.pose();
 				matrix.pushPose();
-				MultiBufferSource.BufferSource buffer = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
 				for(int i = 0;i < debugOut.size();i++){
 					int w = ClientUtils.font().width(debugOut.get(i).getString());
 					int yOff = i * (ClientUtils.font().lineHeight + 2);
 					
 					matrix.pushPose();
 					matrix.translate(0, 0, 1);
-					GuiHelper.drawColouredRect(1, 1 + yOff, w + 1, 10, 0xAF_000000, buffer, matrix);
-					buffer.endBatch();
+					RenderUtils.drawColouredRect(guiGraphics, 1, 1 + yOff, w + 1, 10);
 					// Draw string without shadow
-					event.getGuiGraphics().drawString(ClientUtils.font(), debugOut.get(i), 2, 2 + yOff, -1, false);
+					guiGraphics.drawString(ClientUtils.font(), debugOut.get(i), 2, 2 + yOff, -1, false);
 					matrix.popPose();
 				}
 				matrix.popPose();
@@ -117,8 +120,8 @@ public class ClientEventHandler{
 						int col = 0xffffff;
 						for(int i = 0;i < text.length;i++){
 							if(text[i] != null){
-								int fx = event.getWindow().getGuiScaledWidth() / 2 + 8;
-								int fy = event.getWindow().getGuiScaledHeight() / 2 + 8 + i * font.lineHeight;
+								int fx = event.getGuiGraphics().guiWidth() / 2 + 8;
+								int fy = event.getGuiGraphics().guiHeight() / 2 + 8 + i * font.lineHeight;
 								event.getGuiGraphics().drawString(font, text[i], fx, fy, col);
 							}
 						}
@@ -132,7 +135,8 @@ public class ClientEventHandler{
 	public void onRenderOverlayPost(RenderGuiLayerEvent.Post event){
 		if(MCUtil.getPlayer() != null && event.getName() == VanillaGuiLayers.HOTBAR){
 			Player player = MCUtil.getPlayer();
-			PoseStack matrix = event.getGuiGraphics().pose();
+			GuiGraphics guiGraphics = event.getGuiGraphics();
+			PoseStack matrix = guiGraphics.pose();
 			
 			if(player.getVehicle() instanceof MotorboatEntity motorboat){
 				int offset = 0;
@@ -156,70 +160,75 @@ public class ClientEventHandler{
 					}
 				}
 				
-				matrix.pushPose();
-				{
-					int scaledWidth = MCUtil.getWindow().getGuiScaledWidth();
-					int scaledHeight = MCUtil.getWindow().getGuiScaledHeight();
-					
-					MultiBufferSource.BufferSource buffer = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
-					VertexConsumer builder = ItemOverlayUtils.getHudElementsBuilder(buffer);
-					
-					int rightOffset = 0;
-					if(MCUtil.getOptions().showSubtitles().get())
-						rightOffset += 100;
-					float dx = scaledWidth - rightOffset - 16;
-					float dy = scaledHeight + offset;
+				// FIXME
+				boolean enable = false;
+				if(enable){
 					matrix.pushPose();
 					{
-						matrix.translate(dx, dy, 0);
-						GuiHelper.drawTexturedRect(builder, matrix, -24, -68, 31, 62, 256f, 179, 210, 9, 71);
+						int scaledWidth = guiGraphics.guiWidth();
+						int scaledHeight = guiGraphics.guiWidth();
 						
-						matrix.translate(-23, -37, 0);
-						float capacity = motorboat.getMaxFuel();
-						if(capacity > 0){
-							FluidStack fuel = motorboat.getContainedFluid();
-							int amount = fuel.getAmount();
-							float angle = 83 - (166 * amount / capacity);
-							matrix.pushPose();
-							matrix.mulPose(Axis.ZP.rotationDegrees(angle));
-							GuiHelper.drawTexturedRect(builder, matrix, 6, -2, 24, 4, 256f, 91, 123, 80, 87);
-							matrix.popPose();
-							matrix.translate(23, 37, 0);
-							
-							GuiHelper.drawTexturedRect(builder, matrix, -41, -73, 53, 72, 256f, 8, 61, 4, 76);
-						}
-					}
-					matrix.popPose();
-					
-					buffer.endBatch();
-					
-					if(holdingDebugItem && MCUtil.getFont() != null){
+						MultiBufferSource.BufferSource buffer = event.getGuiGraphics().bufferSource();
+						//MultiBufferSource.BufferSource buffer = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
+						VertexConsumer builder = null;//ItemOverlayUtils.getHudElementsBuilder(buffer);
+						
+						int rightOffset = 0;
+						if(MCUtil.getOptions().showSubtitles().get())
+							rightOffset += 100;
+						float dx = scaledWidth - rightOffset - 16;
+						float dy = scaledHeight + offset;
 						matrix.pushPose();
 						{
-							Font font = MCUtil.getFont();
+							matrix.translate(dx, dy, 0);
+							GuiHelper.drawTexturedRect(builder, matrix, -24, -68, 31, 62, 256f, 179, 210, 9, 71);
 							
-							int capacity = motorboat.getMaxFuel();
-							FluidStack fs = motorboat.getContainedFluid();
-							int amount = (fs == FluidStack.EMPTY || fs.getFluid() == null) ? 0 : fs.getAmount();
-							
-							Vec3 vec = motorboat.getDeltaMovement();
-							float speed = (float) Math.sqrt(vec.x * vec.x + vec.z * vec.z);
-							
-							String[] array = {
-									String.format(Locale.US, "Fuel: %05d/%d mB (%s)", amount, capacity, fs.getDisplayName().getString()),
-									String.format(Locale.US, "Speed: %.3f", speed),
-									String.format(Locale.US, "PropXRot: %07.3f° (%.3frad)", motorboat.propellerXRot, motorboat.propellerXRot * Mth.DEG_TO_RAD),
-									String.format(Locale.US, "PropSpeed: %06.3f°", motorboat.propellerXRotSpeed),
-							};
-							int w = 3, h = 3;
-							for(int i = 0;i < array.length;i++){
-								event.getGuiGraphics().drawString(font, array[i], w, h + (9 * i), -1);
+							matrix.translate(-23, -37, 0);
+							float capacity = motorboat.getMaxFuel();
+							if(capacity > 0){
+								FluidStack fuel = motorboat.getContainedFluid();
+								int amount = fuel.getAmount();
+								float angle = 83 - (166 * amount / capacity);
+								matrix.pushPose();
+								matrix.mulPose(Axis.ZP.rotationDegrees(angle));
+								GuiHelper.drawTexturedRect(builder, matrix, 6, -2, 24, 4, 256f, 91, 123, 80, 87);
+								matrix.popPose();
+								matrix.translate(23, 37, 0);
+								
+								GuiHelper.drawTexturedRect(builder, matrix, -41, -73, 53, 72, 256f, 8, 61, 4, 76);
 							}
 						}
 						matrix.popPose();
+						
+						buffer.endBatch();
+						
+						if(holdingDebugItem && MCUtil.getFont() != null){
+							matrix.pushPose();
+							{
+								Font font = MCUtil.getFont();
+								
+								int capacity = motorboat.getMaxFuel();
+								FluidStack fs = motorboat.getContainedFluid();
+								int amount = (fs == FluidStack.EMPTY || fs.getFluid() == null) ? 0 : fs.getAmount();
+								
+								Vec3 vec = motorboat.getDeltaMovement();
+								float speed = (float) Math.sqrt(vec.x * vec.x + vec.z * vec.z);
+								
+								String[] array = {
+									String.format(Locale.US, "Fuel: %05d/%d mB (%s)", amount, capacity, fs.getHoverName().getString()),
+									String.format(Locale.US, "Speed: %.3f", speed),
+									String.format(Locale.US, "PropXRot: %07.3f° (%.3frad)", motorboat.propellerXRot, motorboat.propellerXRot * Mth.DEG_TO_RAD),
+									String.format(Locale.US, "PropSpeed: %06.3f°", motorboat.propellerXRotSpeed),
+									};
+								int w = 3, h = 3;
+								for(int i = 0;i < array.length;i++){
+									guiGraphics.drawString(font, array[i], w, h + (9 * i), -1);
+								}
+							}
+							matrix.popPose();
+						}
 					}
+					matrix.popPose();
 				}
-				matrix.popPose();
 			}
 		}
 	}

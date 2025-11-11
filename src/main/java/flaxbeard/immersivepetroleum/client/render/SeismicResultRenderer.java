@@ -6,7 +6,6 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import flaxbeard.immersivepetroleum.client.render.dyn.DynamicTextureWrapper;
 import flaxbeard.immersivepetroleum.client.utils.MCUtil;
-import flaxbeard.immersivepetroleum.common.IPContent;
 import flaxbeard.immersivepetroleum.common.items.SurveyResultItem;
 import flaxbeard.immersivepetroleum.common.util.ResourceUtils;
 import flaxbeard.immersivepetroleum.common.util.survey.ISurveyInfo;
@@ -14,10 +13,8 @@ import flaxbeard.immersivepetroleum.common.util.survey.SurveyScan;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.client.event.RenderHandEvent;
-import net.minecraftforge.client.event.RenderItemInFrameEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.client.event.RenderItemInFrameEvent;
 import org.joml.Matrix4f;
 
 /**
@@ -38,7 +35,7 @@ public class SeismicResultRenderer{
 				if(wrapper != null){
 					PoseStack matrix = event.getPoseStack();
 					// MultiBufferSource buffer = event.getMultiBufferSource(); // Breaks things left and right
-					MultiBufferSource.BufferSource buffer = MultiBufferSource.immediate(TESSELATOR.getBuilder());
+					MultiBufferSource.BufferSource buffer = RenderUtils.immediate();
 					
 					matrix.pushPose();
 					{
@@ -56,10 +53,10 @@ public class SeismicResultRenderer{
 							VertexConsumer builder = buffer.getBuffer(wrapper.renderType);
 							Matrix4f mat = matrix.last().pose();
 							
-							builder.vertex(mat, 0, 0, 0).color(-1).uv(1, 1).uv2(light).endVertex();
-							builder.vertex(mat, 0, b, 0).color(-1).uv(1, 0).uv2(light).endVertex();
-							builder.vertex(mat, a, b, 0).color(-1).uv(0, 0).uv2(light).endVertex();
-							builder.vertex(mat, a, 0, 0).color(-1).uv(0, 1).uv2(light).endVertex();
+							builder.addVertex(mat, 0, 0, 0).setColor(-1).setUv(1, 1).setLight(light);
+							builder.addVertex(mat, 0, b, 0).setColor(-1).setUv(1, 0).setLight(light);
+							builder.addVertex(mat, a, b, 0).setColor(-1).setUv(0, 0).setLight(light);
+							builder.addVertex(mat, a, 0, 0).setColor(-1).setUv(0, 1).setLight(light);
 						}
 						matrix.popPose();
 						
@@ -74,10 +71,10 @@ public class SeismicResultRenderer{
 							VertexConsumer builder = buffer.getBuffer(RenderType.text(OVERLAY));
 							Matrix4f mat = matrix.last().pose();
 							
-							builder.vertex(mat, 0, 0, 0).color(-1).uv(0, 0).uv2(light).endVertex();
-							builder.vertex(mat, 0, h, 0).color(-1).uv(0, 1).uv2(light).endVertex();
-							builder.vertex(mat, w, h, 0).color(-1).uv(1, 1).uv2(light).endVertex();
-							builder.vertex(mat, w, 0, 0).color(-1).uv(1, 0).uv2(light).endVertex();
+							builder.addVertex(mat, 0, 0, 0).setColor(-1).setUv(0, 0).setLight(light);
+							builder.addVertex(mat, 0, h, 0).setColor(-1).setUv(0, 1).setLight(light);
+							builder.addVertex(mat, w, h, 0).setColor(-1).setUv(1, 1).setLight(light);
+							builder.addVertex(mat, w, 0, 0).setColor(-1).setUv(1, 0).setLight(light);
 						}
 						matrix.popPose();
 					}

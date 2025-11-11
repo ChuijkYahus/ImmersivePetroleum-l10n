@@ -67,7 +67,7 @@ public class RecipeReloadListener implements ResourceManagerReloadListener{
 	}
 	
 	static <R extends Recipe<?>> Map<ResourceLocation, R> filterRecipes(Collection<RecipeHolder<?>> recipes, Class<R> recipeClass, IERecipeTypes.TypeWithClass<R> recipeType){
-		// FIXME A.S.A.P
+		// FIXME
 		return recipes.stream()
 				.map(RecipeHolder::value)
 				.filter(iRecipe -> iRecipe.getType() == recipeType.get())
