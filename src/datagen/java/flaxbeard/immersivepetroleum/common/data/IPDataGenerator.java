@@ -1,22 +1,19 @@
 package flaxbeard.immersivepetroleum.common.data;
 
 import flaxbeard.immersivepetroleum.ImmersivePetroleum;
-import flaxbeard.immersivepetroleum.common.data.loot.IPBlockLoot;
-import flaxbeard.immersivepetroleum.common.data.loot.IPLoot;
+import flaxbeard.immersivepetroleum.common.data.loot.IPLootGenerator;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.data.DataProvider;
-import net.minecraft.data.loot.LootTableProvider;
-import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
-import net.minecraftforge.common.data.ExistingFileHelper;
-import net.minecraftforge.data.event.GatherDataEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
+import net.minecraft.data.PackOutput;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.common.EventBusSubscriber.Bus;
+import net.neoforged.neoforge.common.data.ExistingFileHelper;
+import net.neoforged.neoforge.data.event.GatherDataEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -26,37 +23,31 @@ public class IPDataGenerator{
 	
 	@SubscribeEvent
 	public static void generate(GatherDataEvent event){
-		DataGenerator generator = event.getGenerator();
-		ExistingFileHelper exhelper = event.getExistingFileHelper();
-		//StaticTemplateManager.EXISTING_HELPER = exhelper;
-		CompletableFuture<HolderLookup.Provider> provider = event.getLookupProvider();
+		final ExistingFileHelper exHelper = event.getExistingFileHelper();
+		final DataGenerator generator = event.getGenerator();
+		final PackOutput output = generator.getPackOutput();
+		final CompletableFuture<HolderLookup.Provider> provider = event.getLookupProvider();
 		
 		if(event.includeServer()){
-			IPBlockTags blockTags = new IPBlockTags(generator, provider, exhelper);
+			IPBlockTags blockTags = new IPBlockTags(output, provider, exHelper);
 			generator.addProvider(true, blockTags);
-			generator.addProvider(true, new IPItemTags(generator, provider, blockTags, exhelper));
-			generator.addProvider(true, new IPFluidTags(generator, provider, exhelper));
-			generator.addProvider(true, new LootTableProvider(generator.getPackOutput(), Collections.emptySet(), List.of(
-					new LootTableProvider.SubProviderEntry(IPBlockLoot::new, LootContextParamSets.BLOCK),
-					new LootTableProvider.SubProviderEntry(IPLoot::new, LootContextParamSets.ADVANCEMENT_REWARD)
-			)));
-			generator.addProvider(true, new IPRecipes(generator));
-			generator.addProvider(true, new IPAdvancements(generator, provider, exhelper));
+			generator.addProvider(true, new IPItemTags(output, provider, blockTags.contentsGetter(), exHelper));
+			generator.addProvider(true, new IPFluidTags(output, provider, exHelper));
+			generator.addProvider(true, new IPLootGenerator(output, provider));
+			generator.addProvider(true, new IPRecipes(output, provider));
+			generator.addProvider(true, new IPAdvancements(output, provider, exHelper));
 			
-			generator.addProvider(true, new IPBlockStates(generator, exhelper));
-			generator.addProvider(true, new IPItemModels(generator, exhelper));
+			generator.addProvider(true, new IPBlockStates(output, exHelper));
+			generator.addProvider(true, new IPItemModels(output, exHelper));
 			
-			List<DataProvider> providers = IPWorldGen.makeProviders(generator.getPackOutput(), provider);
-			if (providers != null && !providers.isEmpty())
-			{
-				for(final DataProvider data : providers)
-				{
+			List<DataProvider> providers = IPWorldGen.makeProviders(output, provider);
+			if(!providers.isEmpty()){
+				for(final DataProvider data: providers){
 					generator.addProvider(true, data);
 				}
 			}
 			
-			generator.addProvider(true, new IPMultiblockTexturesAttach(generator.getPackOutput(), exhelper));
-			//IPBiomeModifierProvider.method(generator, exhelper, d -> generator.addProvider(true, d));
+			generator.addProvider(true, new IPMultiblockTexturesAttach(output, provider, exHelper));
 		}
 	}
 }

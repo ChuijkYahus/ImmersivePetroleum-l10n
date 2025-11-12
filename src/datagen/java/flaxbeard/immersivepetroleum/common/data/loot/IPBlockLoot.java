@@ -6,6 +6,7 @@ import flaxbeard.immersivepetroleum.common.IPContent;
 import flaxbeard.immersivepetroleum.common.IPRegisters;
 import flaxbeard.immersivepetroleum.common.util.loot.IPTileDropLootEntry;
 import net.minecraft.advancements.critereon.StatePropertiesPredicate;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.data.loot.BlockLootSubProvider;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.flag.FeatureFlags;
@@ -24,7 +25,7 @@ import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
 import net.minecraft.world.level.storage.loot.predicates.ExplosionCondition;
 import net.minecraft.world.level.storage.loot.predicates.LootItemBlockStatePropertyCondition;
 import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
-import net.minecraftforge.registries.RegistryObject;
+import net.neoforged.neoforge.registries.DeferredHolder;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -32,39 +33,38 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class IPBlockLoot extends BlockLootSubProvider{
-	private static final Set<Item> EXPLOSION_RESISTANT = Stream.of(
-					Blocks.DRAGON_EGG,
-					Blocks.BEACON,
-					Blocks.CONDUIT,
-					Blocks.SKELETON_SKULL,
-					Blocks.WITHER_SKELETON_SKULL,
-					Blocks.PLAYER_HEAD,
-					Blocks.ZOMBIE_HEAD,
-					Blocks.CREEPER_HEAD,
-					Blocks.DRAGON_HEAD,
-					Blocks.PIGLIN_HEAD,
-					Blocks.SHULKER_BOX,
-					Blocks.BLACK_SHULKER_BOX,
-					Blocks.BLUE_SHULKER_BOX,
-					Blocks.BROWN_SHULKER_BOX,
-					Blocks.CYAN_SHULKER_BOX,
-					Blocks.GRAY_SHULKER_BOX,
-					Blocks.GREEN_SHULKER_BOX,
-					Blocks.LIGHT_BLUE_SHULKER_BOX,
-					Blocks.LIGHT_GRAY_SHULKER_BOX,
-					Blocks.LIME_SHULKER_BOX,
-					Blocks.MAGENTA_SHULKER_BOX,
-					Blocks.ORANGE_SHULKER_BOX,
-					Blocks.PINK_SHULKER_BOX,
-					Blocks.PURPLE_SHULKER_BOX,
-					Blocks.RED_SHULKER_BOX,
-					Blocks.WHITE_SHULKER_BOX,
-					Blocks.YELLOW_SHULKER_BOX).
-			map(ItemLike::asItem).
-			collect(Collectors.toSet());
-
-	public IPBlockLoot() {
-		super(EXPLOSION_RESISTANT, FeatureFlags.REGISTRY.allFlags());
+	private static final Set<Item> EXPLOSION_RESISTANT = Stream.of(new Block[]{
+		Blocks.DRAGON_EGG,
+		Blocks.BEACON,
+		Blocks.CONDUIT,
+		Blocks.SKELETON_SKULL,
+		Blocks.WITHER_SKELETON_SKULL,
+		Blocks.PLAYER_HEAD,
+		Blocks.ZOMBIE_HEAD,
+		Blocks.CREEPER_HEAD,
+		Blocks.DRAGON_HEAD,
+		Blocks.PIGLIN_HEAD,
+		Blocks.SHULKER_BOX,
+		Blocks.BLACK_SHULKER_BOX,
+		Blocks.BLUE_SHULKER_BOX,
+		Blocks.BROWN_SHULKER_BOX,
+		Blocks.CYAN_SHULKER_BOX,
+		Blocks.GRAY_SHULKER_BOX,
+		Blocks.GREEN_SHULKER_BOX,
+		Blocks.LIGHT_BLUE_SHULKER_BOX,
+		Blocks.LIGHT_GRAY_SHULKER_BOX,
+		Blocks.LIME_SHULKER_BOX,
+		Blocks.MAGENTA_SHULKER_BOX,
+		Blocks.ORANGE_SHULKER_BOX,
+		Blocks.PINK_SHULKER_BOX,
+		Blocks.PURPLE_SHULKER_BOX,
+		Blocks.RED_SHULKER_BOX,
+		Blocks.WHITE_SHULKER_BOX,
+		Blocks.YELLOW_SHULKER_BOX
+	}).map(ItemLike::asItem).collect(Collectors.toSet());
+	
+	public IPBlockLoot(HolderLookup.Provider provider){
+		super(EXPLOSION_RESISTANT, FeatureFlags.REGISTRY.allFlags(), provider);
 	}
 	
 	@Override
@@ -76,10 +76,10 @@ public class IPBlockLoot extends BlockLootSubProvider{
 		registerSelfDropping(IPContent.Blocks.PETCOKE.get());
 		registerSelfDropping(IPContent.Blocks.SEISMIC_SURVEY.get());
 		registerSelfDropping(IPContent.Blocks.PARAFFIN_WAX.get());
-
+		
 		register(IPContent.Blocks.GAS_GENERATOR.get(), tileDrop());
 		register(IPContent.Blocks.AUTO_LUBRICATOR.get(), tileDrop());
-
+		
 		registerMultiblock(IPContent.Multiblock.DISTILLATIONTOWER.block().get());
 		registerMultiblock(IPContent.Multiblock.PUMPJACK.block().get());
 		registerMultiblock(IPContent.Multiblock.HYDROTREATER.block().get());
@@ -90,17 +90,21 @@ public class IPBlockLoot extends BlockLootSubProvider{
 	
 	@Override
 	protected Iterable<Block> getKnownBlocks(){
+		//@formatter:off
 		return IPRegisters.BLOCK_REGISTER.getEntries().
 				stream().
-				map(RegistryObject::get).
+				map(DeferredHolder::get).
 				filter(block -> !block.getLootTable().equals(BuiltInLootTables.EMPTY)).
 				collect(Collectors.toList());
+		//@formatter:on
 	}
-
+	
 	private <S extends SlabBlock> void createSlabItemTable(S block){
+		//@formatter:off
 		LootPoolSingletonContainer.Builder<?> b = LootItem.lootTableItem(block)
 			.apply(SetItemCountFunction.setCount(ConstantValue.exactly(2.0F)).when(LootItemBlockStatePropertyCondition.hasBlockStateProperties(block)
 					.setProperties(StatePropertiesPredicate.Builder.properties().hasProperty(SlabBlock.TYPE, SlabType.DOUBLE))));
+		//@formatter:on
 		
 		register(block, LootTable.lootTable().withPool(createPoolBuilder().setRolls(ConstantValue.exactly(1.0F)).add(b)));
 	}
@@ -133,7 +137,7 @@ public class IPBlockLoot extends BlockLootSubProvider{
 	
 	private void register(Block b, LootPool.Builder... pools){
 		LootTable.Builder builder = LootTable.lootTable();
-		for(LootPool.Builder pool:pools)
+		for(LootPool.Builder pool: pools)
 			builder.withPool(pool);
 		register(b, builder);
 	}

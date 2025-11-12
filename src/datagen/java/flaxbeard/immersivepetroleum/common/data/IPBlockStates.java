@@ -24,8 +24,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.data.DataGenerator;
+import net.minecraft.data.PackOutput;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
@@ -37,17 +38,15 @@ import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
-import net.minecraftforge.client.extensions.common.IClientFluidTypeExtensions;
-import net.minecraftforge.client.model.generators.BlockModelBuilder;
-import net.minecraftforge.client.model.generators.BlockStateProvider;
-import net.minecraftforge.client.model.generators.ConfiguredModel;
-import net.minecraftforge.client.model.generators.ItemModelBuilder;
-import net.minecraftforge.client.model.generators.ModelFile;
-import net.minecraftforge.client.model.generators.VariantBlockStateBuilder;
-import net.minecraftforge.client.model.generators.VariantBlockStateBuilder.PartialBlockstate;
-import net.minecraftforge.client.model.generators.loaders.ObjModelBuilder;
-import net.minecraftforge.common.data.ExistingFileHelper;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
+import net.neoforged.neoforge.client.model.generators.BlockModelBuilder;
+import net.neoforged.neoforge.client.model.generators.BlockStateProvider;
+import net.neoforged.neoforge.client.model.generators.ConfiguredModel;
+import net.neoforged.neoforge.client.model.generators.ItemModelBuilder;
+import net.neoforged.neoforge.client.model.generators.ModelFile;
+import net.neoforged.neoforge.client.model.generators.VariantBlockStateBuilder;
+import net.neoforged.neoforge.client.model.generators.loaders.ObjModelBuilder;
+import net.neoforged.neoforge.common.data.ExistingFileHelper;
 import org.apache.commons.lang3.mutable.Mutable;
 import org.apache.commons.lang3.mutable.MutableObject;
 
@@ -61,10 +60,10 @@ import java.util.stream.Stream;
 public class IPBlockStates extends BlockStateProvider{
 	final ExistingFileHelper exFileHelper;
 	private final NongeneratedModels nongeneratedModels;
-	public IPBlockStates(DataGenerator gen, ExistingFileHelper exFileHelper){
-		super(gen.getPackOutput(), ImmersivePetroleum.MODID, exFileHelper);
+	public IPBlockStates(PackOutput output, ExistingFileHelper exFileHelper){
+		super(output, ImmersivePetroleum.MODID, exFileHelper);
 		this.exFileHelper = exFileHelper;
-		this.nongeneratedModels = new NongeneratedModels(gen.getPackOutput(), exFileHelper);
+		this.nongeneratedModels = new NongeneratedModels(output, exFileHelper);
 	}
 	
 	@Override
@@ -106,10 +105,10 @@ public class IPBlockStates extends BlockStateProvider{
 			ResourceLocation wellPipeTexture = modLoc("block/well_pipe_top");
 			
 			ModelFile wellPipeModel = models().cubeBottomTop(wellPipeRL.toString(), ieConreteTexture, wellPipeTexture, wellPipeTexture);
-			ModelFile wellPipeModel_cracked = models().cubeBottomTop(wellPipeRL.toString() + "_cracked", concrete_cracked, wellPipeTexture, wellPipeTexture);
+			ModelFile wellPipeModel_cracked = models().cubeBottomTop(wellPipeRL + "_cracked", concrete_cracked, wellPipeTexture, wellPipeTexture);
 			
 			ModelFile wellPipeModel_cracked_mirrored = models()
-				.withExistingParent(wellPipeRL.toString() + "_cracked_mirrored", "block/cube_mirrored")
+				.withExistingParent(wellPipeRL + "_cracked_mirrored", "block/cube_mirrored")
 				.texture("down", wellPipeTexture)
 				.texture("up", wellPipeTexture)
 				.texture("north", concrete_cracked)
@@ -132,7 +131,7 @@ public class IPBlockStates extends BlockStateProvider{
 			Mutable<IClientFluidTypeExtensions> box = new MutableObject<>();
 			source.getFluidType().initializeClient(box::setValue);
 			ResourceLocation texture = box.getValue().getStillTexture();
-			ModelFile model = this.models().getBuilder("block/fluid/" + ForgeRegistries.FLUIDS.getKey(source).getPath())
+			ModelFile model = this.models().getBuilder("block/fluid/" + RegistryUtils.getRegistryNameOf(source).getPath())
 					.texture("particle", texture);
 			
 			getVariantBuilder(f.block().get()).partialState().setModels(new ConfiguredModel(model));
@@ -250,7 +249,7 @@ public class IPBlockStates extends BlockStateProvider{
 		
 		Stream<Vec3i> partsStream = mb.getStructure(null).stream()
 			.filter(info -> !info.state().isAir())
-			.map(info -> info.pos())
+			.map(StructureTemplate.StructureBlockInfo::pos)
 			.map(transform)
 			.map(p -> p.subtract(offset));
 		
@@ -274,17 +273,14 @@ public class IPBlockStates extends BlockStateProvider{
 		final ResourceLocation name = mb.getUniqueName();
 		if(TemplateMultiblock.SYNCED_CLIENT_TEMPLATES.containsKey(name))
 			return;
-		final String filePath = "structures/"+name.getPath()+".nbt";
+		final String filePath = "structures/" + name.getPath() + ".nbt";
 		int slash = filePath.indexOf('/');
 		String prefix = filePath.substring(0, slash);
-		ResourceLocation shortLoc = ResourceLocation.fromNamespaceAndPath(
-				name.getNamespace(),
-				filePath.substring(slash+1)
-		);
+		ResourceLocation shortLoc = ResourceLocation.fromNamespaceAndPath(name.getNamespace(), filePath.substring(slash + 1));
 		try{
-			final Resource resource = exFileHelper.getResource(shortLoc, PackType.SERVER_DATA, "", prefix);
+			final Resource resource = this.exFileHelper.getResource(shortLoc, PackType.SERVER_DATA, "", prefix);
 			try(final InputStream input = resource.open()){
-				final CompoundTag nbt = NbtIo.readCompressed(input);
+				final CompoundTag nbt = NbtIo.readCompressed(input, NbtAccounter.create(65536));
 				final StructureTemplate template = new StructureTemplate();
 				template.load(BuiltInRegistries.BLOCK.asLookup(), nbt);
 				TemplateMultiblock.SYNCED_CLIENT_TEMPLATES.put(name, template);
@@ -413,7 +409,7 @@ public class IPBlockStates extends BlockStateProvider{
 				}
 				
 			ModelFile model = mirrored ? mirroredModel : masterModel;
-				PartialBlockstate partialState = builder.partialState()
+				VariantBlockStateBuilder.PartialBlockstate partialState = builder.partialState()
 						//.with(isSlave, slave)
 						.with(facing, dir);
 				

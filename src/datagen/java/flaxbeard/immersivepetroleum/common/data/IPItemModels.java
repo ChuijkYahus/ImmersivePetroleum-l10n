@@ -7,27 +7,28 @@ import flaxbeard.immersivepetroleum.common.IPContent;
 import flaxbeard.immersivepetroleum.common.fluids.IPFluid;
 import flaxbeard.immersivepetroleum.common.util.RegistryUtils;
 import flaxbeard.immersivepetroleum.common.util.ResourceUtils;
-import net.minecraft.data.DataGenerator;
+import net.minecraft.data.PackOutput;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.material.Fluid;
-import net.minecraftforge.client.model.generators.ModelBuilder;
-import net.minecraftforge.client.model.generators.ModelProvider;
-import net.minecraftforge.client.model.generators.loaders.DynamicFluidContainerModelBuilder;
-import net.minecraftforge.client.model.generators.loaders.ObjModelBuilder;
-import net.minecraftforge.common.data.ExistingFileHelper;
-import net.minecraftforge.registries.RegistryObject;
+import net.neoforged.neoforge.client.model.generators.ModelBuilder;
+import net.neoforged.neoforge.client.model.generators.ModelProvider;
+import net.neoforged.neoforge.client.model.generators.loaders.DynamicFluidContainerModelBuilder;
+import net.neoforged.neoforge.client.model.generators.loaders.ObjModelBuilder;
+import net.neoforged.neoforge.common.data.ExistingFileHelper;
+import net.neoforged.neoforge.registries.DeferredHolder;
 import org.joml.Vector3f;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class IPItemModels extends ModelProvider<TRSRModelBuilder>{
-	public IPItemModels(DataGenerator gen, ExistingFileHelper exHelper){
-		super(gen.getPackOutput(), ImmersivePetroleum.MODID, ITEM_FOLDER, TRSRModelBuilder::new, exHelper);
-//		super(gen, ImmersivePetroleum.MODID, exHelper);
+	public IPItemModels(PackOutput output, ExistingFileHelper exHelper){
+		super(output, ImmersivePetroleum.MODID, ITEM_FOLDER, TRSRModelBuilder::new, exHelper);
 	}
 	
+	@Nonnull
 	@Override
 	public String getName(){
 		return "Item Models";
@@ -268,7 +269,7 @@ public class IPItemModels extends ModelProvider<TRSRModelBuilder>{
 				.modelLocation(modLoc("models/" + model));
 	}
 	
-	private <I extends Item> void genericItem(RegistryObject<I> regObject){
+	private <I extends Item> void genericItem(DeferredHolder<Item, I> regObject){
 		genericItem(regObject.get());
 	}
 	

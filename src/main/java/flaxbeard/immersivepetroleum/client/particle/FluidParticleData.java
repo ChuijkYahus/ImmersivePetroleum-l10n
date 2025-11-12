@@ -2,6 +2,7 @@ package flaxbeard.immersivepetroleum.client.particle;
 
 import com.mojang.brigadier.StringReader;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import flaxbeard.immersivepetroleum.common.util.RegistryUtils;
 import net.minecraft.core.particles.ParticleOptions;
@@ -9,14 +10,13 @@ import net.minecraft.core.particles.ParticleType;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.material.Fluid;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import javax.annotation.Nonnull;
 
 public class FluidParticleData implements ParticleOptions{
-	public static final Codec<FluidParticleData> CODEC = RecordCodecBuilder.create(instance -> instance.group(Codec.STRING.fieldOf("fluid").forGetter(data -> RegistryUtils.getRegistryNameOf(data.fluid).toString())).apply(instance, FluidParticleData::new));
+	public static final MapCodec<FluidParticleData> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(Codec.STRING.fieldOf("fluid").forGetter(data -> RegistryUtils.getRegistryNameOf(data.fluid).toString())).apply(instance, FluidParticleData::new));
 	
 	@SuppressWarnings("deprecation")
 	public static final ParticleOptions.Deserializer<FluidParticleData> DESERIALIZER = new ParticleOptions.Deserializer<>(){
@@ -37,7 +37,7 @@ public class FluidParticleData implements ParticleOptions{
 	
 	private final Fluid fluid;
 	public FluidParticleData(String name){
-		this(ForgeRegistries.FLUIDS.getValue(ResourceLocation.parse(name)));
+		this(RegistryUtils.getFluidFromRegistryName(ResourceLocation.parse(name)));
 	}
 	
 	public FluidParticleData(Fluid fluid){

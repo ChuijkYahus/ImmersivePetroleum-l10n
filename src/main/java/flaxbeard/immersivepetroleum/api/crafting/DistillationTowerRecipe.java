@@ -53,11 +53,11 @@ public class DistillationTowerRecipe extends IPMultiblockRecipe{
 	
 	public final SizedFluidIngredient input;
 	
-	public DistillationTowerRecipe(FluidStack[] fluidOutput, List<StackWithChance> itemOutput, SizedFluidIngredient input, int energy, int time){
+	public DistillationTowerRecipe(FluidStack[] fluidOutput, @Nullable List<StackWithChance> itemOutput, SizedFluidIngredient input, int energy, int time){
 		super(IPRecipeTypes.DISTILLATION, time, energy);
 		this.fluidOutput = fluidOutput;
 		
-		this.itemOutput = itemOutput != null ? itemOutput.toArray(StackWithChance[]::new) : null;
+		this.itemOutput = (itemOutput != null && !itemOutput.isEmpty()) ? itemOutput.toArray(StackWithChance[]::new) : null;
 		
 		this.input = input;
 		this.fluidInputList = Collections.singletonList(input);

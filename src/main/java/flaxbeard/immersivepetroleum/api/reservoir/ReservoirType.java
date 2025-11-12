@@ -140,6 +140,14 @@ public class ReservoirType extends IESerializableRecipe{
 		return nbt;
 	}
 	
+	public void setBiomes(BWList.Mode mode, ResourceLocation... names){
+		setBiomes(mode, Arrays.asList(names));
+	}
+	
+	public void setBiomes(BWList.Mode mode, List<ResourceLocation> names){
+		setBiomes(new BWList(new HashSet<>(names), mode));
+	}
+	
 	public void setBiomes(boolean blacklist, ResourceLocation... names){
 		setBiomes(blacklist, Arrays.asList(names));
 	}
@@ -150,6 +158,14 @@ public class ReservoirType extends IESerializableRecipe{
 	
 	public void setBiomes(BWList list){
 		this.biomes = list;
+	}
+	
+	public void setDimensions(BWList.Mode mode, ResourceLocation... names){
+		setDimensions(mode, Arrays.asList(names));
+	}
+	
+	public void setDimensions(BWList.Mode mode, List<ResourceLocation> names){
+		setDimensions(new BWList(new HashSet<>(names), mode));
 	}
 	
 	public void setDimensions(boolean blacklist, ResourceLocation... names){
@@ -257,18 +273,22 @@ public class ReservoirType extends IESerializableRecipe{
 		public static final DualCodec<RegistryFriendlyByteBuf, BWList> CODECS = new DualCodec<>(CODEC, CODEC_STREAM);
 		
 		private final Set<ResourceLocation> set;
-		private final boolean isBlacklist;
+		private final Mode mode;
 		public BWList(boolean isBlacklist){
 			this(new HashSet<>(), isBlacklist);
 		}
 		
 		public BWList(Set<ResourceLocation> set, boolean isBlacklist){
+			this(set, isBlacklist ? Mode.BLACKLIST : Mode.WHITELIST);
+		}
+		
+		public BWList(Set<ResourceLocation> set, Mode mode){
 			this.set = set;
-			this.isBlacklist = isBlacklist;
+			this.mode = mode;
 		}
 		
 		public BWList(CompoundTag tag){
-			this.isBlacklist = tag.getBoolean("isBlacklist");
+			this.mode = tag.getBoolean("isBlacklist") ? Mode.BLACKLIST : Mode.WHITELIST;
 			
 			if(tag.contains("list", Tag.TAG_LIST)){
 				ListTag list = tag.getList("list", Tag.TAG_STRING);
@@ -288,7 +308,7 @@ public class ReservoirType extends IESerializableRecipe{
 		}
 		
 		public boolean isBlacklist(){
-			return this.isBlacklist;
+			return this.mode == Mode.BLACKLIST;
 		}
 		
 		public boolean add(ResourceLocation rl){
@@ -305,12 +325,12 @@ public class ReservoirType extends IESerializableRecipe{
 		
 		public boolean valid(ResourceLocation rl){
 			if(this.set.isEmpty()){
-				// An empty set is considered to be "allow anywhere". Regardless of "isBlacklist" value.
+				// An empty set is considered to be "allow anywhere". Regardless of mode value.
 				return true;
 			}
 			
 			boolean contains = this.set.contains(rl);
-			return this.isBlacklist ? !contains : contains;
+			return isBlacklist() ? !contains : contains;
 		}
 		
 		public Set<ResourceLocation> getSet(){
@@ -323,7 +343,7 @@ public class ReservoirType extends IESerializableRecipe{
 		
 		public CompoundTag toNbt(){
 			CompoundTag tag = new CompoundTag();
-			tag.putBoolean("isBlacklist", this.isBlacklist);
+			tag.putBoolean("isBlacklist", this.mode == Mode.BLACKLIST);
 			tag.put("list", toNbtList());
 			return tag;
 		}
@@ -334,6 +354,10 @@ public class ReservoirType extends IESerializableRecipe{
 				this.set.forEach(rl -> nbtList.add(StringTag.valueOf(rl.toString())));
 			}
 			return nbtList;
+		}
+		
+		public enum Mode{
+			WHITELIST, BLACKLIST
 		}
 	}
 }

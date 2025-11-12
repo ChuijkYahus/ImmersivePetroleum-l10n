@@ -18,19 +18,18 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.EntityRenderersEvent;
-import net.minecraftforge.client.event.EntityRenderersEvent.RegisterRenderers;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.common.EventBusSubscriber.Bus;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterRenderers;
 
 import java.util.function.Supplier;
 
 @EventBusSubscriber(modid = ImmersivePetroleum.MODID, value = Dist.CLIENT, bus = Bus.MOD)
 public class ClientModBusEventHandlers{
 	@SubscribeEvent
-	public static void registerRenders(EntityRenderersEvent.RegisterRenderers ev){
+	public static void registerRenders(RegisterRenderers ev){
 		registerBERenderNoContext(ev, IPContent.Multiblock.DISTILLATIONTOWER.masterBE(), MultiblockDistillationTowerRenderer::new);
 		registerBERenderNoContext(ev, IPContent.Multiblock.PUMPJACK.masterBE(), MultiblockPumpjackRenderer::new);
 		registerBERenderNoContext(ev, IPContent.Multiblock.OILTANK.masterBE(), OilTankRenderer::new);
@@ -54,7 +53,7 @@ public class ClientModBusEventHandlers{
 		ev.registerBlockEntityRenderer(type, ctx -> factory.get());
 	}
 	
-	private static <T extends Entity, T2 extends T> void registerEntityRenderingHandler(EntityRenderersEvent.RegisterRenderers ev, Supplier<EntityType<T2>> type, EntityRendererProvider<T> renderer){
+	private static <T extends Entity, T2 extends T> void registerEntityRenderingHandler(RegisterRenderers ev, Supplier<EntityType<T2>> type, EntityRendererProvider<T> renderer){
 		ev.registerEntityRenderer(type.get(), renderer);
 	}
 }

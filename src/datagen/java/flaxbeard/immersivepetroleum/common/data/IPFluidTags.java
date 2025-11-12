@@ -5,20 +5,27 @@ import flaxbeard.immersivepetroleum.ImmersivePetroleum;
 import flaxbeard.immersivepetroleum.api.IPTags;
 import flaxbeard.immersivepetroleum.common.IPContent;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.data.DataGenerator;
+import net.minecraft.data.PackOutput;
 import net.minecraft.data.tags.FluidTagsProvider;
-import net.minecraftforge.common.Tags.Fluids;
-import net.minecraftforge.common.data.ExistingFileHelper;
+import net.neoforged.neoforge.common.Tags.Fluids;
+import net.neoforged.neoforge.common.data.ExistingFileHelper;
 
+import javax.annotation.Nonnull;
 import java.util.concurrent.CompletableFuture;
 
 public class IPFluidTags extends FluidTagsProvider{
-	public IPFluidTags(DataGenerator gen, CompletableFuture<HolderLookup.Provider> pProvider,  ExistingFileHelper exHelper){
-		super(gen.getPackOutput(), pProvider, ImmersivePetroleum.MODID, exHelper);
+	public IPFluidTags(PackOutput output, CompletableFuture<HolderLookup.Provider> lookup, ExistingFileHelper exHelper){
+		super(output, lookup, ImmersivePetroleum.MODID, exHelper);
+	}
+	
+	@Nonnull
+	@Override
+	public String getName(){
+		return getClass().getSimpleName();
 	}
 	
 	@Override
-	protected void addTags(HolderLookup.Provider pProvider){
+	protected void addTags(@Nonnull HolderLookup.Provider provider){
 		tag(IPTags.Fluids.crudeOil).add(IPContent.Fluids.CRUDEOIL.get());
 		
 		tag(IPTags.Fluids.naphtha).add(IPContent.Fluids.NAPHTHA.get());
