@@ -3,6 +3,7 @@ package flaxbeard.immersivepetroleum.common.gui;
 import flaxbeard.immersivepetroleum.api.crafting.CokerUnitRecipe;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.fluids.FluidUtil;
 import net.neoforged.neoforge.fluids.capability.IFluidHandlerItem;
 import net.neoforged.neoforge.items.IItemHandler;
@@ -63,17 +64,15 @@ public class IPSlot extends SlotItemHandler{
 		
 		@Override
 		public boolean mayPlace(@Nonnull ItemStack itemStack){
-			LazyOptional<IFluidHandlerItem> handlerCap = FluidUtil.getFluidHandler(itemStack);
-			return handlerCap.map(handler -> {
-				if(handler.getTanks() <= 0)
-					return false;
-				
-				return switch(filter){
-					case FULL -> !handler.getFluidInTank(0).isEmpty();
-					case EMPTY -> handler.getFluidInTank(0).isEmpty();
+			IFluidHandlerItem capability = itemStack.getCapability(Capabilities.FluidHandler.ITEM);
+			if(capability != null && capability.getTanks() > 0){
+				return switch(this.filter){
+					case FULL -> !capability.getFluidInTank(0).isEmpty();
+					case EMPTY -> capability.getFluidInTank(0).isEmpty();
 					case ANY -> true;
 				};
-			}).orElse(false);
+			}
+			return false;
 		}
 		
 		public enum FluidFilter{

@@ -12,10 +12,11 @@ import flaxbeard.immersivepetroleum.common.util.inventory.MultiFluidTankFiltered
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.energy.IEnergyStorage;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.FluidUtil;
-import net.minecraftforge.items.ItemStackHandler;
+import net.minecraft.world.item.crafting.RecipeHolder;
+import net.neoforged.neoforge.energy.IEnergyStorage;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidUtil;
+import net.neoforged.neoforge.items.ItemStackHandler;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -71,11 +72,11 @@ public class DistillationTowerContainer extends MultiblockAwareGuiContainer {
 					}
 					
 					FluidStack fs = h.getFluidInTank(0);
-					if(fs.isEmpty() || (tanks[TANK_INPUT].getFluidAmount() > 0 && !fs.isFluidEqual(tanks[TANK_INPUT].getFluid()))){
+					if(fs.isEmpty() || (tanks[TANK_INPUT].getFluidAmount() > 0 && !fs.is(tanks[TANK_INPUT].getFluid().getFluid()))){
 						return false;
 					}
 					
-					DistillationTowerRecipe recipe = DistillationTowerRecipe.findRecipe(fs);
+					RecipeHolder<DistillationTowerRecipe> recipe = DistillationTowerRecipe.findRecipe(fs);
 					return recipe != null;
 				}).orElse(false);
 			}

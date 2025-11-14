@@ -8,7 +8,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import flaxbeard.immersivepetroleum.api.crafting.IPRecipeTypes;
 import flaxbeard.immersivepetroleum.common.crafting.Serializers;
 import flaxbeard.immersivepetroleum.common.util.RegistryUtils;
-import io.netty.buffer.ByteBuf;
 import malte0811.dualcodecs.DualCodec;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -16,11 +15,11 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.material.Fluid;
 import net.neoforged.neoforge.common.util.Lazy;
 
@@ -40,7 +39,7 @@ public class ReservoirType extends IESerializableRecipe{
 	static final Lazy<ItemStack> EMPTY_LAZY = Lazy.of(() -> ItemStack.EMPTY);
 	static final TagOutput EMPTY = new TagOutput(ItemStack.EMPTY);
 	
-	public static Map<ResourceLocation, ReservoirType> map = new HashMap<>();
+	public static Map<ResourceLocation, RecipeHolder<ReservoirType>> map = new HashMap<>();
 	
 	public final String name;
 	public final ResourceLocation fluidLocation;

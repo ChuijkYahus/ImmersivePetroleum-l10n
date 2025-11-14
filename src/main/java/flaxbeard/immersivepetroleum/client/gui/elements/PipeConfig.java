@@ -2,7 +2,6 @@ package flaxbeard.immersivepetroleum.client.gui.elements;
 
 import blusunrize.immersiveengineering.api.multiblocks.blocks.env.IMultiblockBEHelper;
 import com.mojang.blaze3d.platform.NativeImage;
-import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import flaxbeard.immersivepetroleum.client.render.RenderUtils;
 import flaxbeard.immersivepetroleum.client.utils.MCUtil;
@@ -14,6 +13,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.DynamicTexture;
@@ -152,7 +152,7 @@ public class PipeConfig extends Button{
 	}
 	
 	@Override
-	public void render(GuiGraphics gui, int mx, int my, float partialTicks){
+	public void renderWidget(GuiGraphics gui, int mx, int my, float partialTicks){
 		MultiBufferSource.BufferSource buffer = RenderUtils.immediate();
 		
 		VertexConsumer builder = buffer.getBuffer(this.gridTextureRenderType);
@@ -162,10 +162,10 @@ public class PipeConfig extends Button{
 			Matrix4f mat = gui.pose().last().pose();
 			int x = this.grid.width * this.gridScale;
 			int y = this.grid.height * this.gridScale;
-			builder.vertex(mat, 0, y, 0).color(1.0F, 1.0F, 1.0F, 1.0F).uv(0.0F, 1.0F).uv2(0xF000F0).endVertex();
-			builder.vertex(mat, x, y, 0).color(1.0F, 1.0F, 1.0F, 1.0F).uv(1.0F, 1.0F).uv2(0xF000F0).endVertex();
-			builder.vertex(mat, x, 0, 0).color(1.0F, 1.0F, 1.0F, 1.0F).uv(1.0F, 0.0F).uv2(0xF000F0).endVertex();
-			builder.vertex(mat, 0, 0, 0).color(1.0F, 1.0F, 1.0F, 1.0F).uv(0.0F, 0.0F).uv2(0xF000F0).endVertex();
+			builder.addVertex(mat, 0, y, 0).setColor(1.0F, 1.0F, 1.0F, 1.0F).setUv(0.0F, 1.0F).setLight(LightTexture.FULL_BRIGHT);
+			builder.addVertex(mat, x, y, 0).setColor(1.0F, 1.0F, 1.0F, 1.0F).setUv(1.0F, 1.0F).setLight(LightTexture.FULL_BRIGHT);
+			builder.addVertex(mat, x, 0, 0).setColor(1.0F, 1.0F, 1.0F, 1.0F).setUv(1.0F, 0.0F).setLight(LightTexture.FULL_BRIGHT);
+			builder.addVertex(mat, 0, 0, 0).setColor(1.0F, 1.0F, 1.0F, 1.0F).setUv(0.0F, 0.0F).setLight(LightTexture.FULL_BRIGHT);
 		}
 		gui.pose().popPose();
 		buffer.endBatch();

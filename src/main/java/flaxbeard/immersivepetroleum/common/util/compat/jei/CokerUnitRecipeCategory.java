@@ -6,12 +6,12 @@ import flaxbeard.immersivepetroleum.common.IPContent;
 import flaxbeard.immersivepetroleum.common.util.ResourceUtils;
 import flaxbeard.immersivepetroleum.common.util.Utils;
 import mezz.jei.api.constants.VanillaTypes;
-import mezz.jei.api.forge.ForgeTypes;
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
 import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.gui.drawable.IDrawableStatic;
 import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
 import mezz.jei.api.helpers.IGuiHelper;
+import mezz.jei.api.neoforge.NeoForgeTypes;
 import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.RecipeIngredientRole;
 import net.minecraft.client.gui.Font;
@@ -41,19 +41,19 @@ public class CokerUnitRecipeCategory extends IPRecipeCategory<CokerUnitRecipe>{
 	
 	@Override
 	public void setRecipe(@Nonnull IRecipeLayoutBuilder builder, CokerUnitRecipe recipe, @Nonnull IFocusGroup focuses){
-		int inputAmount = recipe.inputFluid.getAmount();
+		int inputAmount = recipe.inputFluid.amount();
 		int outputAmount = recipe.outputFluid.getAmount();
 		int guiTankSize = Math.max(inputAmount, outputAmount);
 		
 		builder.addSlot(RecipeIngredientRole.INPUT, 2, 2)
 			.setFluidRenderer(guiTankSize, false, 20, 51)
 			.setOverlay(this.tankOverlay, 0, 0)
-			.addIngredients(ForgeTypes.FLUID_STACK, recipe.inputFluid.getMatchingFluidStacks());
+			.addIngredients(NeoForgeTypes.FLUID_STACK, Arrays.asList(recipe.inputFluid.getFluids()));
 		
 		builder.addSlot(RecipeIngredientRole.OUTPUT, 50, 2)
 			.setFluidRenderer(guiTankSize, false, 20, 51)
 			.setOverlay(this.tankOverlay, 0, 0)
-			.addIngredient(ForgeTypes.FLUID_STACK, recipe.outputFluid);
+			.addIngredient(NeoForgeTypes.FLUID_STACK, recipe.outputFluid);
 		
 		builder.addSlot(RecipeIngredientRole.INPUT, 4, 58)
 			.addIngredients(VanillaTypes.ITEM_STACK, Arrays.asList(recipe.inputItem.getMatchingStacks()));

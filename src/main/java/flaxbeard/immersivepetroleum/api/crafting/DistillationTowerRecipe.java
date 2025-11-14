@@ -4,12 +4,11 @@ import blusunrize.immersiveengineering.api.crafting.IERecipeSerializer;
 import blusunrize.immersiveengineering.api.crafting.StackWithChance;
 import flaxbeard.immersivepetroleum.common.cfg.IPServerConfig;
 import flaxbeard.immersivepetroleum.common.crafting.Serializers;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 
@@ -21,31 +20,23 @@ import java.util.List;
 import java.util.Map;
 
 public class DistillationTowerRecipe extends IPMultiblockRecipe{
-	public static Map<ResourceLocation, DistillationTowerRecipe> recipes = new HashMap<>();
+	public static Map<ResourceLocation, RecipeHolder<DistillationTowerRecipe>> recipes = new HashMap<>();
 	
 	private static final RandomSource RANDOM = RandomSource.create();
 	
 	/** May return null! */
-	public static DistillationTowerRecipe findRecipe(FluidStack input){
+	public static RecipeHolder<DistillationTowerRecipe> findRecipe(FluidStack input){
 		if(!recipes.isEmpty()){
-			for(DistillationTowerRecipe recipe: recipes.values()){
+			for(RecipeHolder<DistillationTowerRecipe> holder: recipes.values()){
+				DistillationTowerRecipe recipe = holder.value();
+				
 				if(recipe.input != null && recipe.input.ingredient().test(input)){
-					return recipe;
+					return holder;
 				}
 			}
 		}
+		
 		return null;
-	}
-	
-	@Nullable
-	public static DistillationTowerRecipe getRecipe(ResourceLocation id){
-		return recipes.get(id);
-	}
-	
-	@Nullable
-	public static DistillationTowerRecipe loadFromNBT(CompoundTag nbt, HolderLookup.Provider provider){
-		FluidStack input = FluidStack.parseOptional(provider, nbt.getCompound("input"));
-		return findRecipe(input);
 	}
 	
 	public final FluidStack[] fluidOutput;

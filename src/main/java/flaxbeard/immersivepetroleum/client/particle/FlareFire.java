@@ -9,12 +9,11 @@ import net.minecraft.client.particle.SimpleAnimatedParticle;
 import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.util.Mth;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 import org.joml.Vector3f;
 
 import javax.annotation.Nonnull;
@@ -89,7 +88,7 @@ public class FlareFire extends SimpleAnimatedParticle{
 	 * 
 	 * @author TwistedGate
 	 */
-	@Mod.EventBusSubscriber(modid = ImmersivePetroleum.MODID, value = Dist.CLIENT)
+	@EventBusSubscriber(modid = ImmersivePetroleum.MODID, value = Dist.CLIENT)
 	public static class Wind{
 		private static Vector3f vec = new Vector3f(0.0F, 0.0F, 0.0F);
 		private static long lastGT;
@@ -101,31 +100,29 @@ public class FlareFire extends SimpleAnimatedParticle{
 		}
 		
 		@SubscribeEvent
-		public static void clientTick(TickEvent.ClientTickEvent event){
-			if(event.side == LogicalSide.CLIENT && event.phase == TickEvent.Phase.START){
-				ClientLevel world = MCUtil.getLevel();
-				if(world == null)
-					return;
+		public static void clientTick(ClientTickEvent.Pre event){
+			ClientLevel world = MCUtil.getLevel();
+			if(world == null)
+				return;
+			
+			long gameTime = world.getGameTime();
+			if((gameTime / 20) != lastGT){
+				lastGT = gameTime / 20;
 				
-				long gameTime = world.getGameTime();
-				if((gameTime / 20) != lastGT){
-					lastGT = gameTime / 20;
-					
-					double fGameTime = (gameTime / 20D);
-					Random lastRand = new Random(Mth.floor(fGameTime));
-					Random thisRand = new Random(Mth.ceil(fGameTime));
-					
-					lastDirection = lastRand.nextFloat() * 360;
-					thisDirection = thisRand.nextFloat() * 360;
-				}
+				double fGameTime = (gameTime / 20D);
+				Random lastRand = new Random(Mth.floor(fGameTime));
+				Random thisRand = new Random(Mth.ceil(fGameTime));
 				
-				double interpDirection = Mth.lerp(((gameTime % 20) / 20F), lastDirection, thisDirection);
-				
-				float xSpeed = (float) Math.sin(interpDirection) * .1F;
-				float zSpeed = (float) Math.cos(interpDirection) * .1F;
-				
-				vec = new Vector3f(xSpeed, 0.0F, zSpeed);
+				lastDirection = lastRand.nextFloat() * 360;
+				thisDirection = thisRand.nextFloat() * 360;
 			}
+			
+			double interpDirection = Mth.lerp(((gameTime % 20) / 20F), lastDirection, thisDirection);
+			
+			float xSpeed = (float) Math.sin(interpDirection) * .1F;
+			float zSpeed = (float) Math.cos(interpDirection) * .1F;
+			
+			vec = new Vector3f(xSpeed, 0.0F, zSpeed);
 		}
 	}
 }

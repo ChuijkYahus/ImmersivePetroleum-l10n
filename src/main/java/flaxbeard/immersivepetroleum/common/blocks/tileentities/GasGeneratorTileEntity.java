@@ -4,7 +4,6 @@ import blusunrize.immersiveengineering.ImmersiveEngineering;
 import blusunrize.immersiveengineering.api.Lib;
 import blusunrize.immersiveengineering.api.TargetingInfo;
 import blusunrize.immersiveengineering.api.energy.MutableEnergyStorage;
-import blusunrize.immersiveengineering.api.utils.CapabilityUtils;
 import blusunrize.immersiveengineering.api.wires.Connection;
 import blusunrize.immersiveengineering.api.wires.ConnectionPoint;
 import blusunrize.immersiveengineering.api.wires.IImmersiveConnectable;
@@ -26,6 +25,7 @@ import flaxbeard.immersivepetroleum.common.blocks.ticking.IPCommonTickableTile;
 import flaxbeard.immersivepetroleum.common.util.Utils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -40,22 +40,15 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.energy.IEnergyStorage;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.FluidUtil;
-import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.fluids.capability.IFluidHandler.FluidAction;
-import net.minecraftforge.fluids.capability.templates.FluidTank;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.FluidUtil;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
 import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 
 import javax.annotation.Nonnull;
@@ -87,26 +80,26 @@ public class GasGeneratorTileEntity extends ImmersiveConnectableBlockEntity impl
 	}
 	
 	@Override
-	public void load(@Nonnull CompoundTag nbt){
-		super.load(nbt);
+	protected void loadAdditional(@Nonnull CompoundTag nbt, @Nonnull HolderLookup.Provider provider){
+		super.loadAdditional(nbt, provider);
 		
 		this.isActive = nbt.getBoolean("isActive");
 		this.fluidTick = nbt.getInt("fluidTick");
 		this.currentFlux = nbt.getInt("currentFlux");
-		this.tank.readFromNBT(nbt.getCompound("tank"));
+		this.tank.readFromNBT(provider, nbt.getCompound("tank"));
 		this.wireType = nbt.contains("wiretype") ? WireUtils.getWireTypeFromNBT(nbt, "wiretype") : null;
 		
 		if(nbt.contains("buffer"))
-			this.energyStorage.deserializeNBT(nbt.get("buffer"));
+			this.energyStorage.deserializeNBT(provider, nbt.get("buffer"));
 	}
 	
 	@Override
-	public void saveAdditional(CompoundTag nbt){
+	public void saveAdditional(@Nonnull CompoundTag nbt, @Nonnull HolderLookup.Provider provider){
 		nbt.putInt("fluidTick", this.fluidTick);
 		nbt.putInt("currentFlux", this.currentFlux);
 		nbt.putBoolean("isActive", this.isActive);
-		nbt.put("tank", this.tank.writeToNBT(new CompoundTag()));
-		nbt.put("buffer", this.energyStorage.serializeNBT());
+		nbt.put("tank", this.tank.writeToNBT(provider, new CompoundTag()));
+		nbt.put("buffer", this.energyStorage.serializeNBT(provider));
 		
 		if(this.wireType != null){
 			nbt.putString("wiretype", this.wireType.getUniqueName());
@@ -115,37 +108,26 @@ public class GasGeneratorTileEntity extends ImmersiveConnectableBlockEntity impl
 	
 	@Override
 	public ClientboundBlockEntityDataPacket getUpdatePacket(){
-		return ClientboundBlockEntityDataPacket.create(this, b -> getUpdateTag());
+		return ClientboundBlockEntityDataPacket.create(this, this::getUpdateTag);
 	}
 	
-	@Override
-	public void handleUpdateTag(CompoundTag tag){
-		load(tag);
-	}
-	
-	@Override
 	@Nonnull
-	public CompoundTag getUpdateTag(){
+	public CompoundTag getUpdateTag(BlockEntity blockEntity, HolderLookup.Provider provider){
 		CompoundTag nbt = new CompoundTag();
-		saveAdditional(nbt);
+		saveAdditional(nbt, provider);
 		return nbt;
 	}
 	
 	@Override
-	public void onDataPacket(net.minecraft.network.Connection net, ClientboundBlockEntityDataPacket pkt){
-		if(pkt.getTag() != null){
-			load(pkt.getTag());
-		}
-	}
-	
-	@Override
 	public void readOnPlacement(LivingEntity placer, ItemStack stack){
+		/*
 		if(stack.hasTag()){
 			CompoundTag nbt = stack.getOrCreateTag();
 			
 			this.tank.readFromNBT(nbt.getCompound("tank"));
 			this.energyStorage.deserializeNBT(nbt.get("energy"));
 		}
+		*/
 	}
 	
 	@Override
@@ -182,6 +164,7 @@ public class GasGeneratorTileEntity extends ImmersiveConnectableBlockEntity impl
 		return this.isActive;
 	}
 	
+	/*
 	private final LazyOptional<IFluidHandler> fluidHandler = CapabilityUtils.constantOptional(this.tank);
 	private final LazyOptional<IEnergyStorage> energyHandler = CapabilityUtils.constantOptional(this.energyStorage);
 	@Override
@@ -200,30 +183,22 @@ public class GasGeneratorTileEntity extends ImmersiveConnectableBlockEntity impl
 		this.fluidHandler.invalidate();
 		this.energyHandler.invalidate();
 	}
+	*/
 	
+	@Nullable
 	@Override
-	public Component[] getOverlayText(Player player, @Nonnull HitResult mop, boolean hammer){
+	public Component[] getOverlayText(@Nullable BlockState blockState, Player player, HitResult mop, boolean hammer){
 		if(Utils.isFluidRelatedItemStack(player.getItemInHand(InteractionHand.MAIN_HAND))){
 			Component s = switch(tank.getFluid().isEmpty() ? 0 : 1){
 				case 0 -> Component.translatable(Lib.GUI + "empty");
 				case 1 ->
-					((MutableComponent) tank.getFluid().getDisplayName()).append(": " + tank.getFluidAmount() + "mB");
+					((MutableComponent) tank.getFluid().getHoverName()).append(": " + tank.getFluidAmount() + "mB");
 				default -> null;
 			};
-			/*
-			if(tank.getFluid().getAmount() > 0)
-				s = ((MutableComponent) tank.getFluid().getDisplayName()).append(": " + tank.getFluidAmount() + "mB");
-			else
-				s = Component.translatable(Lib.GUI + "empty");
-			*/
+			
 			return new Component[]{s};
 		}
 		return null;
-	}
-	
-	@Override
-	public boolean useNixieFont(@Nonnull Player player, @Nonnull HitResult mop){
-		return false;
 	}
 	
 	@Override
@@ -257,17 +232,19 @@ public class GasGeneratorTileEntity extends ImmersiveConnectableBlockEntity impl
 		CompoundTag nbt = new CompoundTag();
 		
 		if(this.tank.getFluidAmount() > 0){
-			CompoundTag tankNbt = this.tank.writeToNBT(new CompoundTag());
+			CompoundTag tankNbt = this.tank.writeToNBT(context.getLevel().registryAccess(), new CompoundTag());
 			nbt.put("tank", tankNbt);
 		}
 		
 		if(this.energyStorage.getEnergyStored() > 0){
-			Tag energyNbt = this.energyStorage.serializeNBT();
+			Tag energyNbt = this.energyStorage.serializeNBT(context.getLevel().registryAccess());
 			nbt.put("energy", energyNbt);
 		}
 		
+		/*
 		if(!nbt.isEmpty())
 			stack.setTag(nbt);
+		*/
 		
 		return ImmutableList.of(stack);
 	}

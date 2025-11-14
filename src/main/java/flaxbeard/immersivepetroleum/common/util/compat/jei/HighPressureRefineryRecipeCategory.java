@@ -6,13 +6,13 @@ import flaxbeard.immersivepetroleum.common.IPContent;
 import flaxbeard.immersivepetroleum.common.util.ResourceUtils;
 import flaxbeard.immersivepetroleum.common.util.Utils;
 import mezz.jei.api.constants.VanillaTypes;
-import mezz.jei.api.forge.ForgeTypes;
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
 import mezz.jei.api.gui.builder.IRecipeSlotBuilder;
 import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.gui.drawable.IDrawableStatic;
 import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
 import mezz.jei.api.helpers.IGuiHelper;
+import mezz.jei.api.neoforge.NeoForgeTypes;
 import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.RecipeIngredientRole;
 import net.minecraft.client.gui.Font;
@@ -22,6 +22,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
 import javax.annotation.Nonnull;
+import java.util.Arrays;
 import java.util.Locale;
 
 public class HighPressureRefineryRecipeCategory extends IPRecipeCategory<HighPressureRefineryRecipe>{
@@ -39,29 +40,31 @@ public class HighPressureRefineryRecipeCategory extends IPRecipeCategory<HighPre
 	
 	@Override
 	public void setRecipe(IRecipeLayoutBuilder builder, HighPressureRefineryRecipe recipe, @Nonnull IFocusGroup focuses){
-		int primaryInputAmount = recipe.inputFluid.getAmount();
-		int secondaryInputAmount = recipe.inputFluidSecondary != null ? recipe.inputFluidSecondary.getAmount() : 0;
+		int primaryInputAmount = recipe.inputFluid.amount();
+		int secondaryInputAmount = recipe.inputFluidSecondary != null ? recipe.inputFluidSecondary.amount() : 0;
 		int outputAmount = recipe.output.getAmount();
 		int guiTankSize = Math.min(Math.max(Math.max(primaryInputAmount, secondaryInputAmount), outputAmount), 1000);
 		
 		builder.addSlot(RecipeIngredientRole.INPUT, 25, 3)
 			.setFluidRenderer(guiTankSize, false, 20, 51)
 			.setOverlay(this.tankOverlay, 0, 0)
-			.addIngredients(ForgeTypes.FLUID_STACK, recipe.inputFluid.getMatchingFluidStacks());
+			.addIngredients(NeoForgeTypes.FLUID_STACK, Arrays.asList(recipe.inputFluid.getFluids()));
 		
 		IRecipeSlotBuilder secondary = builder.addSlot(RecipeIngredientRole.INPUT, 3, 3)
 			.setFluidRenderer(guiTankSize, false, 20, 51)
 			.setOverlay(this.tankOverlay, 0, 0);
 		if(recipe.inputFluidSecondary != null)
-			secondary.addIngredients(ForgeTypes.FLUID_STACK, recipe.inputFluidSecondary.getMatchingFluidStacks());
+			secondary.addIngredients(NeoForgeTypes.FLUID_STACK, Arrays.asList(recipe.inputFluidSecondary.getFluids()));
 		
 		builder.addSlot(RecipeIngredientRole.OUTPUT, 71, 3)
 			.setFluidRenderer(guiTankSize, false, 20, 51)
 			.setOverlay(this.tankOverlay, 0, 0)
-			.addIngredient(ForgeTypes.FLUID_STACK, recipe.output);
+			.addIngredient(NeoForgeTypes.FLUID_STACK, recipe.output);
 		
-		builder.addSlot(RecipeIngredientRole.OUTPUT, 94, 21)
-			.addIngredient(VanillaTypes.ITEM_STACK, recipe.outputItem);
+		if(recipe.hasSecondaryItem()){
+			builder.addSlot(RecipeIngredientRole.OUTPUT, 94, 21)
+				.addIngredient(VanillaTypes.ITEM_STACK, recipe.outputItem.stack().get());
+		}
 	}
 	
 	@Override
@@ -73,7 +76,6 @@ public class HighPressureRefineryRecipeCategory extends IPRecipeCategory<HighPre
 		
 		int time = recipe.getTotalProcessTime();
 		int energy = recipe.getTotalProcessEnergy()/recipe.getTotalProcessTime();
-		int chance = (int) (100 * recipe.chance);
 		
 		guiGraphics.pose().pushPose();
 		String text0 = I18n.get("desc.immersiveengineering.info.ift", Utils.fDecimal(energy));
@@ -83,6 +85,8 @@ public class HighPressureRefineryRecipeCategory extends IPRecipeCategory<HighPre
 		guiGraphics.drawString(font, text1, bWidth / 2 - font.width(text1) / 2, bHeight - font.lineHeight, -1, false);
 		
 		if(recipe.hasSecondaryItem()){
+			int chance = (int) (100 * recipe.outputItem.chance());
+			
 			String text2 = String.format(Locale.US, "%d%%", chance);
 			guiGraphics.drawString(font, text2, bWidth + 3 - font.width(text2), bHeight / 2 + 4, -1, false);
 		}

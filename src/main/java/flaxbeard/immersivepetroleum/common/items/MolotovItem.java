@@ -2,6 +2,8 @@ package flaxbeard.immersivepetroleum.common.items;
 
 import flaxbeard.immersivepetroleum.common.IPContent;
 import flaxbeard.immersivepetroleum.common.entity.MolotovItemEntity;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -15,6 +17,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.Level;
 
 import javax.annotation.Nonnull;
@@ -46,6 +49,28 @@ public class MolotovItem extends IPItemBase{
 		super.inventoryTick(pStack, pLevel, pEntity, pSlotId, pIsSelected);
 		
 		if(this.isLit && pEntity instanceof Player player){
+			CustomData customData = pStack.get(DataComponents.CUSTOM_DATA);
+			CompoundTag tagCopy;
+			if(customData != null && (tagCopy = customData.copyTag()).contains("lit_time", Tag.TAG_LONG)){
+				int duration = (int) (pLevel.getGameTime() - tagCopy.getLong("lit_time")) / 20;
+				
+				if(player.getAbilities().instabuild){
+					if(duration > 0 && pStack.getDamageValue() == 0){
+						pStack.setDamageValue(1);
+					}
+				}else{
+					if(duration > SECONDS){
+						player.getSlot(pSlotId).set(new ItemStack(Items.GLASS_BOTTLE, 1));
+						return;
+					}
+					
+					if(pStack.getDamageValue() != duration){
+						pStack.setDamageValue(duration);
+					}
+				}
+			}
+			
+			/*
 			if(pStack.hasTag() && pStack.getTag().contains("lit_time", Tag.TAG_LONG)){
 				int duration = (int) (pLevel.getGameTime() - pStack.getTag().getLong("lit_time")) / 20;
 				
@@ -64,6 +89,7 @@ public class MolotovItem extends IPItemBase{
 					}
 				}
 			}
+			*/
 		}
 	}
 	
@@ -107,12 +133,17 @@ public class MolotovItem extends IPItemBase{
 			
 			if(mainStack.getItem() == this && offStack.getItem() == Items.FLINT_AND_STEEL){
 				pStack.shrink(1);
-				if(player instanceof ServerPlayer && !player.getAbilities().instabuild){
-					offStack.hurtAndBreak(1, player, (p) -> p.broadcastBreakEvent(InteractionHand.OFF_HAND));
+				if(player instanceof ServerPlayer serverPlayer && !serverPlayer.getAbilities().instabuild){
+					offStack.hurtAndBreak(1, serverPlayer.serverLevel(), serverPlayer, (p) -> {
+					});
+					//offStack.hurtAndBreak(1, serverPlayer, (p) -> p.broadcastBreakEvent(InteractionHand.OFF_HAND));
 				}
 				
+				CompoundTag tag = new CompoundTag();
+				tag.putLong("lit_time", pLevel.getGameTime() - 1);
+				
 				ItemStack lit = new ItemStack(IPContent.Items.MOLOTOV_LIT.get(), 1);
-				lit.getOrCreateTag().putLong("lit_time", pLevel.getGameTime() - 1);
+				lit.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
 				return lit;
 			}
 		}

@@ -33,6 +33,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.capabilities.Capabilities;
@@ -112,12 +113,17 @@ public class DistillationTowerLogic implements IMultiblockLogic<State>, IServerT
 		if(rsEnabled){
 			if(state.energy.getEnergyStored() > 0 && state.processor.getQueueSize() < state.processor.getMaxQueueSize()){
 				if(state.tanks.input().getFluidAmount() > 0){
-					DistillationTowerRecipe recipe = DistillationTowerRecipe.findRecipe(state.tanks.input().getFluid());
-					if(recipe != null && state.tanks.input().getFluidAmount() >= recipe.getInputFluid().getAmount() && state.energy.getEnergyStored() >= recipe.getTotalProcessEnergy() / recipe.getTotalProcessTime()){
-						MultiblockProcessInMachine<DistillationTowerRecipe> process = new DistillationTowerProcess(recipe).setInputTanks(TANK_INPUT);
-						if(state.processor.addProcessToQueue(process, level.getRawLevel(), true)){
-							state.processor.addProcessToQueue(process, level.getRawLevel(), false);
-							update = true;
+					RecipeHolder<DistillationTowerRecipe> holder = DistillationTowerRecipe.findRecipe(state.tanks.input().getFluid());
+					
+					if(holder != null){
+						DistillationTowerRecipe recipe = holder.value();
+						
+						if(state.tanks.input().getFluidAmount() >= recipe.getInputFluid().amount() && state.energy.getEnergyStored() >= recipe.getTotalProcessEnergy() / recipe.getTotalProcessTime()){
+							MultiblockProcessInMachine<DistillationTowerRecipe> process = new DistillationTowerProcess(holder).setInputTanks(TANK_INPUT);
+							if(state.processor.addProcessToQueue(process, level.getRawLevel(), true)){
+								state.processor.addProcessToQueue(process, level.getRawLevel(), false);
+								update = true;
+							}
 						}
 					}
 				}
@@ -133,11 +139,13 @@ public class DistillationTowerLogic implements IMultiblockLogic<State>, IServerT
 		}
 		
 		if(state.inventory.get(INV_0) != ItemStack.EMPTY && state.tanks.input().getFluidAmount() < state.tanks.input().getCapacity()){
-			ItemStack emptyContainer = Utils.drainFluidContainer(state.tanks.input(), state.inventory.get(INV_0), state.inventory.get(INV_1));
+			ItemStack emptyContainer = ItemStack.EMPTY;//Utils.drainFluidContainer(state.tanks.input(), state.inventory.get(INV_0), state.inventory.get(INV_1));
 			if(!emptyContainer.isEmpty()){
-				if(!state.inventory.get(INV_1).isEmpty() && ItemHandlerHelper.canItemStacksStack(state.inventory.get(INV_1), emptyContainer)){
-					state.inventory.get(INV_1).grow(emptyContainer.getCount());
-				}else if(state.inventory.get(INV_1).isEmpty()){
+				final ItemStack inv_1_stack = state.inventory.get(INV_1);
+				
+				if(!inv_1_stack.isEmpty() && inv_1_stack.isStackable() && inv_1_stack.getCount() < inv_1_stack.getMaxStackSize()){
+					inv_1_stack.grow(emptyContainer.getCount());
+				}else if(inv_1_stack.isEmpty()){
 					state.inventory.set(INV_1, emptyContainer.copy());
 				}
 				
@@ -161,12 +169,13 @@ public class DistillationTowerLogic implements IMultiblockLogic<State>, IServerT
 						if(fs.getAmount() > 0){
 							ItemStack filledContainer = FluidHelper.fillFluidContainer(outTank, fs, state.inventory.get(INV_2), state.inventory.get(INV_3));
 							if(!filledContainer.isEmpty()){
-								if(state.inventory.get(INV_3).getCount() == 1 && !FluidHelper.isFluidContainerFull(filledContainer)){
+								ItemStack inv_3_stack = state.inventory.get(INV_3);
+								if(inv_3_stack.getCount() == 1 && !FluidHelper.isFluidContainerFull(filledContainer)){
 									state.inventory.set(INV_3, filledContainer.copy());
 								}else{
-									if(!state.inventory.get(INV_3).isEmpty() && ItemHandlerHelper.canItemStacksStack(state.inventory.get(INV_3), filledContainer)){
-										state.inventory.get(INV_3).grow(filledContainer.getCount());
-									}else if(state.inventory.get(INV_3).isEmpty()){
+									if(!inv_3_stack.isEmpty() && inv_3_stack.isStackable() && inv_3_stack.getCount() < inv_3_stack.getMaxStackSize()){
+										inv_3_stack.grow(filledContainer.getCount());
+									}else if(inv_3_stack.isEmpty()){
 										state.inventory.set(INV_3, filledContainer.copy());
 									}
 									
@@ -219,10 +228,6 @@ public class DistillationTowerLogic implements IMultiblockLogic<State>, IServerT
 		}
 	}
 	
-	public static DistillationTowerRecipe getRecipeForId(Level level, ResourceLocation id){
-		return DistillationTowerRecipe.recipes.get(id);
-	}
-	
 	@Override
 	public void registerCapabilities(CapabilityRegistrar<State> register){
 		register.registerAtOrNull(Capabilities.EnergyStorage.BLOCK, ENERGY_IN, state -> state.energy);
@@ -260,16 +265,19 @@ public class DistillationTowerLogic implements IMultiblockLogic<State>, IServerT
 		private final IFluidHandler fluidOutput;
 		
 		public State(IInitialMultiblockContext<State> context){
+			this.processor = new MultiblockProcessor.InMachineProcessor<>(1, 0, 1, context.getMarkDirtyRunnable(), State::recipeFromId);
 			
-			processor = new MultiblockProcessor.InMachineProcessor<>(1, 0, 1, context.getMarkDirtyRunnable(), DistillationTowerLogic::getRecipeForId);
-			
-			fluidInput = ArrayFluidHandler.fillOnly(tanks.input(), context.getMarkDirtyRunnable());
-			fluidOutput = ArrayFluidHandler.drainOnly(tanks.output(), context.getMarkDirtyRunnable());
+			this.fluidInput = ArrayFluidHandler.fillOnly(tanks.input(), context.getMarkDirtyRunnable());
+			this.fluidOutput = ArrayFluidHandler.drainOnly(tanks.output(), context.getMarkDirtyRunnable());
+		}
+		
+		private static DistillationTowerRecipe recipeFromId(Level level, ResourceLocation id){
+			return DistillationTowerRecipe.recipes.get(id).value();
 		}
 		
 		@Override
 		public AveragingEnergyStorage getEnergy(){
-			return energy;
+			return this.energy;
 		}
 		
 		@Override
@@ -297,7 +305,7 @@ public class DistillationTowerLogic implements IMultiblockLogic<State>, IServerT
 			this.tanks.readNBT(nbt.getCompound("tanks"), provider);
 			this.energy.deserializeNBT(provider, nbt.getCompound("energy"));
 			this.cooldownTicks = nbt.getInt("cooldownTicks");
-			this.processor.fromNBT(nbt.getCompound("recipeworker"), DistillationTowerProcess::new);
+			this.processor.fromNBT(nbt.getCompound("recipeworker"), DistillationTowerProcess::new, provider);
 			
 			this.inventory = readInventory(nbt.getCompound("inventory"), provider);
 			this.rsState.readSaveNBT(nbt, provider);

@@ -73,7 +73,7 @@ public class CokingChamber{
 		
 		if(nbt.contains("recipe", Tag.TAG_STRING)){
 			try{
-				this.recipe = CokerUnitRecipe.recipes.get(ResourceLocation.parse(nbt.getString("recipe")));
+				this.recipe = CokerUnitRecipe.recipes.get(ResourceLocation.parse(nbt.getString("recipe"))).value();
 			}catch(ResourceLocationException e){
 				ImmersivePetroleum.log.error("Tried to load a coking recipe with an invalid name", e);
 			}
@@ -248,11 +248,11 @@ public class CokingChamber{
 				if(this.timer >= 2){
 					this.timer = 0;
 					
-					int max = getTotalAmount() * this.recipe.inputFluid.getAmount();
+					int max = getTotalAmount() * this.recipe.inputFluid.amount();
 					if(this.tank.getFluidAmount() < max){
-						FluidStack accepted = logicState.bufferTanks.input().drain(this.recipe.inputFluid.getAmount(), IFluidHandler.FluidAction.SIMULATE);
-						if(accepted.getAmount() >= this.recipe.inputFluid.getAmount()){
-							logicState.bufferTanks.input().drain(this.recipe.inputFluid.getAmount(), IFluidHandler.FluidAction.EXECUTE);
+						FluidStack accepted = logicState.bufferTanks.input().drain(this.recipe.inputFluid.amount(), IFluidHandler.FluidAction.SIMULATE);
+						if(accepted.getAmount() >= this.recipe.inputFluid.amount()){
+							logicState.bufferTanks.input().drain(this.recipe.inputFluid.amount(), IFluidHandler.FluidAction.EXECUTE);
 							this.tank.fill(accepted, IFluidHandler.FluidAction.EXECUTE);
 						}
 					}else if(this.tank.getFluidAmount() >= max){

@@ -20,7 +20,7 @@ public class CokerChamberInfoArea extends InfoArea{
 		this.fluidDisplay = new FluidInfoArea(
 				chamber.getTank(),
 				new Rect2i(area.getX(), area.getY(), 6, 38),
-				0, 0, 0, 0,
+				0, 0,
 				CokerUnitScreen.GUI_TEXTURE
 		);
 	}

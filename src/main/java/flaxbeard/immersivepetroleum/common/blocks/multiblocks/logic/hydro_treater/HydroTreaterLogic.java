@@ -26,10 +26,10 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.energy.IEnergyStorage;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.FluidUtil;
 import net.neoforged.neoforge.fluids.IFluidTank;
@@ -88,26 +88,32 @@ public class HydroTreaterLogic implements IMultiblockLogic<State>, IServerTickab
 		if(state.rsState.isEnabled(context)){
 			if(state.energy.getEnergyStored() > 0 && state.processor.getQueueSize() < state.processor.getMaxQueueSize()){
 				if(state.tanks.primary().getFluidAmount() > 0 || state.tanks.secondary().getFluidAmount() > 0){
-					HighPressureRefineryRecipe recipe = HighPressureRefineryRecipe.findRecipe(state.tanks.primary().getFluid(), state.tanks.secondary().getFluid());
-					if(recipe != null && state.energy.getEnergyStored() >= recipe.getTotalProcessEnergy() / recipe.getTotalProcessTime()){
-						if(state.tanks.primary().getFluidAmount() >= recipe.getInputFluid().getAmount() && (recipe.getSecondaryInputFluid() == null || (state.tanks.secondary().getFluidAmount() >= recipe.getSecondaryInputFluid().getAmount()))){
-							int[] inputs, inputAmounts;
-							
-							if(recipe.getSecondaryInputFluid() != null){
-								inputs = new int[]{TANK_INPUT_A, TANK_INPUT_B};
-								inputAmounts = new int[]{recipe.getInputFluid().getAmount(), recipe.getSecondaryInputFluid().getAmount()};
-							}else{
-								inputs = new int[]{TANK_INPUT_A};
-								inputAmounts = new int[]{recipe.getInputFluid().getAmount()};
-							}
-							
-							MultiblockProcessInMachine<HighPressureRefineryRecipe> process = new HydroTreaterProcess(recipe).setInputTanks(inputs).setInputAmounts(inputAmounts);
-							if(state.processor.addProcessToQueue(process, level, true)){
-								state.processor.addProcessToQueue(process, level, false);
-								update = true;
+					RecipeHolder<HighPressureRefineryRecipe> holder = HighPressureRefineryRecipe.findRecipe(state.tanks.primary().getFluid(), state.tanks.secondary().getFluid());
+					
+					if(holder != null){
+						HighPressureRefineryRecipe recipe = holder.value();
+						
+						if(state.energy.getEnergyStored() >= recipe.getTotalProcessEnergy() / recipe.getTotalProcessTime()){
+							if(state.tanks.primary().getFluidAmount() >= recipe.getInputFluid().amount() && (recipe.getSecondaryInputFluid() == null || (state.tanks.secondary().getFluidAmount() >= recipe.getSecondaryInputFluid().amount()))){
+								int[] inputs, inputAmounts;
+								
+								if(recipe.getSecondaryInputFluid() != null){
+									inputs = new int[]{TANK_INPUT_A, TANK_INPUT_B};
+									inputAmounts = new int[]{recipe.getInputFluid().amount(), recipe.getSecondaryInputFluid().amount()};
+								}else{
+									inputs = new int[]{TANK_INPUT_A};
+									inputAmounts = new int[]{recipe.getInputFluid().amount()};
+								}
+								
+								MultiblockProcessInMachine<HighPressureRefineryRecipe> process = new HydroTreaterProcess(holder, inputs).setInputAmounts(inputAmounts);
+								if(state.processor.addProcessToQueue(process, level, true)){
+									state.processor.addProcessToQueue(process, level, false);
+									update = true;
+								}
 							}
 						}
 					}
+					
 				}
 			}
 		}
@@ -157,10 +163,6 @@ public class HydroTreaterLogic implements IMultiblockLogic<State>, IServerTickab
 		});
 	}
 	
-	public static HighPressureRefineryRecipe getRecipeForId(Level level, ResourceLocation id){
-		return HighPressureRefineryRecipe.recipes.get(id);
-	}
-	
 	@Override
 	public Function<BlockPos, VoxelShape> shapeGetter(ShapeType forType){
 		return HydroTreaterShape.GETTER;
@@ -182,12 +184,16 @@ public class HydroTreaterLogic implements IMultiblockLogic<State>, IServerTickab
 		private final IFluidHandler outputRef;
 		
 		public State(IInitialMultiblockContext<State> context){
-			this.processor = new MultiblockProcessor.InMachineProcessor<>(1, 0, 1, context.getMarkDirtyRunnable(), HydroTreaterLogic::getRecipeForId);
+			this.processor = new MultiblockProcessor.InMachineProcessor<>(1, 0, 1, context.getMarkDirtyRunnable(), State::getRecipeForId);
 			
 			this.outputRef = context.getCapabilityAt(Capabilities.FluidHandler.BLOCK, FLUID_OUT).get();
 			this.fluidInputMain = ArrayFluidHandler.fillOnly(tanks.primary(), context.getMarkDirtyRunnable());
 			this.fluidInputSecondary = ArrayFluidHandler.fillOnly(tanks.secondary(), context.getMarkDirtyRunnable());
 			this.fluidOutput = ArrayFluidHandler.drainOnly(tanks.output(), context.getMarkDirtyRunnable());
+		}
+		
+		private static HighPressureRefineryRecipe getRecipeForId(Level level, ResourceLocation id){
+			return HighPressureRefineryRecipe.recipes.get(id).value();
 		}
 		
 		@Override
@@ -202,7 +208,7 @@ public class HydroTreaterLogic implements IMultiblockLogic<State>, IServerTickab
 		public void readSaveNBT(CompoundTag nbt, HolderLookup.Provider provider){
 			this.tanks.readNBT(nbt.getCompound("tanks"), provider);
 			this.energy.deserializeNBT(provider, nbt.getCompound("energy"));
-			this.processor.fromNBT(nbt.get("processor"), HydroTreaterProcess::new);
+			this.processor.fromNBT(nbt.get("processor"), HydroTreaterProcess::new, provider);
 			this.rsState.readSaveNBT(nbt, provider);
 		}
 		

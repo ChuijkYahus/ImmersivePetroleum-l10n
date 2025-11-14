@@ -9,9 +9,7 @@ import blusunrize.immersiveengineering.api.multiblocks.blocks.registry.Multibloc
 import blusunrize.immersiveengineering.common.blocks.multiblocks.process.ProcessContext;
 import blusunrize.immersiveengineering.common.util.inventory.MultiFluidTank;
 import com.google.common.collect.Multimap;
-import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import flaxbeard.immersivepetroleum.api.crafting.LubricatedHandler;
 import flaxbeard.immersivepetroleum.api.crafting.LubricatedHandler.LubricatedTileInfo;
@@ -97,7 +95,7 @@ public class DebugRenderHandler{
 	public void renderDebuggingOverlay(RenderGuiLayerEvent.Post event){
 		Minecraft mc = Minecraft.getInstance();
 		
-		if(mc.player != null && event.getOverlay().id() == VanillaGuiLayers.DEBUG_OVERLAY){
+		if(mc.player != null && event.getName() == VanillaGuiLayers.DEBUG_OVERLAY){
 			Player player = mc.player;
 			
 			if(isHoldingDebugItem(player)){
@@ -163,8 +161,10 @@ public class DebugRenderHandler{
 											debugOut.add(toText(poweredGeneric.getEnergy().getEnergyStored() + "/" + poweredGeneric.getEnergy().getMaxEnergyStored() + " RF"));
 										}else{
 											// Fallback
-											masterHelper.getCapability(ForgeCapabilities.ENERGY, null)
+											/* // TODO 1.21.1: Fallback is kaput now
+											masterHelper.getCapabilityPosition(ForgeCapabilities.ENERGY, null)
 												.ifPresent(energy -> energyCapabilityDebugDisplay(energy, debugOut));
+											*/
 										}
 									}
 									

@@ -7,27 +7,27 @@ import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.internal.versions.neoforge.NeoForgeVersion;
 
 public class ResourceUtils{
-	public static ResourceLocation ip(String str){
-		return ResourceLocation.fromNamespaceAndPath(ImmersivePetroleum.MODID, str);
+	public static ResourceLocation ip(String path){
+		return ResourceLocation.fromNamespaceAndPath(ImmersivePetroleum.MODID, path);
 	}
 	
-	public static ModelResourceLocation ipModel(String str){
-		return ModelResourceLocation.standalone(ip(str));
+	public static ModelResourceLocation ipModel(String modelPath){
+		return ModelResourceLocation.standalone(ip(modelPath));
 	}
 	
-	public static ResourceLocation ct(String str){
-		return ResourceLocation.fromNamespaceAndPath("crafttweaker", str);
+	public static ResourceLocation ct(String path){
+		return ResourceLocation.fromNamespaceAndPath("crafttweaker", path);
 	}
 	
-	public static ResourceLocation ie(String str){
-		return ResourceLocation.fromNamespaceAndPath(Lib.MODID, str);
+	public static ResourceLocation ie(String path){
+		return ResourceLocation.fromNamespaceAndPath(Lib.MODID, path);
 	}
 	
-	public static ResourceLocation forge(String str){
-		return ResourceLocation.fromNamespaceAndPath(NeoForgeVersion.MOD_ID, str);
+	public static ResourceLocation forge(String path){
+		return ResourceLocation.fromNamespaceAndPath(NeoForgeVersion.MOD_ID, path);
 	}
 	
-	public static ResourceLocation mc(String str){
-		return ResourceLocation.fromNamespaceAndPath(ResourceLocation.DEFAULT_NAMESPACE, str);
+	public static ResourceLocation mc(String path){
+		return ResourceLocation.fromNamespaceAndPath(ResourceLocation.DEFAULT_NAMESPACE, path);
 	}
 }

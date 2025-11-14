@@ -29,6 +29,7 @@ import net.minecraft.network.chat.ComponentUtils;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ColumnPos;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.fluids.FluidStack;
 
@@ -167,7 +168,7 @@ public class IslandCommand{
 	}
 	
 	private static CompletableFuture<Suggestions> typeSuggestor(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder){
-		return SharedSuggestionProvider.suggest(ReservoirType.map.values().stream().map(type -> type.name), builder);
+		return SharedSuggestionProvider.suggest(ReservoirType.map.values().stream().map(type -> type.value().name), builder);
 	}
 	
 	private static int setReservoirAmount(CommandContext<CommandSourceStack> context, @Nonnull ReservoirIsland island){
@@ -191,7 +192,9 @@ public class IslandCommand{
 	private static int setReservoirType(CommandContext<CommandSourceStack> context, @Nonnull ReservoirIsland island){
 		String name = context.getArgument("name", String.class);
 		ReservoirType reservoir = null;
-		for(ReservoirType res: ReservoirType.map.values()){
+		for(RecipeHolder<ReservoirType> holder: ReservoirType.map.values()){
+			ReservoirType res = holder.value();
+			
 			if(res.name.equalsIgnoreCase(name))
 				reservoir = res;
 		}

@@ -9,7 +9,6 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.world.level.saveddata.SavedData;
 
 import javax.annotation.Nonnull;
-import java.util.stream.IntStream;
 
 public class IPSaveData extends SavedData{
 	public static final String dataName = "ImmersivePetroleum-SaveData";

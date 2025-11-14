@@ -8,26 +8,26 @@ import blusunrize.immersiveengineering.common.blocks.multiblocks.process.Process
 import flaxbeard.immersivepetroleum.api.crafting.DistillationTowerRecipe;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.function.BiFunction;
 
 public class DistillationTowerProcess extends MultiblockProcessInMachine<DistillationTowerRecipe>{
-	public DistillationTowerProcess(DistillationTowerRecipe recipe, int... inputSlots){
+	public DistillationTowerProcess(RecipeHolder<DistillationTowerRecipe> recipe, int... inputSlots){
 		super(recipe, inputSlots);
 	}
 	
-	public DistillationTowerProcess(BiFunction<Level, ResourceLocation, DistillationTowerRecipe> recipe, CompoundTag data){
-		super(recipe, data);
+	public DistillationTowerProcess(BiFunction<Level, ResourceLocation, DistillationTowerRecipe> loader, CompoundTag compoundTag, HolderLookup.Provider provider){
+		super(loader, compoundTag);
 	}
 	
 	@Override

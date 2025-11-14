@@ -58,7 +58,7 @@ public class FluidHelper{
 	}
 	
 	/**
-	 * Originally in IE as {@link blusunrize.immersiveengineering.common.util.Utils#isFluidContainerFull(ItemStack)}
+	 * Originally in IE as blusunrize.immersiveengineering.common.util.Utils#isFluidContainerFull(ItemStack)
 	 */
 	public static boolean isFluidContainerFull(ItemStack stack){
 		return FluidUtil.getFluidHandler(stack).map(handler -> {
@@ -71,7 +71,7 @@ public class FluidHelper{
 	
 	/**
 	 * Originally in IE as
-	 * {@link blusunrize.immersiveengineering.common.util.Utils#fillFluidContainer(IFluidHandler, ItemStack, ItemStack, Player)}
+	 * blusunrize.immersiveengineering.common.util.Utils#fillFluidContainer(IFluidHandler, ItemStack, ItemStack, Player)
 	 */
 	public static ItemStack fillFluidContainer(IFluidHandler handler, ItemStack containerIn, ItemStack containerOut, @Nullable Player player){
 		if(containerIn == null || containerIn.isEmpty())
@@ -80,7 +80,8 @@ public class FluidHelper{
 		FluidActionResult result = FluidUtil.tryFillContainer(containerIn, handler, Integer.MAX_VALUE, player, false);
 		if(result.isSuccess()){
 			final ItemStack full = result.getResult();
-			if((containerOut.isEmpty() || ItemHandlerHelper.canItemStacksStack(containerOut, full))){
+			if((containerOut.isEmpty() || containerOut.isStackable() && containerOut.getCount() < containerOut.getMaxStackSize())){
+			//if((containerOut.isEmpty() || ItemHandlerHelper.canItemStacksStack(containerOut, full))){
 				if(!containerOut.isEmpty() && containerOut.getCount() + full.getCount() > containerOut.getMaxStackSize())
 					return ItemStack.EMPTY;
 				result = FluidUtil.tryFillContainer(containerIn, handler, Integer.MAX_VALUE, player, true);
@@ -94,7 +95,7 @@ public class FluidHelper{
 	
 	/**
 	 * FluidStack based version of
-	 * {@link blusunrize.immersiveengineering.common.util.Utils#fillFluidContainer(IFluidHandler, ItemStack, ItemStack, Player)} minus the
+	 * blusunrize.immersiveengineering.common.util.Utils#fillFluidContainer(IFluidHandler, ItemStack, ItemStack, Player) minus the
 	 * useless bits :D
 	 */
 	public static ItemStack fillFluidContainer(IFluidTank tank, FluidStack fluid, ItemStack containerIn, ItemStack containerOut){
@@ -104,7 +105,7 @@ public class FluidHelper{
 		FluidActionResult result = tryFillContainer(tank, fluid, containerIn, false);
 		if(result.isSuccess()){
 			final ItemStack full = result.getResult();
-			if((containerOut.isEmpty() || ItemHandlerHelper.canItemStacksStack(containerOut, full))){
+			if((containerOut.isEmpty() || full.isStackable() && full.getCount() < full.getMaxStackSize())){
 				if(!containerOut.isEmpty() && containerOut.getCount() + full.getCount() > containerOut.getMaxStackSize()){
 					return ItemStack.EMPTY;
 				}
@@ -120,7 +121,7 @@ public class FluidHelper{
 	}
 	
 	/**
-	 * FluidStack based version of {@link net.minecraftforge.fluids.FluidUtil#tryFillContainer(ItemStack, IFluidHandler, int, Player, boolean)}
+	 * FluidStack based version of net.minecraftforge.fluids.FluidUtil#tryFillContainer(ItemStack, IFluidHandler, int, Player, boolean)
 	 * minus the useless bits :D
 	 */
 	static FluidActionResult tryFillContainer(IFluidTank tank, FluidStack fluidSource, @Nonnull ItemStack container, boolean doFill){

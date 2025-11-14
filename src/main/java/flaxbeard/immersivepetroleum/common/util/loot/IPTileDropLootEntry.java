@@ -1,8 +1,5 @@
 package flaxbeard.immersivepetroleum.common.util.loot;
 
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonObject;
-import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import flaxbeard.immersivepetroleum.common.blocks.interfaces.IBlockEntityDrop;

@@ -18,9 +18,12 @@ import mezz.jei.api.registration.IRecipeCategoryRegistration;
 import mezz.jei.api.registration.IRecipeRegistration;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 
 import javax.annotation.Nonnull;
-import java.util.function.Function;
+import java.util.List;
+import java.util.Map;
 
 @JeiPlugin
 public class JEIStuff implements IModPlugin{
@@ -53,9 +56,13 @@ public class JEIStuff implements IModPlugin{
 	
 	@Override
 	public void registerRecipes(IRecipeRegistration registration){
-		registration.addRecipes(this.distillation_type, DistillationTowerRecipe.recipes.values().stream().map(Function.identity()).toList());
-		registration.addRecipes(this.coker_type, CokerUnitRecipe.recipes.values().stream().map(Function.identity()).toList());
-		registration.addRecipes(this.recovery_type, HighPressureRefineryRecipe.recipes.values().stream().map(Function.identity()).toList());
+		registration.addRecipes(this.distillation_type, listOf(DistillationTowerRecipe.recipes));
+		registration.addRecipes(this.coker_type, listOf(CokerUnitRecipe.recipes));
+		registration.addRecipes(this.recovery_type, listOf(HighPressureRefineryRecipe.recipes));
+	}
+	
+	private <T extends Recipe<?>> List<T> listOf(Map<ResourceLocation, RecipeHolder<T>> map){
+		return map.values().stream().map(RecipeHolder::value).toList();
 	}
 	
 	@Override
@@ -68,11 +75,13 @@ public class JEIStuff implements IModPlugin{
 	@Override
 	public void registerGuiHandlers(IGuiHandlerRegistration registration){
 		registration.addRecipeClickArea(DistillationTowerScreen.class, 85, 19, 18, 51, this.distillation_type);
-		//Have to use four of these so that  they don't overlap
+		
+		//Have to use four of these so that they don't overlap
 		registration.addRecipeClickArea(CokerUnitScreen.class, 59, 21, 15, 67, this.coker_type);
 		registration.addRecipeClickArea(CokerUnitScreen.class, 64, 63, 73, 25, this.coker_type);
 		registration.addRecipeClickArea(CokerUnitScreen.class, 127, 21, 15, 67, this.coker_type);
 		registration.addRecipeClickArea(CokerUnitScreen.class, 81, 21, 39, 42, this.coker_type);
+		
 		registration.addRecipeClickArea(HydrotreaterScreen.class, 55, 9, 32, 51, this.recovery_type);
 	}
 }

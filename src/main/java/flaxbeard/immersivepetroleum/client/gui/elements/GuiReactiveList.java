@@ -123,7 +123,7 @@ public class GuiReactiveList extends Button{
 	static final ResourceLocation TEXTURE = ResourceUtils.ie("textures/gui/hud_elements.png");
 	
 	@Override
-	public void render(@Nonnull GuiGraphics gui, int mx, int my, float partialTicks){
+	protected void renderWidget(@Nonnull GuiGraphics gui, int mx, int my, float partialTicks){
 		Font fr = MCUtil.getFont();
 		
 		int mmY = my - this.getY();
@@ -186,11 +186,11 @@ public class GuiReactiveList extends Button{
 	}
 	
 	@Override
-	public boolean mouseScrolled(double mouseX, double mouseY, double delta){
-		if(delta != 0 && maxOffset > 0){
-			if(delta < 0 && offset < maxOffset)
+	public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY){
+		if(scrollY != 0 && maxOffset > 0){
+			if(scrollY < 0 && offset < maxOffset)
 				offset++;
-			if(delta > 0 && offset > 0)
+			if(scrollY > 0 && offset > 0)
 				offset--;
 			return true;
 		}else

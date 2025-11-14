@@ -11,13 +11,14 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLLoadCompleteEvent;
+import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 
 public class CommonProxy{
 	/** Fired at {@link FMLCommonSetupEvent} */
 	public void setup(){
 	}
 	
-	public void registerContainersAndScreens(){
+	public void registerContainersAndScreens(RegisterMenuScreensEvent ev){
 	}
 	
 	public void preInit(){

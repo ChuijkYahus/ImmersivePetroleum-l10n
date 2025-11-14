@@ -42,7 +42,7 @@ public class DistillationTowerScreen extends IEContainerScreen<DistillationTower
 		input.fluids = this.menu.input.get();
 		
 		return List.of(
-				new FluidInfoArea(input, new Rect2i(leftPos + 62, topPos + 21, 16, 47), 177, 31, 20, 51, GUI_TEXTURE),
+				new FluidInfoArea(input, new Rect2i(leftPos + 62, topPos + 21, 16, 47), 177, 31, GUI_TEXTURE),
 				new EnergyInfoArea(leftPos + 158, topPos + 22, this.menu.energy),
 				new MultitankArea(new Rect2i(leftPos + 112, topPos + 21, 16, 47), 24000, this.menu.output)
 		);

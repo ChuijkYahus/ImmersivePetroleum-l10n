@@ -28,7 +28,6 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.Skeleton;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.LiquidBlock;
@@ -38,7 +37,6 @@ import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.LogicalSide;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.EntityMountEvent;
@@ -102,7 +100,7 @@ public class CommonEventHandler{
 	}
 	
 	@SubscribeEvent
-	public void handleBoatImmunity(PlayerTickEvent event){
+	public void handleBoatImmunity(PlayerTickEvent.Pre event){
 		Player entity = event.getEntity();
 		if(entity.isOnFire() && entity.getVehicle() instanceof MotorboatEntity boat){
 			if(boat.isFireproof){
@@ -260,13 +258,22 @@ public class CommonEventHandler{
 	public static final Map<ResourceLocation, List<BlockPos>> toRemove = new HashMap<>();
 	
 	@SubscribeEvent
-	public void handleNapalm(LevelTickEvent event){
+	public void handleNapalmPre(LevelTickEvent.Pre event){
+		handleNapalm(event);
+	}
+	
+	@SubscribeEvent
+	public void handleNapalmPost(LevelTickEvent.Post event){
+		handleNapalm(event);
+	}
+	
+	private void handleNapalm(LevelTickEvent event){
 		if(event.getLevel().isClientSide())
 			return;
 		
 		ResourceLocation d = event.getLevel().dimension().location();
 		
-		if(event instanceof LevelTickEvent.Pre pre){
+		if(event instanceof LevelTickEvent.Pre){
 			if(napalmPositions.get(d) != null){
 				List<BlockPos> trList = toRemove.computeIfAbsent(d, f -> new ArrayList<>());
 				
@@ -279,7 +286,7 @@ public class CommonEventHandler{
 				});
 			}
 			
-		}else if(event instanceof LevelTickEvent.Post post){
+		}else if(event instanceof LevelTickEvent.Post){
 			if(toRemove.get(d) != null && napalmPositions.get(d) != null){
 				List<BlockPos> list = new ArrayList<>(toRemove.get(d));
 				napalmPositions.get(d).removeAll(list);

@@ -7,6 +7,7 @@ import flaxbeard.immersivepetroleum.ImmersivePetroleum;
 import flaxbeard.immersivepetroleum.api.energy.FuelHandler;
 import flaxbeard.immersivepetroleum.common.IPContent;
 import flaxbeard.immersivepetroleum.common.IPContent.BoatUpgrades;
+import flaxbeard.immersivepetroleum.common.IPDataComponents;
 import flaxbeard.immersivepetroleum.common.items.DebugItem;
 import flaxbeard.immersivepetroleum.common.items.GasolineBottleItem;
 import flaxbeard.immersivepetroleum.common.items.MotorboatItem;
@@ -240,7 +241,7 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 			this.entityData.set(TANK_FLUID, "");
 			this.entityData.set(TANK_AMOUNT, 0);
 		}else{
-			this.entityData.set(TANK_FLUID, stack.getFluid() == null ? "" : RegistryUtils.getRegistryNameOf(stack.getFluid()).toString());
+			this.entityData.set(TANK_FLUID, RegistryUtils.getRegistryNameOf(stack.getFluid()).toString());
 			this.entityData.set(TANK_AMOUNT, stack.getAmount());
 		}
 	}
@@ -316,6 +317,10 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 						MotorboatItem item = (MotorboatItem) getDropItem();
 						ItemStack stack = new ItemStack(item, 1);
 						
+						FluidStack containedFluid = getContainedFluid();
+						if(!containedFluid.isEmpty())
+							stack.set(IPDataComponents.BOAT_TANK, containedFluid);
+						
 						/* // FIXME Boat-Item NBT Storage
 						LazyOptional<IItemHandler> handler = stack.getCapability(ForgeCapabilities.ITEM_HANDLER, null);
 						handler.ifPresent(itemHandler ->
@@ -327,7 +332,6 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 								}
 							}
 						});
-						writeTank(stack.getOrCreateTag(), true);
 						*/
 						
 						if(isPlayer){
@@ -350,23 +354,6 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 		}else{
 			return true;
 		}
-	}
-	
-	public void readTank(CompoundTag nbt){
-		FluidTank tank = new FluidTank(getMaxFuel());
-		if(nbt != null)
-			tank.readFromNBT(this.registryAccess(), nbt.getCompound("tank"));
-		
-		setContainedFluid(tank.getFluid());
-	}
-	
-	public void writeTank(CompoundTag nbt, boolean toItem){
-		FluidTank tank = new FluidTank(getMaxFuel());
-		tank.setFluid(getContainedFluid());
-		
-		boolean write = tank.getFluidAmount() > 0;
-		if(!toItem || write)
-			nbt.put("tank", tank.writeToNBT(this.registryAccess(), new CompoundTag()));
 	}
 	
 	@Override

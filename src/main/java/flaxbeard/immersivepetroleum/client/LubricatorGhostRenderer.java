@@ -3,7 +3,6 @@ package flaxbeard.immersivepetroleum.client;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.env.IMultiblockBEHelperMaster;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.logic.IMultiblockBE;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import flaxbeard.immersivepetroleum.api.crafting.LubricatedHandler;
 import flaxbeard.immersivepetroleum.client.render.RenderUtils;
@@ -24,7 +23,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.client.model.data.ModelData;
+import net.neoforged.neoforge.client.model.data.ModelData;
 
 import java.util.HashSet;
 
@@ -33,11 +32,11 @@ public class LubricatorGhostRenderer{
 	private final HashSet<BlockPos> previousMasters = new HashSet<>(256);
 	private final RenderType renderType = RenderType.translucent();
 	private final Minecraft minecraft;
-	private final int range = 16;
 	public LubricatorGhostRenderer(Minecraft minecraft){
 		this.minecraft = minecraft;
 	}
 	
+	@SuppressWarnings("unchecked")
 	public void render(PoseStack matrix){
 		if(this.minecraft.player == null)
 			return;
@@ -61,9 +60,10 @@ public class LubricatorGhostRenderer{
 				final Level level = this.minecraft.player.level();
 				final BlockPos base = this.minecraft.player.blockPosition();
 				int x, y, z;
-				for(x = -this.range;x <= this.range;x++){
-					for(z = -this.range;z <= this.range;z++){
-						for(y = -this.range;y <= this.range;y++){
+				int range = 16;
+				for(x = -range;x <= range;x++){
+					for(z = -range;z <= range;z++){
+						for(y = -range;y <= range;y++){
 							BlockPos pos = base.offset(x, y, z);
 							BlockEntity te = level.getBlockEntity(pos);
 							

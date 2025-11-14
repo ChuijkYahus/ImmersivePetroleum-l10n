@@ -6,23 +6,19 @@ import blusunrize.immersiveengineering.client.utils.GuiHelper;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
-import flaxbeard.immersivepetroleum.ImmersivePetroleum;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.OilTankLogic;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.fluids.FluidStack;
 import org.joml.Matrix4f;
 
 import javax.annotation.Nonnull;
 
 @OnlyIn(Dist.CLIENT)
-@EventBusSubscriber(value = Dist.CLIENT, modid = ImmersivePetroleum.MODID, bus = Bus.MOD)
 public class OilTankRenderer extends IEBlockEntityRenderer<MultiblockBlockEntityMaster<OilTankLogic.State>>{
 	@Override
 	public boolean shouldRenderOffScreen(@Nonnull MultiblockBlockEntityMaster<OilTankLogic.State> te){
@@ -32,7 +28,7 @@ public class OilTankRenderer extends IEBlockEntityRenderer<MultiblockBlockEntity
 	@SuppressWarnings("deprecation")
 	@Override
 	public void render(MultiblockBlockEntityMaster<OilTankLogic.State> te, float partialTicks, @Nonnull PoseStack matrix, @Nonnull MultiBufferSource buffer, int combinedLight, int combinedOverlay){
-		if(te.isRemoved() || !te.getLevel().hasChunkAt(te.getBlockPos()))
+		if(te.isRemoved() || te.getLevel() == null || !te.getLevel().hasChunkAt(te.getBlockPos()))
 			return;
 		
 		combinedOverlay = OverlayTexture.NO_OVERLAY;
@@ -64,10 +60,10 @@ public class OilTankRenderer extends IEBlockEntityRenderer<MultiblockBlockEntity
 				// Background
 				Matrix4f mat = matrix.last().pose();
 				VertexConsumer builder = buffer.getBuffer(IPRenderTypes.TRANSLUCENT_POSITION_COLOR);
-				builder.vertex(mat, 1.5F, -0.5F, 0.0F).color(34, 34, 34, 255).endVertex();
-				builder.vertex(mat, 1.5F, 1F, 0.0F).color(34, 34, 34, 255).endVertex();
-				builder.vertex(mat, 0F, 1F, 0.0F).color(34, 34, 34, 255).endVertex();
-				builder.vertex(mat, 0F, -0.5F, 0.0F).color(34, 34, 34, 255).endVertex();
+				builder.addVertex(mat, 1.5F, -0.5F, 0.0F).setColor(34, 34, 34, 255);
+				builder.addVertex(mat, 1.5F, 1F, 0.0F).setColor(34, 34, 34, 255);
+				builder.addVertex(mat, 0F, 1F, 0.0F).setColor(34, 34, 34, 255);
+				builder.addVertex(mat, 0F, -0.5F, 0.0F).setColor(34, 34, 34, 255);
 				
 				FluidStack fs = te.getHelper().getState().tank.getFluid();
 				if(!fs.isEmpty()){
@@ -126,15 +122,15 @@ public class OilTankRenderer extends IEBlockEntityRenderer<MultiblockBlockEntity
 		float u0 = input ? 0.0F : 0.1F, v0 = 0.5F;
 		float u1 = u0 + 0.1F, v1 = v0 + 0.1F;
 		if(flip){
-			builder.vertex(mat, 1.001F, 0F, 0F).color(1F, 1F, 1F, 1F).uv(u1, v1).overlayCoords(combinedOverlay).uv2(combinedLight).normal(1, 1, 1).endVertex();
-			builder.vertex(mat, 1.001F, 1F, 0F).color(1F, 1F, 1F, 1F).uv(u1, v0).overlayCoords(combinedOverlay).uv2(combinedLight).normal(1, 1, 1).endVertex();
-			builder.vertex(mat, 1.001F, 1F, 1F).color(1F, 1F, 1F, 1F).uv(u0, v0).overlayCoords(combinedOverlay).uv2(combinedLight).normal(1, 1, 1).endVertex();
-			builder.vertex(mat, 1.001F, 0F, 1F).color(1F, 1F, 1F, 1F).uv(u0, v1).overlayCoords(combinedOverlay).uv2(combinedLight).normal(1, 1, 1).endVertex();
+			builder.addVertex(mat, 1.001F, 0F, 0F).setColor(1F, 1F, 1F, 1F).setUv(u1, v1).setOverlay(combinedOverlay).setLight(combinedLight).setNormal(1, 1, 1);
+			builder.addVertex(mat, 1.001F, 1F, 0F).setColor(1F, 1F, 1F, 1F).setUv(u1, v0).setOverlay(combinedOverlay).setLight(combinedLight).setNormal(1, 1, 1);
+			builder.addVertex(mat, 1.001F, 1F, 1F).setColor(1F, 1F, 1F, 1F).setUv(u0, v0).setOverlay(combinedOverlay).setLight(combinedLight).setNormal(1, 1, 1);
+			builder.addVertex(mat, 1.001F, 0F, 1F).setColor(1F, 1F, 1F, 1F).setUv(u0, v1).setOverlay(combinedOverlay).setLight(combinedLight).setNormal(1, 1, 1);
 		}else{
-			builder.vertex(mat, -0.001F, 0F, 0F).color(1F, 1F, 1F, 1F).uv(u0, v1).overlayCoords(combinedOverlay).uv2(combinedLight).normal(1, 1, 1).endVertex();
-			builder.vertex(mat, -0.001F, 0F, 1F).color(1F, 1F, 1F, 1F).uv(u1, v1).overlayCoords(combinedOverlay).uv2(combinedLight).normal(1, 1, 1).endVertex();
-			builder.vertex(mat, -0.001F, 1F, 1F).color(1F, 1F, 1F, 1F).uv(u1, v0).overlayCoords(combinedOverlay).uv2(combinedLight).normal(1, 1, 1).endVertex();
-			builder.vertex(mat, -0.001F, 1F, 0F).color(1F, 1F, 1F, 1F).uv(u0, v0).overlayCoords(combinedOverlay).uv2(combinedLight).normal(1, 1, 1).endVertex();
+			builder.addVertex(mat, -0.001F, 0F, 0F).setColor(1F, 1F, 1F, 1F).setUv(u0, v1).setOverlay(combinedOverlay).setLight(combinedLight).setNormal(1, 1, 1);
+			builder.addVertex(mat, -0.001F, 0F, 1F).setColor(1F, 1F, 1F, 1F).setUv(u1, v1).setOverlay(combinedOverlay).setLight(combinedLight).setNormal(1, 1, 1);
+			builder.addVertex(mat, -0.001F, 1F, 1F).setColor(1F, 1F, 1F, 1F).setUv(u1, v0).setOverlay(combinedOverlay).setLight(combinedLight).setNormal(1, 1, 1);
+			builder.addVertex(mat, -0.001F, 1F, 0F).setColor(1F, 1F, 1F, 1F).setUv(u0, v0).setOverlay(combinedOverlay).setLight(combinedLight).setNormal(1, 1, 1);
 		}
 	}
 }

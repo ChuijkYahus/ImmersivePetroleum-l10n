@@ -10,8 +10,8 @@ import flaxbeard.immersivepetroleum.client.model.ModelPumpjack;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.PumpjackLogic;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.Direction;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import javax.annotation.Nonnull;
 import java.util.function.Supplier;
@@ -27,35 +27,36 @@ public class MultiblockPumpjackRenderer extends IEBlockEntityRenderer<Multiblock
 	
 	@Override
 	public void render(@Nonnull MultiblockBlockEntityMaster<PumpjackLogic.State> te, float partialTicks, @Nonnull PoseStack transform, @Nonnull MultiBufferSource buffer, int combinedLightIn, int combinedOverlayIn){
-		if(!te.isRemoved() || te.getLevel().hasChunkAt(te.getBlockPos())){
-			transform.pushPose();
-			Direction rotation = te.getHelper().getContext().getLevel().getOrientation().front();
-			switch(rotation){
-				case NORTH -> {
-					transform.mulPose(Axis.YP.rotationDegrees(90F));
-					transform.translate(-6, 0, -1);
-				}
-				case EAST -> transform.translate(-5, 0, -1);
-				case SOUTH -> {
-					transform.mulPose(Axis.YP.rotationDegrees(270F));
-					transform.translate(-5, 0, -2);
-				}
-				case WEST -> {
-					transform.mulPose(Axis.YP.rotationDegrees(180F));
-					transform.translate(-6, 0, -2);
-				}
-				default -> {
-				}
+		if(te.isRemoved() || te.getLevel() == null || !te.getLevel().hasChunkAt(te.getBlockPos()))
+			return;
+		
+		transform.pushPose();
+		Direction rotation = te.getHelper().getContext().getLevel().getOrientation().front();
+		switch(rotation){
+			case NORTH -> {
+				transform.mulPose(Axis.YP.rotationDegrees(90F));
+				transform.translate(-6, 0, -1);
 			}
-			
-			ModelPumpjack model;
-			if((model = (ModelPumpjack) pumpjackarm.get()) != null){
-				float ticks = te.getHelper().getState().activeTicks + (te.getHelper().getState().wasActive ? partialTicks : 0);
-				model.ticks = 1.5F * ticks;
-				
-				model.renderToBuffer(transform, buffer.getBuffer(model.renderType(ModelPumpjack.TEXTURE)), combinedLightIn, combinedOverlayIn, 1.0F, 1.0F, 1.0F, 1.0F);
+			case EAST -> transform.translate(-5, 0, -1);
+			case SOUTH -> {
+				transform.mulPose(Axis.YP.rotationDegrees(270F));
+				transform.translate(-5, 0, -2);
 			}
-			transform.popPose();
+			case WEST -> {
+				transform.mulPose(Axis.YP.rotationDegrees(180F));
+				transform.translate(-6, 0, -2);
+			}
+			default -> {
+			}
 		}
+		
+		ModelPumpjack model;
+		if((model = (ModelPumpjack) pumpjackarm.get()) != null){
+			float ticks = te.getHelper().getState().activeTicks + (te.getHelper().getState().wasActive ? partialTicks : 0);
+			model.ticks = 1.5F * ticks;
+			
+			model.renderToBuffer(transform, buffer.getBuffer(model.renderType(ModelPumpjack.TEXTURE)), combinedLightIn, combinedOverlayIn, -1);
+		}
+		transform.popPose();
 	}
 }

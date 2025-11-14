@@ -46,13 +46,13 @@ public class CokerUnitScreen extends IEContainerScreen<CokerUnitContainer>{
 					new FluidInfoArea(
 							this.getMenu().tanks.input(),
 							new Rect2i(this.leftPos + 32, this.topPos + 14, 16, 47),
-							202, 2, 16, 47,
+							202, 2,
 							GUI_TEXTURE
 					),
 					new FluidInfoArea(
 							this.getMenu().tanks.output(),
 							new Rect2i(this.leftPos + 152, this.topPos + 14, 16, 47),
-							202, 2, 16, 47,
+							202, 2,
 							GUI_TEXTURE
 					),
 					new EnergyDisplay(this.leftPos + 168, this.topPos + 67, 7, 21, this.getMenu().energy),

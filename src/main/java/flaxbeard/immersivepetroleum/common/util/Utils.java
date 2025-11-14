@@ -5,6 +5,7 @@ import blusunrize.immersiveengineering.api.multiblocks.blocks.env.IMultiblockBEH
 import blusunrize.immersiveengineering.api.multiblocks.blocks.logic.IMultiblockBE;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.registry.MultiblockBlockEntityMaster;
 import net.minecraft.advancements.Advancement;
+import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.PlayerAdvancements;
 import net.minecraft.server.ServerAdvancementManager;
@@ -17,7 +18,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.neoforged.neoforge.capabilities.Capabilities;
 
 import javax.annotation.Nullable;
 import java.text.DecimalFormat;
@@ -60,7 +61,7 @@ public class Utils{
 		if(player instanceof ServerPlayer serverPlayer){
 			PlayerAdvancements advancements = serverPlayer.getAdvancements();
 			ServerAdvancementManager manager = ((ServerLevel) serverPlayer.getCommandSenderWorld()).getServer().getAdvancements();
-			Advancement advancement = manager.getAdvancement(ResourceUtils.ip(name));
+			AdvancementHolder advancement = manager.get(ResourceUtils.ip(name));
 			if(advancement != null)
 				advancements.award(advancement, "code_trigger");
 		}
@@ -70,7 +71,7 @@ public class Utils{
 	public static boolean isFluidRelatedItemStack(ItemStack stack){
 		if(stack.isEmpty())
 			return false;
-		return stack.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM).isPresent();
+		return stack.getCapability(Capabilities.FluidHandler.ITEM) != null;
 	}
 	
 	public static void dropItem(Level level, BlockPos pos, ItemStack stack){
@@ -99,7 +100,9 @@ public class Utils{
 	}
 	
 	public static boolean hasKey(ItemStack stack, String key, int tagId){
-		return stack.hasTag() && stack.getTag().contains(key, tagId);
+		// TODO Either adapt or replace
+		return false;
+		//return stack.hasTag() && stack.getTag().contains(key, tagId);
 	}
 	
 	@Nullable

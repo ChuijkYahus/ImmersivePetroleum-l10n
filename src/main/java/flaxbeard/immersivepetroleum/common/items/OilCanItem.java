@@ -23,6 +23,7 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.FluidUtil;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
@@ -51,12 +52,9 @@ public class OilCanItem extends IPItemBase{
 	
 	@Override
 	public void appendHoverText(@Nonnull ItemStack stack, @Nonnull TooltipContext ctx, @Nonnull List<Component> tooltip, @Nonnull TooltipFlag flag){
-		if(ForgeCapabilities.FLUID_HANDLER_ITEM == null)
-			return;
-		
 		FluidUtil.getFluidContained(stack).ifPresent(fluid -> {
 			if(!fluid.isEmpty() && fluid.getAmount() > 0){
-				Component out = ((MutableComponent) fluid.getDisplayName())
+				Component out = ((MutableComponent) fluid.getHoverName())
 						.append(Component.literal(": " + fluid.getAmount() + "/8000mB")).withStyle(ChatFormatting.GRAY);
 				tooltip.add(out);
 			}else{
@@ -80,17 +78,10 @@ public class OilCanItem extends IPItemBase{
 		InteractionHand hand = context.getHand();
 		BlockPos pos = context.getClickedPos();
 		
-		BlockEntity te = level.getBlockEntity(pos);
-		if(te != null){
-			LazyOptional<IFluidHandler> capability = te.getCapability(ForgeCapabilities.FLUID_HANDLER);
-			
-			if(capability.isPresent()){
-				capability.ifPresent(handler -> FluidUtil.interactWithFluidHandler(player, hand, handler));
-				return InteractionResult.SUCCESS;
-			}
-			
+		IFluidHandler handler = level.getCapability(Capabilities.FluidHandler.BLOCK, pos, null);
+		if(handler != null && !FluidUtil.interactWithFluidHandler(player, hand, handler)){
 			return FluidUtil.getFluidHandler(stack)
-				.map(handler -> tryLubricateMachine(level, pos, player, handler))
+				.map(h -> tryLubricateMachine(level, pos, player, h))
 				.orElse(InteractionResult.PASS);
 		}
 		
@@ -154,7 +145,7 @@ public class OilCanItem extends IPItemBase{
 			return InteractionResult.FAIL;
 	}
 	
-	// TODO Where'd container item stuff go?!
+	/* // TODO Where'd container item stuff go?!
 	//@Override
 	public boolean hasContainerItem(ItemStack stack){
 		return ItemNBTHelper.hasKey(stack, "jerrycanDrain") || FluidUtil.getFluidContained(stack).isPresent();
@@ -176,4 +167,5 @@ public class OilCanItem extends IPItemBase{
 		}
 		return stack;
 	}
+	*/
 }

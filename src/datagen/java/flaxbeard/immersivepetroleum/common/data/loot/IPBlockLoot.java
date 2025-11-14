@@ -91,11 +91,7 @@ public class IPBlockLoot extends BlockLootSubProvider{
 	@Override
 	protected Iterable<Block> getKnownBlocks(){
 		//@formatter:off
-		return IPRegisters.BLOCK_REGISTER.getEntries().
-				stream().
-				map(DeferredHolder::get).
-				filter(block -> !block.getLootTable().equals(BuiltInLootTables.EMPTY)).
-				collect(Collectors.toList());
+		return IPRegisters.getAllBlocks();
 		//@formatter:on
 	}
 	

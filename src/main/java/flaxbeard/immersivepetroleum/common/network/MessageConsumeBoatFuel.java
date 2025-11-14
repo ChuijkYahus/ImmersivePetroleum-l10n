@@ -1,37 +1,38 @@
 package flaxbeard.immersivepetroleum.common.network;
 
 import flaxbeard.immersivepetroleum.common.entity.MotorboatEntity;
-import net.minecraft.network.FriendlyByteBuf;
+import io.netty.buffer.ByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.Entity;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.fml.LogicalSide;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-import java.util.function.Supplier;
+import javax.annotation.Nonnull;
 
 public class MessageConsumeBoatFuel implements INetMessage{
-	public int amount;
+	public static final Type<MessageConsumeBoatFuel> ID = INetMessage.createType("consume_speedboat_fuel");
 	
+	public static final StreamCodec<ByteBuf, MessageConsumeBoatFuel> CODEC = ByteBufCodecs.INT.map(MessageConsumeBoatFuel::new, message -> message.amount);
+	
+	private final int amount;
 	public MessageConsumeBoatFuel(int amount){
 		this.amount = amount;
 	}
 	
-	public MessageConsumeBoatFuel(FriendlyByteBuf buf){
-		this.amount = buf.readInt();
+	@Nonnull
+	@Override
+	public Type<? extends CustomPacketPayload> type(){
+		return ID;
 	}
 	
 	@Override
-	public void toBytes(FriendlyByteBuf buf){
-		buf.writeInt(amount);
-	}
-	
-	@Override
-	public void process(Supplier<NetworkEvent.Context> context){
-		context.get().enqueueWork(() -> {
-			NetworkEvent.Context con = context.get();
-			
-			if(con.getDirection().getReceptionSide() == LogicalSide.SERVER && con.getSender() != null){
-				Entity entity = con.getSender().getVehicle();
+	public void process(IPayloadContext context){
+		context.enqueueWork(() -> {
+			if(context.connection().getDirection().getReceptionSide() == LogicalSide.SERVER){
+				Entity entity = context.player().getVehicle();
 				
 				if(entity instanceof MotorboatEntity boat){
 					FluidStack fluid = boat.getContainedFluid();

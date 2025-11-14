@@ -1,11 +1,8 @@
 package flaxbeard.immersivepetroleum.common.items;
 
 import blusunrize.immersiveengineering.api.multiblocks.MultiblockHandler.IMultiblock;
-import blusunrize.immersiveengineering.api.shader.CapabilityShader;
-import blusunrize.immersiveengineering.api.shader.CapabilityShader.ShaderWrapper_Item;
 import blusunrize.immersiveengineering.api.tool.upgrade.IUpgradeableTool;
-import blusunrize.immersiveengineering.api.utils.CapabilityUtils;
-import blusunrize.immersiveengineering.api.utils.ItemUtils;
+import blusunrize.immersiveengineering.api.tool.upgrade.UpgradeData;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -18,8 +15,8 @@ import flaxbeard.immersivepetroleum.client.render.RenderUtils;
 import flaxbeard.immersivepetroleum.client.utils.MCUtil;
 import flaxbeard.immersivepetroleum.common.IPContent;
 import flaxbeard.immersivepetroleum.common.IPContent.Items;
+import flaxbeard.immersivepetroleum.common.IPDataComponents;
 import flaxbeard.immersivepetroleum.common.IPKeyBinds;
-import flaxbeard.immersivepetroleum.common.util.IPItemStackHandler;
 import flaxbeard.immersivepetroleum.common.util.Utils;
 import flaxbeard.immersivepetroleum.common.util.projector.MultiblockProjection;
 import flaxbeard.immersivepetroleum.common.util.projector.Settings;
@@ -37,7 +34,6 @@ import net.minecraft.core.BlockPos.MutableBlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.Vec3i;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -66,9 +62,7 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.LogicalSide;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.capabilities.ICapabilityProvider;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.model.data.ModelData;
@@ -100,10 +94,10 @@ public class ProjectorItem extends IPItemBase implements IUpgradeableTool{
 	@Nonnull
 	public Component getName(@Nonnull ItemStack stack){
 		String selfKey = getDescriptionId(stack);
-		if(stack.hasTag()){
+		if(stack.has(IPDataComponents.PROJECTOR_SETTINGS)){
 			Settings settings = getSettings(stack);
 			if(settings.getMultiblock() != null){
-				Component name = settings.getMultiblock().getDisplayName(); //Component.translatable("desc.immersiveengineering.info.multiblock.IE:" + getActualMBName(settings.getMultiblock()));
+				Component name = settings.getMultiblock().getDisplayName();
 				
 				return Component.translatable(selfKey + ".specific", name).withStyle(ChatFormatting.GOLD);
 			}
@@ -114,8 +108,10 @@ public class ProjectorItem extends IPItemBase implements IUpgradeableTool{
 	@Override
 	public void appendHoverText(@Nonnull ItemStack stack, @Nonnull TooltipContext ctx, @Nonnull List<Component> tooltip, @Nonnull TooltipFlag flag){
 		Settings settings = getSettings(stack);
-		if(settings.getMultiblock() != null){
-			Vec3i size = settings.getMultiblock().getSize(ctx.level());
+		Level level = ctx.level();
+		
+		if(settings.getMultiblock() != null && level != null){
+			Vec3i size = settings.getMultiblock().getSize(level);
 			
 			tooltip.add(Component.translatable("desc.immersivepetroleum.info.projector.build0"));
 			tooltip.add(Component.translatable("desc.immersivepetroleum.info.projector.build1", settings.getMultiblock().getDisplayName()));
@@ -261,6 +257,9 @@ public class ProjectorItem extends IPItemBase implements IUpgradeableTool{
 	@Override
 	@Nonnull
 	public InteractionResult useOn(UseOnContext context){
+		if(context.getPlayer() == null)
+			return InteractionResult.PASS;
+		
 		Level world = context.getLevel();
 		Player playerIn = context.getPlayer();
 		InteractionHand hand = context.getHand();
@@ -349,7 +348,11 @@ public class ProjectorItem extends IPItemBase implements IUpgradeableTool{
 	// STATIC METHODS
 	
 	public static Settings getSettings(@Nullable ItemStack stack){
-		return new Settings(stack);
+		Settings settings;
+		if(stack == null || (settings = stack.get(IPDataComponents.PROJECTOR_SETTINGS)) == null)
+			return new Settings();
+		
+		return settings;
 	}
 	
 	private static void alignHit(MutableBlockPos hit, Player playerIn, Vec3i size, Rotation rotation, boolean mirror){
@@ -589,7 +592,7 @@ public class ProjectorItem extends IPItemBase implements IUpgradeableTool{
 						{
 							// Center (Blue)
 							BlockPos center = min.immutable().offset(max);
-							matrix.translate(center.getX() / 2, center.getY() / 2, center.getZ() / 2);
+							matrix.translate((float) (center.getX() / 2), (float) (center.getY() / 2), (float) (center.getZ() / 2));
 							renderCenteredOutlineBox(mainBuffer, matrix, 0x0000FF, flicker);
 						}
 						matrix.popPose();
@@ -621,7 +624,7 @@ public class ProjectorItem extends IPItemBase implements IUpgradeableTool{
 				ModelData modelData = ModelData.EMPTY;
 				BlockEntity te = rInfo.templateWorld.getBlockEntity(rInfo.tBlockInfo.pos());
 				if(te != null){
-					te.setBlockState(state);;
+					te.setBlockState(state);
 					modelData = te.getModelData();
 				}
 				
@@ -699,14 +702,12 @@ public class ProjectorItem extends IPItemBase implements IUpgradeableTool{
 			Vector3f end = combine(min, max, endBits);
 			Vector3f delta = new Vector3f(end);
 			delta.sub(start);
-			out.vertex(mat.last().pose(), start.x(), start.y(), start.z())
-					.color(rgba)
-					.normal(mat.last().normal(), delta.x(), delta.y(), delta.z())
-					.endVertex();
-			out.vertex(mat.last().pose(), end.x(), end.y(), end.z())
-					.color(rgba)
-					.normal(mat.last().normal(), delta.x(), delta.y(), delta.z())
-					.endVertex();
+			out.addVertex(mat.last().pose(), start.x(), start.y(), start.z())
+					.setColor(rgba)
+					.setNormal(mat.last(), delta.x(), delta.y(), delta.z());
+			out.addVertex(mat.last().pose(), end.x(), end.y(), end.z())
+					.setColor(rgba)
+					.setNormal(mat.last(), delta.x(), delta.y(), delta.z());
 		}
 	}
 	
@@ -714,7 +715,6 @@ public class ProjectorItem extends IPItemBase implements IUpgradeableTool{
 	@OnlyIn(Dist.CLIENT)
 	@EventBusSubscriber(modid = ImmersivePetroleum.MODID, value = Dist.CLIENT)
 	public static class ClientInputHandler{
-		
 		
 		static boolean shiftHeld = false;
 		
@@ -787,13 +787,13 @@ public class ProjectorItem extends IPItemBase implements IUpgradeableTool{
 	}
 	
 	@Override
-	public CompoundTag getUpgrades(ItemStack stack){
-		return stack.hasTag() ? stack.getOrCreateTag().getCompound("upgrades") : new CompoundTag();
+	public UpgradeData getUpgrades(ItemStack stack){
+		return UpgradeData.EMPTY;//stack.hasTag() ? stack.getOrCreateTag().getCompound("upgrades") : new CompoundTag();
 	}
 	
 	@Override
 	public void clearUpgrades(ItemStack stack){
-		ItemUtils.removeTag(stack, "upgrades");
+		//ItemUtils.removeTag(stack, "upgrades");
 	}
 	
 	@Override
@@ -824,6 +824,7 @@ public class ProjectorItem extends IPItemBase implements IUpgradeableTool{
 		return NONE;
 	}
 	
+	/*
 	public ICapabilityProvider initCapabilities(ItemStack stack, CompoundTag nbt){
 		if(stack.isEmpty())
 			return null;
@@ -841,4 +842,5 @@ public class ProjectorItem extends IPItemBase implements IUpgradeableTool{
 			}
 		};
 	}
+	*/
 }

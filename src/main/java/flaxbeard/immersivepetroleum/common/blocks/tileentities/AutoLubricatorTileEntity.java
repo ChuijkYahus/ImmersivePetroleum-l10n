@@ -13,6 +13,7 @@ import flaxbeard.immersivepetroleum.common.blocks.interfaces.IPlacementReader;
 import flaxbeard.immersivepetroleum.common.blocks.interfaces.IPlayerInteraction;
 import flaxbeard.immersivepetroleum.common.blocks.ticking.IPCommonTickableTile;
 import flaxbeard.immersivepetroleum.common.blocks.wooden.AutoLubricatorBlock;
+import flaxbeard.immersivepetroleum.common.IPDataComponents;
 import flaxbeard.immersivepetroleum.common.util.Utils;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
@@ -38,6 +39,7 @@ import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.fluids.FluidUtil;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
+import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -52,10 +54,10 @@ public class AutoLubricatorTileEntity extends IPTileEntityBase implements IPComm
 	}
 	
 	public AutoLubricatorTileEntity master(){
-		if(!this.isSlave)
+		if(!this.isSlave || this.level == null)
 			return this;
 		
-		BlockEntity te = this.getLevel().getBlockEntity(getBlockPos().below());
+		BlockEntity te = this.level.getBlockEntity(getBlockPos().below());
 		return te instanceof AutoLubricatorTileEntity autolube ? autolube : null;
 	}
 	
@@ -64,7 +66,7 @@ public class AutoLubricatorTileEntity extends IPTileEntityBase implements IPComm
 		this.isSlave = compound.getBoolean("slave");
 		
 		Direction facing = Direction.byName(compound.getString("facing"));
-		this.facing = facing.get2DDataValue() == -1 ? Direction.NORTH : facing;
+		this.facing = (facing == null || facing.get2DDataValue() == -1) ? Direction.NORTH : facing;
 		
 		this.tank.readFromNBT(provider, compound.getCompound("tank"));
 	}
@@ -92,10 +94,20 @@ public class AutoLubricatorTileEntity extends IPTileEntityBase implements IPComm
 	
 	@Override
 	public void readOnPlacement(LivingEntity placer, ItemStack stack){
+		/*// TODO
 		if(stack.hasTag())
 			readTank(stack.getTag());
+		*/
 		
-		if(placer instanceof Player player){
+		if(stack.has(IPDataComponents.Test.DATA_TYPE)){
+			IPDataComponents.Test test = stack.get(IPDataComponents.Test.DATA_TYPE);
+			
+			if(test != null){
+				stack.update(IPDataComponents.Test.DATA_TYPE, test, test1 -> new IPDataComponents.Test(test1.test()));
+			}
+		}
+		
+		if(placer instanceof Player player && this.level != null){
 			BlockPos target = this.worldPosition.relative(this.facing);
 			BlockEntity te = this.level.getBlockEntity(target);
 			
@@ -112,7 +124,7 @@ public class AutoLubricatorTileEntity extends IPTileEntityBase implements IPComm
 	@Nonnull
 	public List<ItemStack> getBlockEntityDrop(LootContext context){
 		BlockState state = context.getParamOrNull(LootContextParams.BLOCK_STATE);
-		if(state.getValue(AutoLubricatorBlock.SLAVE))
+		if(state == null || state.getValue(AutoLubricatorBlock.SLAVE))
 			return List.of(ItemStack.EMPTY);
 		
 		
@@ -121,17 +133,17 @@ public class AutoLubricatorTileEntity extends IPTileEntityBase implements IPComm
 		BlockEntity te = context.getParamOrNull(LootContextParams.BLOCK_ENTITY);
 		if(te instanceof AutoLubricatorTileEntity autolube){
 			CompoundTag tag = new CompoundTag();
-			autolube.writeTank(tag, true);
+			autolube.writeTank(tag, context.getLevel().registryAccess(), true);
 			if(!tag.isEmpty()){
-				stack.setTag(tag);
+				//stack.setTag(tag); // TODO
 			}
 		}
 		
 		return List.of(stack);
 	}
 	
+	/*
 	private LazyOptional<IFluidHandler> outputHandler;
-	
 	@Nonnull
 	public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, Direction side){
 		if(cap == Capabilities.FLUID_HANDLER){
@@ -150,13 +162,16 @@ public class AutoLubricatorTileEntity extends IPTileEntityBase implements IPComm
 		
 		return super.getCapability(cap, side);
 	}
+	*/
 	
+	/*
 	@Override
 	public void setRemoved(){
 		super.setRemoved();
 		if(this.outputHandler != null)
 			this.outputHandler.invalidate();
 	}
+	*/
 	
 	@Override
 	public void setChanged(){
@@ -167,12 +182,14 @@ public class AutoLubricatorTileEntity extends IPTileEntityBase implements IPComm
 		this.level.updateNeighborsAt(this.worldPosition, state.getBlock());
 	}
 	
+	/*
 	@Override
 	public void invalidateCaps(){
 		super.invalidateCaps();
 		if(this.outputHandler != null)
 			this.outputHandler.invalidate();
 	}
+	*/
 	
 	public Direction getFacing(){
 		return this.facing;
@@ -185,18 +202,19 @@ public class AutoLubricatorTileEntity extends IPTileEntityBase implements IPComm
 	@OnlyIn(Dist.CLIENT)
 	public AABB getRenderBoundingBox(){
 		BlockPos pos = getBlockPos();
-		return new AABB(pos.offset(-3, -3, -3), pos.offset(3, 3, 3));
+		return AABB.encapsulatingFullBlocks(pos.offset(-3, -3, -3), pos.offset(3, 3, 3));
 	}
 	
+	@Nullable
 	@Override
-	public Component[] getOverlayText(Player player, @Nonnull HitResult mop, boolean hammer){
+	public Component[] getOverlayText(@Nullable BlockState blockState, Player player, @Nonnull HitResult mop, boolean hammer){
 		if(Utils.isFluidRelatedItemStack(player.getItemInHand(InteractionHand.MAIN_HAND))){
 			AutoLubricatorTileEntity master = master();
 			if(master != null){
 				Component s = switch(master.tank.isEmpty() ? 0 : 1){
 					case 0 -> Component.translatable(Lib.GUI + "empty");
 					case 1 ->
-						((MutableComponent) master.tank.getFluid().getDisplayName()).append(": " + master.tank.getFluidAmount() + "mB");
+						((MutableComponent) master.tank.getFluid().getHoverName()).append(": " + master.tank.getFluidAmount() + "mB");
 					default -> null;
 				};
 				
@@ -207,14 +225,9 @@ public class AutoLubricatorTileEntity extends IPTileEntityBase implements IPComm
 	}
 	
 	@Override
-	public boolean useNixieFont(@Nonnull Player player, @Nonnull HitResult mop){
-		return false;
-	}
-	
-	@Override
 	public InteractionResult interact(@Nonnull Direction side, @Nonnull Player player, @Nonnull InteractionHand hand, @Nonnull ItemStack heldItem, float hitX, float hitY, float hitZ){
 		AutoLubricatorTileEntity master = master();
-		if(master != null){
+		if(master != null && this.level != null){
 			if(!this.level.isClientSide && FluidUtil.interactWithFluidHandler(player, hand, master.tank)){
 				setChanged();
 			}
@@ -230,7 +243,7 @@ public class AutoLubricatorTileEntity extends IPTileEntityBase implements IPComm
 	@Override
 	@SuppressWarnings("rawtypes, unchecked")
 	public void tickClient(){
-		if(this.isSlave){
+		if(this.isSlave || this.level == null){
 			return;
 		}
 		
@@ -260,7 +273,7 @@ public class AutoLubricatorTileEntity extends IPTileEntityBase implements IPComm
 	@Override
 	@SuppressWarnings("rawtypes, unchecked")
 	public void tickServer(){
-		if(this.isSlave)
+		if(this.isSlave || this.level == null)
 			return;
 		
 		

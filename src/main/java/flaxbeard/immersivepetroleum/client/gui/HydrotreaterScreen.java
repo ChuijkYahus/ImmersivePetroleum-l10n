@@ -37,19 +37,19 @@ public class HydrotreaterScreen extends IEContainerScreen<HydrotreaterContainer>
 				new FluidInfoArea(
 						this.getMenu().tanks.primary(),
 						new Rect2i(this.leftPos + 34, this.topPos + 11, 16, 47),
-						140, 0, 20, 51,
+						140, 0,
 						GUI_TEXTURE
 				),
 				new FluidInfoArea(
 						this.getMenu().tanks.secondary(),
 						new Rect2i(this.leftPos + 11, this.topPos + 11, 16, 47),
-						140, 0, 20, 51,
+						140, 0,
 						GUI_TEXTURE
 				),
 				new FluidInfoArea(
 						this.getMenu().tanks.output(),
 						new Rect2i(this.leftPos + 92, this.topPos + 11, 16, 47),
-						140, 0, 20, 51,
+						140, 0,
 						GUI_TEXTURE
 				),
 				new EnergyInfoArea(leftPos + 122, topPos + 12, this.getMenu().energy)

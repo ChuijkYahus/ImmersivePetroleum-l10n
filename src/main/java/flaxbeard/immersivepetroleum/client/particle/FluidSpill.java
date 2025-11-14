@@ -12,11 +12,11 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.level.material.Fluid;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.extensions.common.IClientFluidTypeExtensions;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.FluidType;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidType;
 
 import javax.annotation.Nonnull;
 
@@ -46,10 +46,10 @@ public class FluidSpill extends TextureSheetParticle{
 		setSprite(sprite);
 		
 		int argb = fluidProperties.getTintColor(fs);
-		this.alpha = ((argb >> 24) & 255) / 255F;
-		this.rCol = ((argb >> 16) & 255) / 255F;
-		this.gCol = ((argb >> 8 & 255)) / 255F;
-		this.bCol = (argb & 255) / 255F;
+		this.alpha = ((argb >> 24) & 0xFF) / 255F;
+		this.rCol = ((argb >> 16) & 0xFF) / 255F;
+		this.gCol = ((argb >> 8 & 0xFF)) / 255F;
+		this.bCol = (argb & 0xFF) / 255F;
 	}
 	
 	@Override
@@ -72,7 +72,7 @@ public class FluidSpill extends TextureSheetParticle{
 			
 			this.hasPhysics = this.yd <= 0.0;
 			
-			this.quadSize *= 0.97D;
+			this.quadSize *= 0.97F;
 		}
 	}
 	

@@ -12,9 +12,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.FluidUtil;
-import net.minecraftforge.items.ItemStackHandler;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidUtil;
+import net.neoforged.neoforge.items.ItemStackHandler;
 
 import java.util.List;
 
@@ -69,7 +69,7 @@ public class CokerUnitContainer extends MultiblockAwareGuiContainer{
 			}
 			
 			FluidStack fs = h.getFluidInTank(0);
-			if(fs.isEmpty() || (this.tanks.input().getFluidAmount() > 0 && !fs.isFluidEqual(this.tanks.input().getFluid()))){
+			if(fs.isEmpty() || (this.tanks.input().getFluidAmount() > 0 && !fs.is(this.tanks.input().getFluid().getFluid()))){
 				return false;
 			}
 			

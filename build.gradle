@@ -131,17 +131,25 @@ dependencies {
 	// http://www.gradle.org/docs/current/userguide/dependency_management.html
 }
 
-def version_replaces = [
-	'ip_version'	: mod_version,
-	'mc_version'	: version_minecraft,
-	'neo_version'	: version_neo,
-	'ie_version'	: version_ie,
-]
 processResources {
-	filesMatching("META-INF/mods.toml") {
-		expand version_replaces
-	}
+	duplicatesStrategy = DuplicatesStrategy.FAIL
+	exclude ".cache"
 }
+var modMeta = tasks.register("generateModMetadata", ProcessResources) {
+	var version_replaces = [
+		'ip_version'	: mod_version,
+		'mc_version'	: version_minecraft,
+		'neo_version'	: version_neo,
+		'ie_version'	: version_ie,
+	]
+
+	inputs.properties version_replaces
+	expand version_replaces
+	from "src/main/templates"
+	into "build/generated/sources/modMetadata"
+}
+sourceSets.main.resources.srcDir generateModMetadata
+neoForge.ideSyncTask modMeta
 
 publishing {
 	publications {

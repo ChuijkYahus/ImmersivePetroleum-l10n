@@ -53,25 +53,29 @@ public class RecipeReloadListener implements ResourceManagerReloadListener{
 		if(recipes.isEmpty())
 			return;
 		
-		ImmersivePetroleum.log.info("Loading Distillation Recipes.");
-		DistillationTowerRecipe.recipes = filterRecipes(recipes, DistillationTowerRecipe.class, IPRecipeTypes.DISTILLATION);
-		
 		ImmersivePetroleum.log.info("Loading Reservoirs.");
 		ReservoirType.map = filterRecipes(recipes, ReservoirType.class, IPRecipeTypes.RESERVOIR);
 		
-		ImmersivePetroleum.log.info("Loading Coker-Unit Recipes.");
+		ImmersivePetroleum.log.info("Loading Distillation Recipes.");
+		DistillationTowerRecipe.recipes = filterRecipes(recipes, DistillationTowerRecipe.class, IPRecipeTypes.DISTILLATION);
+		
+		ImmersivePetroleum.log.info("Loading Coker Recipes.");
 		CokerUnitRecipe.recipes = filterRecipes(recipes, CokerUnitRecipe.class, IPRecipeTypes.COKER);
 		
 		ImmersivePetroleum.log.info("Loading High-Pressure Refinery Recipes.");
 		HighPressureRefineryRecipe.recipes = filterRecipes(recipes, HighPressureRefineryRecipe.class, IPRecipeTypes.HYDROTREATER);
 	}
 	
-	static <R extends Recipe<?>> Map<ResourceLocation, R> filterRecipes(Collection<RecipeHolder<?>> recipes, Class<R> recipeClass, IERecipeTypes.TypeWithClass<R> recipeType){
-		// FIXME
-		return recipes.stream()
-				.map(RecipeHolder::value)
-				.filter(iRecipe -> iRecipe.getType() == recipeType.get())
-				.map(recipeClass::cast)
-				.collect(Collectors.toMap(recipe -> recipe.getId(), recipe -> recipe));
+	@SuppressWarnings("unchecked")
+	static <R extends Recipe<?>, H extends RecipeHolder<R>> Map<ResourceLocation, H> filterRecipes(Collection<RecipeHolder<?>> recipes, Class<R> recipeClass, IERecipeTypes.TypeWithClass<R> recipeType){
+		//@formatter:off
+		return (Map<ResourceLocation, H>) recipes.stream()
+			.filter(holder -> holder.value().getType() == recipeType.get())
+			.map(holder -> new Test(holder.id(), holder))
+			.collect(Collectors.toMap(Test::id, Test::holder));
+		//@formatter:on
+	}
+	
+	private record Test(ResourceLocation id, RecipeHolder<?> holder){
 	}
 }

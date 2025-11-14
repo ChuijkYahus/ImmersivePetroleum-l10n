@@ -2,11 +2,17 @@ package flaxbeard.immersivepetroleum.common.util.projector;
 
 import blusunrize.immersiveengineering.api.multiblocks.MultiblockHandler;
 import blusunrize.immersiveengineering.api.multiblocks.MultiblockHandler.IMultiblock;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import flaxbeard.immersivepetroleum.common.network.MessageProjectorSync;
+import flaxbeard.immersivepetroleum.common.IPDataComponents;
+import io.netty.buffer.ByteBuf;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
@@ -15,9 +21,30 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Rotation;
 
 import javax.annotation.Nullable;
-import java.util.function.Supplier;
 
 public class Settings{
+	//@formatter:off
+	public static final Codec<Settings> CODEC = RecordCodecBuilder.create(inst -> inst.group(
+		Codec.INT.fieldOf("mode").forGetter(s -> s.mode.ordinal()),
+		Codec.INT.fieldOf("rotation").forGetter(s -> s.rotation.ordinal()),
+		BlockPos.CODEC.fieldOf("pos").forGetter(s -> s.pos),
+		Codec.STRING.fieldOf("multiblock").forGetter(s -> s.multiblock.getUniqueName().toString()),
+		Codec.BOOL.fieldOf("mirror").forGetter(s -> s.mirror),
+		Codec.BOOL.fieldOf("isPlaced").forGetter(s -> s.isPlaced)
+	).apply(inst, (modeId, rotId, pos, mbId, mirrored, placed) -> {
+		Settings settings = new Settings();
+		settings.mode = Mode.values()[modeId];
+		settings.rotation = Rotation.values()[rotId];
+		settings.pos = pos;
+		settings.multiblock = MultiblockHandler.getByUniqueName(ResourceLocation.parse(mbId));
+		settings.mirror = mirrored;
+		settings.isPlaced = placed;
+		return settings;
+	}));
+	//@formatter:on
+	
+	public static final StreamCodec<ByteBuf, Settings> CODEC_STREAM = ByteBufCodecs.COMPOUND_TAG.map(Settings::new, Settings::toNbt);
+	
 	public static final String KEY_SELF = "settings";
 	public static final String KEY_BLOCKS = "blocks";
 	public static final String KEY_MODE = "mode";
@@ -39,6 +66,8 @@ public class Settings{
 	}
 	
 	public Settings(@Nullable final ItemStack stack){
+		// TODO
+		/*
 		this(((Supplier<CompoundTag>) () -> {
 			CompoundTag nbt = null;
 			if(stack != null && (nbt = stack.getTagElement(KEY_SELF)) == null){
@@ -48,6 +77,8 @@ public class Settings{
 			}
 			return nbt;
 		}).get());
+		*/
+		this();
 	}
 	
 	public Settings(CompoundTag settingsNbt){
@@ -75,6 +106,28 @@ public class Settings{
 				this.pos = new BlockPos(x, y, z);
 			}
 		}
+	}
+	
+	public CompoundTag toNbt(){
+		CompoundTag nbt = new CompoundTag();
+		nbt.putInt(KEY_MODE, this.mode.ordinal());
+		nbt.putInt(KEY_ROTATION, this.rotation.ordinal());
+		nbt.putBoolean(KEY_MIRROR, this.mirror);
+		nbt.putBoolean(KEY_PLACED, this.isPlaced);
+		
+		if(this.multiblock != null){
+			nbt.putString(KEY_MULTIBLOCK, this.multiblock.getUniqueName().toString());
+		}
+		
+		if(this.pos != null){
+			CompoundTag pos = new CompoundTag();
+			pos.putInt("x", this.pos.getX());
+			pos.putInt("y", this.pos.getY());
+			pos.putInt("z", this.pos.getZ());
+			nbt.put(KEY_POSITION, pos);
+		}
+		
+		return nbt;
 	}
 	
 	/** Rotate by 90° Clockwise */
@@ -158,31 +211,12 @@ public class Settings{
 		return this.multiblock;
 	}
 	
-	public CompoundTag toNbt(){
-		CompoundTag nbt = new CompoundTag();
-		nbt.putInt(KEY_MODE, this.mode.ordinal());
-		nbt.putInt(KEY_ROTATION, this.rotation.ordinal());
-		nbt.putBoolean(KEY_MIRROR, this.mirror);
-		nbt.putBoolean(KEY_PLACED, this.isPlaced);
-		
-		if(this.multiblock != null){
-			nbt.putString(KEY_MULTIBLOCK, this.multiblock.getUniqueName().toString());
-		}
-		
-		if(this.pos != null){
-			CompoundTag pos = new CompoundTag();
-			pos.putInt("x", this.pos.getX());
-			pos.putInt("y", this.pos.getY());
-			pos.putInt("z", this.pos.getZ());
-			nbt.put(KEY_POSITION, pos);
-		}
-		
-		return nbt;
-	}
-	
 	public ItemStack applyTo(ItemStack stack){
+		stack.set(IPDataComponents.PROJECTOR_SETTINGS, this);
+		/*
 		stack.getOrCreateTagElement("settings");
 		stack.getTag().put("settings", this.toNbt());
+		*/
 		return stack;
 	}
 	

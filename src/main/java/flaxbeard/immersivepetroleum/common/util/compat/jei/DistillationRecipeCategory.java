@@ -1,34 +1,36 @@
 package flaxbeard.immersivepetroleum.common.util.compat.jei;
 
+import blusunrize.immersiveengineering.api.crafting.StackWithChance;
 import flaxbeard.immersivepetroleum.api.crafting.DistillationTowerRecipe;
 import flaxbeard.immersivepetroleum.client.utils.MCUtil;
 import flaxbeard.immersivepetroleum.common.IPContent;
 import flaxbeard.immersivepetroleum.common.util.RegistryUtils;
 import flaxbeard.immersivepetroleum.common.util.ResourceUtils;
 import flaxbeard.immersivepetroleum.common.util.Utils;
-import mezz.jei.api.forge.ForgeTypes;
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
 import mezz.jei.api.gui.builder.IRecipeSlotBuilder;
+import mezz.jei.api.gui.builder.ITooltipBuilder;
 import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.gui.drawable.IDrawableStatic;
-import mezz.jei.api.gui.ingredient.IRecipeSlotTooltipCallback;
+import mezz.jei.api.gui.ingredient.IRecipeSlotRichTooltipCallback;
 import mezz.jei.api.gui.ingredient.IRecipeSlotView;
 import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.ingredients.ITypedIngredient;
+import mezz.jei.api.neoforge.NeoForgeTypes;
 import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.RecipeIngredientRole;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.resources.language.I18n;
-import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 import javax.annotation.Nonnull;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -67,7 +69,7 @@ public class DistillationRecipeCategory extends IPRecipeCategory<DistillationTow
 				IRecipeSlotBuilder slot = builder
 						.addSlot(RecipeIngredientRole.OUTPUT, x0, lastHeight - height)
 						.setFluidRenderer(f.getAmount(), false, tW, height)
-						.addIngredient(ForgeTypes.FLUID_STACK, f);
+						.addIngredient(NeoForgeTypes.FLUID_STACK, f);
 				
 				lastHeight -= height;
 				
@@ -82,41 +84,41 @@ public class DistillationRecipeCategory extends IPRecipeCategory<DistillationTow
 			builder.addSlot(RecipeIngredientRole.INPUT, 11, 21)
 				.setFluidRenderer(outputTotal, false, 16, 47)
 				.setOverlay(this.tankOverlay, -2, -2)
-				.addIngredients(ForgeTypes.FLUID_STACK, recipe.getInputFluid().getMatchingFluidStacks());
+				.addIngredients(NeoForgeTypes.FLUID_STACK, Arrays.asList(recipe.input.getFluids()));
 		}
 		
 		IRecipeSlotBuilder itemOutput = builder.addSlot(RecipeIngredientRole.OUTPUT, 77, 37)
-				.addTooltipCallback(new TooltipHandler(recipe));
+				.addRichTooltipCallback(new TooltipHandler(recipe));
 		for(ItemStack s:recipe.getItemOutputs()){
 			itemOutput.addItemStack(s);
 		}
 	}
 	
-	private static class TooltipHandler implements IRecipeSlotTooltipCallback{
-		private final Map<ResourceLocation, Double> map = new HashMap<>();
+	private static class TooltipHandler implements IRecipeSlotRichTooltipCallback{
+		private final Map<ResourceLocation, Float> map = new HashMap<>();
 		
 		public TooltipHandler(DistillationTowerRecipe recipe){
-			NonNullList<ItemStack> list = recipe.getItemOutputs();
-			for(int i = 0;i < list.size();i++){
-				ItemStack stack = list.get(i);
-				
-				this.map.put(RegistryUtils.getRegistryNameOf(stack.getItem()), recipe.chances()[i]);
+			StackWithChance[] list = recipe.itemOutput;
+			if(list != null){
+				for(StackWithChance stack: list){
+					this.map.put(RegistryUtils.getRegistryNameOf(stack.stack().get().getItem()), stack.chance());
+				}
 			}
 		}
 		
 		@Override
-		public void onTooltip(IRecipeSlotView recipeSlotView, List<Component> tooltip){
+		public void onRichTooltip(IRecipeSlotView recipeSlotView, @Nonnull ITooltipBuilder tooltip){
 			ITypedIngredient<?> type = recipeSlotView.getDisplayedIngredient().orElse(null);
 			if(type != null && type.getIngredient() instanceof ItemStack stack){
-				Double t;
+				Float t;
 				if((t = this.map.get(RegistryUtils.getRegistryNameOf(stack.getItem()))) != null){
 					double chance = t.doubleValue();
 					
 					Component text = Component.translatable("desc.immersivepetroleum.compat.jei.distillation.byproduct")
 							.withStyle(ChatFormatting.GOLD, ChatFormatting.UNDERLINE);
 					
-					tooltip.add(0, text);
-					tooltip.add(2, toTextComponent(chance));
+					tooltip.add(text);
+					tooltip.add(toTextComponent(chance));
 				}
 			}
 		}

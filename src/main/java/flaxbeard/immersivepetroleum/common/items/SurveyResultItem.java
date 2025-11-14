@@ -44,7 +44,7 @@ public class SurveyResultItem extends IPItemBase{
 	}
 	
 	@Override
-	public InteractionResultHolder<ItemStack> use(Level pLevel, Player pPlayer, InteractionHand pUsedHand){
+	public @Nonnull InteractionResultHolder<ItemStack> use(Level pLevel, Player pPlayer, @Nonnull InteractionHand pUsedHand){
 		ItemStack held = pPlayer.getItemInHand(pUsedHand);
 		
 		if(pLevel.isClientSide && ISurveyInfo.from(held) instanceof SurveyScan scan){
@@ -67,48 +67,46 @@ public class SurveyResultItem extends IPItemBase{
 	
 	@Override
 	public void appendHoverText(@Nonnull ItemStack stack, @Nonnull TooltipContext ctx, @Nonnull List<Component> tooltip, @Nonnull TooltipFlag flag){
-		if(stack.hasTag() && stack.getTag() != null){
-			ISurveyInfo info = ISurveyInfo.from(stack);
-			
-			if(info instanceof SurveyScan scan){
-				if(scan.getUuid() == null){
-					tooltip.add(Component.literal("SORRY, IM FAULTY!").withStyle(ChatFormatting.RED));
-					tooltip.add(Component.literal("YOU'LL HAVE TO TOSS ME!").withStyle(ChatFormatting.RED));
-					return;
-				}
-				
-				tooltip.add(Component.translatable("desc.immersivepetroleum.flavour.surveytool.rightclickme"));
-				
-				if(flag == TooltipFlag.Default.ADVANCED){
-					tooltip.add(Component.literal("ID: " + (scan.getUuid() != null ? scan.getUuid().toString() : "Null")));
-					tooltip.add(Component.literal("dSize: " + (scan.getData() != null ? scan.getData().length : "Null")));
-				}
+		ISurveyInfo info = ISurveyInfo.from(stack);
+		
+		if(info instanceof SurveyScan scan){
+			if(scan.getUuid() == null){
+				tooltip.add(Component.literal("SORRY, IM FAULTY!").withStyle(ChatFormatting.RED));
+				tooltip.add(Component.literal("YOU'LL HAVE TO TOSS ME!").withStyle(ChatFormatting.RED));
+				return;
 			}
 			
-			if(info instanceof IslandInfo islandInfo){
-				int expected = islandInfo.getExpected();
-				long amount = islandInfo.getAmount();
-				byte percentage = islandInfo.getStatus();
-				FluidStack fs = islandInfo.getFluidStack();
-				
-				if(islandInfo.getFluidStack() == FluidStack.EMPTY){
-					tooltip.add(Component.literal("SORRY, IM FAULTY!").withStyle(ChatFormatting.RED));
-					tooltip.add(Component.literal("YOU'LL HAVE TO TOSS ME!").withStyle(ChatFormatting.RED));
-					return;
-				}
-				
-				tooltip.add(Component.translatable(fs.getDescriptionId()).withStyle(ChatFormatting.DARK_GRAY));
-				tooltip.add(Component.translatable("desc.immersivepetroleum.info.survey_result.amount", String.format(Locale.ENGLISH, "%,.3f", amount / 1000D), percentage).withStyle(ChatFormatting.DARK_GRAY));
-				tooltip.add(Component.translatable("desc.immersivepetroleum.info.survey_result.expected", expected).withStyle(ChatFormatting.DARK_GRAY));
-				
+			tooltip.add(Component.translatable("desc.immersivepetroleum.flavour.surveytool.rightclickme"));
+			
+			if(flag == TooltipFlag.Default.ADVANCED){
+				tooltip.add(Component.literal("ID: " + (scan.getUuid() != null ? scan.getUuid().toString() : "Null")));
+				tooltip.add(Component.literal("dSize: " + (scan.getData() != null ? scan.getData().length : "Null")));
+			}
+		}
+		
+		if(info instanceof IslandInfo islandInfo){
+			int expected = islandInfo.getExpected();
+			long amount = islandInfo.getAmount();
+			byte percentage = islandInfo.getStatus();
+			FluidStack fs = islandInfo.getFluidStack();
+			
+			if(islandInfo.getFluidStack() == FluidStack.EMPTY){
+				tooltip.add(Component.literal("SORRY, IM FAULTY!").withStyle(ChatFormatting.RED));
+				tooltip.add(Component.literal("YOU'LL HAVE TO TOSS ME!").withStyle(ChatFormatting.RED));
+				return;
 			}
 			
-			if(info != null){
-				int x = info.getX();
-				int z = info.getZ();
-				
-				tooltip.add(Component.translatable("desc.immersivepetroleum.flavour.surveytool.location", x, z).withStyle(ChatFormatting.DARK_GRAY));
-			}
+			tooltip.add(Component.translatable(fs.getDescriptionId()).withStyle(ChatFormatting.DARK_GRAY));
+			tooltip.add(Component.translatable("desc.immersivepetroleum.info.survey_result.amount", String.format(Locale.ENGLISH, "%,.3f", amount / 1000D), percentage).withStyle(ChatFormatting.DARK_GRAY));
+			tooltip.add(Component.translatable("desc.immersivepetroleum.info.survey_result.expected", expected).withStyle(ChatFormatting.DARK_GRAY));
+			
+		}
+		
+		if(info != null){
+			int x = info.getX();
+			int z = info.getZ();
+			
+			tooltip.add(Component.translatable("desc.immersivepetroleum.flavour.surveytool.location", x, z).withStyle(ChatFormatting.DARK_GRAY));
 		}
 	}
 }

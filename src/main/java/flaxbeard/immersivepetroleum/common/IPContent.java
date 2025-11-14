@@ -210,7 +210,7 @@ public class IPContent{
 	public static final DeferredHolder<Item, Item> DEBUGITEM = IPRegisters.registerItem("debug", DebugItem::new);
 	
 	public static class WorldGenFeatures{
-		public static final DeferredHolder<Feature<?>, FeatureReservoir> RESERVOIR_FEATURE = IPRegisters.FEATURE_REGISTER.register("reservoir", FeatureReservoir::new);
+		public static final DeferredHolder<Feature<?>, FeatureReservoir> RESERVOIR_FEATURE = IPRegisters.registerFeature("reservoir", FeatureReservoir::new);
 		
 		//@formatter:off
 		private static void forceClassLoad(){}
@@ -234,6 +234,7 @@ public class IPContent{
 		IPDamageSources.forceClassLoad();
 		WorldGenFeatures.forceClassLoad();
 		IPCreativeTab.forceClassLoad();
+		IPDataComponents.forceClassLoad();
 	}
 	
 	public static void preInit(){

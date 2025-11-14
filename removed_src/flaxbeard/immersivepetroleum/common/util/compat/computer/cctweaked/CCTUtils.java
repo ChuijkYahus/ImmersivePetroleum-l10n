@@ -3,7 +3,7 @@ package flaxbeard.immersivepetroleum.common.util.compat.computer.cctweaked;
 import flaxbeard.immersivepetroleum.common.util.RegistryUtils;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 import java.util.HashMap;
 import java.util.Map;

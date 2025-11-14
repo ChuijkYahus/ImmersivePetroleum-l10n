@@ -1,7 +1,5 @@
 package flaxbeard.immersivepetroleum.common.sound;
 
-import blusunrize.immersiveengineering.common.items.EarmuffsItem;
-import blusunrize.immersiveengineering.common.register.IEItems;
 import flaxbeard.immersivepetroleum.client.utils.MCUtil;
 import flaxbeard.immersivepetroleum.common.util.RegistryUtils;
 import net.minecraft.client.resources.sounds.Sound;
@@ -14,8 +12,6 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
@@ -24,6 +20,7 @@ import net.neoforged.api.distmarker.OnlyIn;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+// TODO Was this class actually ever used?
 @OnlyIn(Dist.CLIENT)
 public class IPEntitySound implements TickableSoundInstance{
 	protected Sound sound;
@@ -126,6 +123,8 @@ public class IPEntitySound implements TickableSoundInstance{
 	
 	public void evaluateVolume(){
 		volumeAjustment = 1f;
+		
+		/* // TODO
 		if(MCUtil.getPlayer() != null && !MCUtil.getPlayer().getItemBySlot(EquipmentSlot.HEAD).isEmpty()){
 			ItemStack stack = MCUtil.getPlayer().getItemBySlot(EquipmentSlot.HEAD);
 			if(ItemNBTHelper.hasKey(stack, "IE:Earmuffs"))
@@ -133,6 +132,7 @@ public class IPEntitySound implements TickableSoundInstance{
 			if(stack != null && IEItems.Misc.EARMUFFS.asItem().equals(stack.getItem()))
 				volumeAjustment = EarmuffsItem.getVolumeMod(stack);
 		}
+		*/
 		
 		if(volumeAjustment > .1f)
 			for(int dx = (int) Math.floor(entity.getX() - 8) >> 4;dx <= (int) Math.floor(entity.getX() + 8) >> 4;dx++){

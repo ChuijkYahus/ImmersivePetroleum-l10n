@@ -40,8 +40,8 @@ public class ModelLubricantPipes{
 		}
 		
 		@Override
-		public void renderToBuffer(@Nonnull PoseStack matrixStackIn, @Nonnull VertexConsumer bufferIn, int packedLightIn, int packedOverlayIn, float red, float green, float blue, float alpha){
-			this.origin.render(matrixStackIn, bufferIn, packedLightIn, packedOverlayIn, red, green, blue, alpha);
+		public void render(@Nonnull PoseStack matrixStackIn, @Nonnull VertexConsumer bufferIn, int packedLightIn, int packedOverlayIn, int color){
+			this.origin.render(matrixStackIn, bufferIn, packedLightIn, packedOverlayIn, color);
 		}
 	}
 	
@@ -95,8 +95,8 @@ public class ModelLubricantPipes{
 		}
 		
 		@Override
-		public void renderToBuffer(@Nonnull PoseStack matrixStackIn, @Nonnull VertexConsumer bufferIn, int packedLightIn, int packedOverlayIn, float red, float green, float blue, float alpha){
-			this.origin.render(matrixStackIn, bufferIn, packedLightIn, packedOverlayIn, red, green, blue, alpha);
+		public void render(@Nonnull PoseStack matrixStackIn, @Nonnull VertexConsumer bufferIn, int packedLightIn, int packedOverlayIn, int color){
+			this.origin.render(matrixStackIn, bufferIn, packedLightIn, packedOverlayIn, color);
 		}
 	}
 	
@@ -154,8 +154,8 @@ public class ModelLubricantPipes{
 		}
 		
 		@Override
-		public void renderToBuffer(@Nonnull PoseStack matrixStackIn, @Nonnull VertexConsumer bufferIn, int packedLightIn, int packedOverlayIn, float red, float green, float blue, float alpha){
-			this.origin.render(matrixStackIn, bufferIn, packedLightIn, packedOverlayIn, red, green, blue, alpha);
+		public void render(@Nonnull PoseStack matrixStackIn, @Nonnull VertexConsumer bufferIn, int packedLightIn, int packedOverlayIn, int color){
+			this.origin.render(matrixStackIn, bufferIn, packedLightIn, packedOverlayIn, color);
 		}
 	}
 }

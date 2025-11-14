@@ -8,6 +8,7 @@ import net.minecraft.core.NonNullList;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 
@@ -21,25 +22,27 @@ import java.util.Objects;
 
 public class HighPressureRefineryRecipe extends IPMultiblockRecipe{
 	
-	public static Map<ResourceLocation, HighPressureRefineryRecipe> recipes = new HashMap<>();
+	public static Map<ResourceLocation, RecipeHolder<HighPressureRefineryRecipe>> recipes = new HashMap<>();
 	
 	private static final RandomSource RANDOM = RandomSource.create();
 	
-	public static HighPressureRefineryRecipe findRecipe(@Nonnull FluidStack input, @Nonnull FluidStack secondary){
+	public static RecipeHolder<HighPressureRefineryRecipe> findRecipe(@Nonnull FluidStack input, @Nonnull FluidStack secondary){
 		Objects.requireNonNull(input);
 		Objects.requireNonNull(secondary);
 		
-		for(HighPressureRefineryRecipe recipe: recipes.values()){
+		for(RecipeHolder<HighPressureRefineryRecipe> holder : recipes.values()){
+			HighPressureRefineryRecipe recipe = holder.value();
+			
 			if(secondary.isEmpty()){
-				if(recipe.inputFluidSecondary == null && (recipe.inputFluid != null && recipe.inputFluid.test(input))){
-					return recipe;
-				}
+				if(recipe.inputFluidSecondary == null && (recipe.inputFluid != null && recipe.inputFluid.test(input)))
+					return holder;
+				
 			}else{
-				if((recipe.inputFluid != null && recipe.inputFluid.test(input)) && (recipe.inputFluidSecondary != null && recipe.inputFluidSecondary.test(secondary))){
-					return recipe;
-				}
+				if((recipe.inputFluid != null && recipe.inputFluid.test(input)) && (recipe.inputFluidSecondary != null && recipe.inputFluidSecondary.test(secondary)))
+					return holder;
 			}
 		}
+		
 		return null;
 	}
 	
@@ -47,7 +50,9 @@ public class HighPressureRefineryRecipe extends IPMultiblockRecipe{
 		Objects.requireNonNull(fluid);
 		
 		if(!fluid.isEmpty()){
-			for(HighPressureRefineryRecipe recipe: recipes.values()){
+			for(RecipeHolder<HighPressureRefineryRecipe> holder : recipes.values()){
+				HighPressureRefineryRecipe recipe = holder.value();
+				
 				if(recipe.inputFluid != null && test(recipe.inputFluid, fluid, ignoreAmount)){
 					return true;
 				}
@@ -60,7 +65,9 @@ public class HighPressureRefineryRecipe extends IPMultiblockRecipe{
 		Objects.requireNonNull(fluid);
 		
 		if(!fluid.isEmpty()){
-			for(HighPressureRefineryRecipe recipe: recipes.values()){
+			for(RecipeHolder<HighPressureRefineryRecipe> holder : recipes.values()){
+				HighPressureRefineryRecipe recipe = holder.value();
+				
 				if(recipe.inputFluidSecondary != null && test(recipe.inputFluidSecondary, fluid, ignoreAmount)){
 					return true;
 				}

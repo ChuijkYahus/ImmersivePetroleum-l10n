@@ -15,6 +15,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
@@ -45,7 +46,8 @@ public class GasolineBottleItem extends IPItemBase{
 			
 			BlockEntity be = level.getBlockEntity(pos);
 			if(be != null){
-				IFluidHandler fh = be.getCapability(ForgeCapabilities.FLUID_HANDLER, null).orElse(null);
+				
+				IFluidHandler fh = level.getCapability(Capabilities.FluidHandler.BLOCK, pos, null);
 				if(fh != null){
 					FluidStack fs = new FluidStack(IPContent.Fluids.GASOLINE.get(), GasolineBottleItem.FILLED_AMOUNT);
 					if(fh.fill(fs, FluidAction.SIMULATE) >= GasolineBottleItem.FILLED_AMOUNT){

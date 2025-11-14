@@ -7,27 +7,23 @@ import blusunrize.immersiveengineering.common.blocks.multiblocks.process.Process
 import flaxbeard.immersivepetroleum.api.crafting.HighPressureRefineryRecipe;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.ItemHandlerHelper;
-import net.neoforged.neoforge.items.IItemHandler;
 
 import java.util.function.BiFunction;
 
 public class HydroTreaterProcess extends MultiblockProcessInMachine<HighPressureRefineryRecipe>{
 	
-	public HydroTreaterProcess(HighPressureRefineryRecipe recipe, int... inputSlots){
+	public HydroTreaterProcess(RecipeHolder<HighPressureRefineryRecipe> recipe, int... inputSlots){
 		super(recipe, inputSlots);
 	}
 	
-	public HydroTreaterProcess(BiFunction<Level, ResourceLocation, HighPressureRefineryRecipe> recipe, CompoundTag data){
+	public HydroTreaterProcess(BiFunction<Level, ResourceLocation, HighPressureRefineryRecipe> recipe, CompoundTag data, HolderLookup.Provider provider){
 		super(recipe, data);
 	}
 	
@@ -43,12 +39,14 @@ public class HydroTreaterProcess extends MultiblockProcessInMachine<HighPressure
 		Direction outDir = (orientation.mirrored() ? orientation.front().getClockWise() : orientation.front().getCounterClockWise());
 		BlockPos outPos = mbLevel.toAbsolute(HydroTreaterLogic.Item_OUT).relative(outDir);
 		
+		/* // TODO
 		BlockEntity te = rawLevel.getBlockEntity(outPos);
 		if(te != null){
 			LazyOptional<IItemHandler> handler = te.getCapability(ForgeCapabilities.ITEM_HANDLER, outDir.getOpposite());
 			ItemStack finalOutput = output;
 			output = handler.map(itemHandler -> ItemHandlerHelper.insertItem(itemHandler, finalOutput, false)).orElse(ItemStack.EMPTY);
 		}
+		*/
 		
 		if(!output.isEmpty()){
 			double x = outPos.getX() + 0.5;

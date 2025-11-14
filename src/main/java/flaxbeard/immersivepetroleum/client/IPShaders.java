@@ -5,11 +5,11 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import flaxbeard.immersivepetroleum.ImmersivePetroleum;
 import flaxbeard.immersivepetroleum.common.util.ResourceUtils;
 import net.minecraft.client.renderer.ShaderInstance;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RegisterShadersEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.common.EventBusSubscriber.Bus;
+import net.neoforged.neoforge.client.event.RegisterShadersEvent;
 
 import java.io.IOException;
 
@@ -36,7 +36,7 @@ public class IPShaders{
 			shader_line = s;
 		});
 		
-		event.registerShader(new ShaderInstance(event.getResourceProvider(), ResourceUtils.ip("rendertype_projection"), DefaultVertexFormat.POSITION_COLOR_TEX), s -> {
+		event.registerShader(new ShaderInstance(event.getResourceProvider(), ResourceUtils.ip("rendertype_projection"), DefaultVertexFormat.POSITION_TEX_COLOR), s -> {
 			ImmersivePetroleum.log.debug("rendertype_projection shader loaded.");
 			shader_projection = s;
 			

@@ -1,7 +1,6 @@
 package flaxbeard.immersivepetroleum.client.gui;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import flaxbeard.immersivepetroleum.client.render.IPRenderTypes;
 import flaxbeard.immersivepetroleum.client.render.RenderUtils;
@@ -13,6 +12,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
@@ -166,25 +166,25 @@ public class SeismicSurveyScreen extends Screen{
 			Matrix4f mat = guiGraphics.pose().last().pose();
 			
 			float s = this.hoverSquareScale;
-			builder.vertex(mat, 0, 0, 0).color(color).endVertex();
-			builder.vertex(mat, 0, s, 0).color(color).endVertex();
-			builder.vertex(mat, 1, s, 0).color(color).endVertex();
-			builder.vertex(mat, 1, 0, 0).color(color).endVertex();
+			builder.addVertex(mat, 0, 0, 0).setColor(color);
+			builder.addVertex(mat, 0, s, 0).setColor(color);
+			builder.addVertex(mat, 1, s, 0).setColor(color);
+			builder.addVertex(mat, 1, 0, 0).setColor(color);
 			
-			builder.vertex(mat, 0, 1 - s, 0).color(color).endVertex();
-			builder.vertex(mat, 0, 1, 0).color(color).endVertex();
-			builder.vertex(mat, 1, 1, 0).color(color).endVertex();
-			builder.vertex(mat, 1, 1 - s, 0).color(color).endVertex();
+			builder.addVertex(mat, 0, 1 - s, 0).setColor(color);
+			builder.addVertex(mat, 0, 1, 0).setColor(color);
+			builder.addVertex(mat, 1, 1, 0).setColor(color);
+			builder.addVertex(mat, 1, 1 - s, 0).setColor(color);
 			
-			builder.vertex(mat, 0, 0, 0).color(color).endVertex();
-			builder.vertex(mat, 0, 1, 0).color(color).endVertex();
-			builder.vertex(mat, s, 1, 0).color(color).endVertex();
-			builder.vertex(mat, s, 0, 0).color(color).endVertex();
+			builder.addVertex(mat, 0, 0, 0).setColor(color);
+			builder.addVertex(mat, 0, 1, 0).setColor(color);
+			builder.addVertex(mat, s, 1, 0).setColor(color);
+			builder.addVertex(mat, s, 0, 0).setColor(color);
 			
-			builder.vertex(mat, 1 - s, 0, 0).color(color).endVertex();
-			builder.vertex(mat, 1 - s, 1, 0).color(color).endVertex();
-			builder.vertex(mat, 1, 1, 0).color(color).endVertex();
-			builder.vertex(mat, 1, 0, 0).color(color).endVertex();
+			builder.addVertex(mat, 1 - s, 0, 0).setColor(color);
+			builder.addVertex(mat, 1 - s, 1, 0).setColor(color);
+			builder.addVertex(mat, 1, 1, 0).setColor(color);
+			builder.addVertex(mat, 1, 0, 0).setColor(color);
 		}
 		guiGraphics.pose().popPose();
 		
@@ -202,16 +202,16 @@ public class SeismicSurveyScreen extends Screen{
 			int a = wrapper.width;
 			int b = wrapper.height;
 			
-			builder.vertex(mat, 0, 0, 0).color(-1).uv(1.0F, 1.0F).uv2(0xF000F0).endVertex();
-			builder.vertex(mat, 0, b, 0).color(-1).uv(1.0F, 0.0F).uv2(0xF000F0).endVertex();
-			builder.vertex(mat, a, b, 0).color(-1).uv(0.0F, 0.0F).uv2(0xF000F0).endVertex();
-			builder.vertex(mat, a, 0, 0).color(-1).uv(0.0F, 1.0F).uv2(0xF000F0).endVertex();
+			builder.addVertex(mat, 0, 0, 0).setColor(-1).setUv(1.0F, 1.0F).setLight(LightTexture.FULL_BRIGHT);
+			builder.addVertex(mat, 0, b, 0).setColor(-1).setUv(1.0F, 0.0F).setLight(LightTexture.FULL_BRIGHT);
+			builder.addVertex(mat, a, b, 0).setColor(-1).setUv(0.0F, 0.0F).setLight(LightTexture.FULL_BRIGHT);
+			builder.addVertex(mat, a, 0, 0).setColor(-1).setUv(0.0F, 1.0F).setLight(LightTexture.FULL_BRIGHT);
 			
 			builder = buffer.getBuffer(RenderType.text(OVERLAY_TEXTURE));
-			builder.vertex(mat, 0, 0, 0).color(-1).uv(0, 0).uv2(0xF000F0).endVertex();
-			builder.vertex(mat, 0, b, 0).color(-1).uv(0, 1).uv2(0xF000F0).endVertex();
-			builder.vertex(mat, a, b, 0).color(-1).uv(1, 1).uv2(0xF000F0).endVertex();
-			builder.vertex(mat, a, 0, 0).color(-1).uv(1, 0).uv2(0xF000F0).endVertex();
+			builder.addVertex(mat, 0, 0, 0).setColor(-1).setUv(0, 0).setLight(LightTexture.FULL_BRIGHT);
+			builder.addVertex(mat, 0, b, 0).setColor(-1).setUv(0, 1).setLight(LightTexture.FULL_BRIGHT);
+			builder.addVertex(mat, a, b, 0).setColor(-1).setUv(1, 1).setLight(LightTexture.FULL_BRIGHT);
+			builder.addVertex(mat, a, 0, 0).setColor(-1).setUv(1, 0).setLight(LightTexture.FULL_BRIGHT);
 		}
 		guiGraphics.pose().popPose();
 		

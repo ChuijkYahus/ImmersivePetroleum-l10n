@@ -64,7 +64,7 @@ public class ModelPumpjack extends IPModel{
 	}
 	
 	@Override
-	public void renderToBuffer(@Nonnull PoseStack matrixStackIn, @Nonnull VertexConsumer bufferIn, int packedLightIn, int packedOverlayIn, float red, float green, float blue, float alpha){
+	public void render(@Nonnull PoseStack matrixStackIn, @Nonnull VertexConsumer bufferIn, int packedLightIn, int packedOverlayIn, int color){
 		this.arm.zRot = (float) Math.toRadians(15 * Math.sin(this.ticks / 25F));
 		this.swingy.zRot = (float) (2 * (Math.PI / 4) + (this.ticks / 25F));
 		
@@ -122,6 +122,6 @@ public class ModelPumpjack extends IPModel{
 			this.wellConnector2.visible = true;
 		}
 		
-		this.origin.render(matrixStackIn, bufferIn, packedLightIn, packedOverlayIn, red, green, blue, alpha);
+		this.origin.render(matrixStackIn, bufferIn, packedLightIn, packedOverlayIn, color);
 	}
 }

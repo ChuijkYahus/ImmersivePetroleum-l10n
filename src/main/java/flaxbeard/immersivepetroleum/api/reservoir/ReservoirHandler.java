@@ -12,6 +12,7 @@ import net.minecraft.server.level.ColumnPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.WorldGenLevel;
@@ -72,7 +73,9 @@ public class ReservoirHandler{
 				int totalWeight = getTotalWeight(dimensionRL, biomeRL);
 				if(totalWeight > 0){
 					int weight = Math.abs(randomSource.nextInt() % totalWeight);
-					for(ReservoirType res:ReservoirType.map.values()){
+					for(RecipeHolder<ReservoirType> holder:ReservoirType.map.values()){
+						ReservoirType res = holder.value();
+						
 						if(res.getDimensions().valid(dimensionRL) && res.getBiomes().valid(biomeRL)){
 							weight -= res.weight;
 							if(weight < 0){
@@ -113,7 +116,9 @@ public class ReservoirHandler{
 		if(totalWeight == null){
 			totalWeight = 0;
 			
-			for(ReservoirType reservoir:ReservoirType.map.values()){
+			for(RecipeHolder<ReservoirType> holder:ReservoirType.map.values()){
+				ReservoirType reservoir = holder.value();
+				
 				if(reservoir.getDimensions().valid(dimension) && reservoir.getBiomes().valid(biome)){
 					totalWeight += reservoir.weight;
 				}
@@ -168,12 +173,12 @@ public class ReservoirHandler{
 	
 	/**
 	 * Adds a reservoir type to the pool of valid reservoirs
-	 * 
+	 *
 	 * @param id        The "recipeId" of the reservoir type
 	 * @param reservoir The {@link ReservoirType} type to add
 	 * @return The {@link ReservoirType} passed in
 	 */
-	public static ReservoirType addReservoir(ResourceLocation id, ReservoirType reservoir){
+	public static RecipeHolder<ReservoirType> addReservoir(ResourceLocation id, RecipeHolder<ReservoirType> reservoir){
 		ReservoirType.map.put(id, reservoir);
 		return reservoir;
 	}

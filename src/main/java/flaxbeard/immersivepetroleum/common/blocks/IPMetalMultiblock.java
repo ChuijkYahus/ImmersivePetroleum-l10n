@@ -75,6 +75,6 @@ public class IPMetalMultiblock<T extends IMultiblockState & IPCommonTickableTile
 				}*/
 			}
 		}
-		return super.use(state, world, pos, player, hand, hit);
+		return null;//super.use(state, world, pos, player, hand, hit);
 	}
 }

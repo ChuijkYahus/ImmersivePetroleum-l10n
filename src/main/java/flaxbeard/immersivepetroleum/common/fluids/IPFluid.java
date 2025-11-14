@@ -8,7 +8,6 @@ import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -37,11 +36,9 @@ import net.minecraft.world.level.material.FlowingFluid;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.capabilities.ICapabilityProvider;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.neoforged.neoforge.common.NeoForgeMod;
 import net.neoforged.neoforge.fluids.FluidType;
-import net.neoforged.neoforge.fluids.capability.wrappers.FluidBucketWrapper;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import org.apache.commons.lang3.mutable.Mutable;
 import org.apache.commons.lang3.mutable.MutableObject;
@@ -242,7 +239,7 @@ public class IPFluid extends FlowingFluid{
 				buildAttributes.accept(builder);
 			}
 			
-			DeferredHolder<FluidType, CustomFluidType> type = IPRegisters.FLUID_TYPE.register(name, () -> new CustomFluidType(name, builder));
+			DeferredHolder<FluidType, CustomFluidType> type = IPRegisters.registerFluidType(name, () -> new CustomFluidType(name, builder));
 			
 			Mutable<IPFluidEntry> thisMutable = new MutableObject<>();
 			

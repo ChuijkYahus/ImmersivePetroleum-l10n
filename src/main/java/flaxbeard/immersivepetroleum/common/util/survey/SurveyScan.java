@@ -1,9 +1,15 @@
 package flaxbeard.immersivepetroleum.common.util.survey;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import flaxbeard.immersivepetroleum.api.reservoir.ReservoirHandler;
 import flaxbeard.immersivepetroleum.api.reservoir.ReservoirIsland;
+import flaxbeard.immersivepetroleum.common.IPDataComponents;
+import io.netty.buffer.ByteBuf;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.server.level.ColumnPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
@@ -22,17 +28,35 @@ public class SurveyScan implements ISurveyInfo{
 	public static final int SCAN_SIZE = SCAN_RADIUS * 2 + 1;
 	private static final double sqrt2048 = Math.sqrt((SCAN_RADIUS * SCAN_RADIUS) * 2);
 	
-	@Nullable
-	private UUID uuid;
-	private int x, z;
-	private byte[] data;
+	private static final Codec<UUID> UUID_CODEC = RecordCodecBuilder.create(inst -> inst.group(
+		Codec.LONG.fieldOf("msb").forGetter(UUID::getMostSignificantBits),
+		Codec.LONG.fieldOf("lsb").forGetter(UUID::getLeastSignificantBits)
+	).apply(inst, UUID::new));
 	
-	public SurveyScan(CompoundTag tag){
-		this.uuid = tag.hasUUID("uuid") ? tag.getUUID("uuid") : null;
-		this.x = tag.getInt("x");
-		this.z = tag.getInt("z");
-		this.data = tag.getByteArray("map");
-	}
+	//@formatter:off
+	public static final Codec<SurveyScan> CODEC = RecordCodecBuilder.create(inst -> inst.group(
+		UUID_CODEC.optionalFieldOf("uuid").forGetter(s -> {
+			if(s.uuid == null)
+				return Optional.empty();
+			return Optional.of(s.uuid);
+		}),
+		Codec.INT.fieldOf("x").forGetter(s -> s.x),
+		Codec.INT.fieldOf("z").forGetter(s -> s.z),
+		Codec.BYTE.sizeLimitedListOf(SCAN_SIZE * SCAN_SIZE).fieldOf("data").forGetter(s -> {
+			List<Byte> bytes = new ArrayList<>();
+			for(byte b: s.data)
+				bytes.add(b);
+			return bytes;
+		})
+	).apply(inst, SurveyScan::new));
+	//@formatter:on
+	
+	public static final StreamCodec<ByteBuf, SurveyScan> CODEC_STREAM = ByteBufCodecs.COMPOUND_TAG.map(SurveyScan::new, ISurveyInfo::writeToTag);
+	
+	@Nullable
+	private final UUID uuid;
+	private final int x, z;
+	private final byte[] data;
 	
 	public SurveyScan(Level world, BlockPos pos){
 		this.uuid = UUID.randomUUID();
@@ -40,6 +64,25 @@ public class SurveyScan implements ISurveyInfo{
 		this.z = pos.getZ();
 		
 		this.data = scanArea(world, pos);
+	}
+	
+	private SurveyScan(CompoundTag tag){
+		this.uuid = tag.hasUUID("uuid") ? tag.getUUID("uuid") : null;
+		this.x = tag.getInt("x");
+		this.z = tag.getInt("z");
+		this.data = tag.getByteArray("map");
+	}
+	
+	private SurveyScan(Optional<UUID> uuid, int x, int z, List<Byte> dataList){
+		byte[] data = new byte[dataList.size()];
+		for(int i = 0;i < dataList.size();i++){
+			data[i] = dataList.get(i);
+		}
+		
+		this.uuid = uuid.orElse(null);
+		this.x = x;
+		this.z = z;
+		this.data = data;
 	}
 	
 	@Nullable
@@ -60,12 +103,14 @@ public class SurveyScan implements ISurveyInfo{
 	}
 	
 	@Override
-	public CompoundTag writeToStack(ItemStack stack){
-		return writeToTag(stack.getOrCreateTagElement(TAG_KEY));
+	public void writeToStack(ItemStack stack){
+		stack.set(IPDataComponents.SURVEY_SCAN, this);
 	}
 	
 	@Override
-	public CompoundTag writeToTag(CompoundTag tag){
+	public CompoundTag writeToTag(){
+		CompoundTag tag = new CompoundTag();
+		
 		tag.putUUID("uuid", UUID.randomUUID());
 		tag.putInt("x", this.x);
 		tag.putInt("z", this.z);

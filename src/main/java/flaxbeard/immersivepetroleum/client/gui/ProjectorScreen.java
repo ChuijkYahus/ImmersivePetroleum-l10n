@@ -5,12 +5,12 @@ import blusunrize.immersiveengineering.api.multiblocks.ClientMultiblocks.Multibl
 import blusunrize.immersiveengineering.api.multiblocks.MultiblockHandler;
 import blusunrize.immersiveengineering.api.multiblocks.MultiblockHandler.IMultiblock;
 import blusunrize.immersiveengineering.api.utils.TemplateWorldCreator;
-import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.math.Axis;
 import flaxbeard.immersivepetroleum.client.gui.elements.GuiReactiveList;
 import flaxbeard.immersivepetroleum.client.render.IPRenderTypes;
 import flaxbeard.immersivepetroleum.client.render.RenderUtils;
 import flaxbeard.immersivepetroleum.client.utils.MCUtil;
+import flaxbeard.immersivepetroleum.common.IPDataComponents;
 import flaxbeard.immersivepetroleum.common.util.ResourceUtils;
 import flaxbeard.immersivepetroleum.common.util.projector.Settings;
 import net.minecraft.client.Minecraft;
@@ -35,6 +35,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import net.neoforged.neoforge.client.model.data.ModelData;
 import net.neoforged.neoforge.common.util.Lazy;
 
 import javax.annotation.Nonnull;
@@ -74,7 +75,8 @@ public class ProjectorScreen extends Screen{
 	float rotation = 0.0F, move = 0.0F;
 	public ProjectorScreen(InteractionHand hand, ItemStack projector){
 		super(Component.literal("projector"));
-		this.settings = new Settings(projector);
+		
+		this.settings = projector.has(IPDataComponents.PROJECTOR_SETTINGS) ? projector.get(IPDataComponents.PROJECTOR_SETTINGS) : new Settings();
 		this.hand = hand;
 		this.multiblocks = Lazy.of(MultiblockHandler::getMultiblocks);
 		
@@ -244,7 +246,7 @@ public class ProjectorScreen extends Screen{
 						guiGraphics.pose().popPose();
 					}else{
 						if(this.templateWorld == null || (!this.multiblock.getUniqueName().equals(mb.getUniqueName()))){
-							this.templateWorld = TemplateWorldCreator.CREATOR.getValue().makeWorld(mb.getStructure(this.getMinecraft().level), pos -> true, this.getMinecraft().level.registryAccess());
+							this.templateWorld = TemplateWorldCreator.CREATOR.get().makeWorld(mb.getStructure(this.getMinecraft().level), pos -> true, this.getMinecraft().level.registryAccess());
 							this.multiblock = mb;
 						}
 						

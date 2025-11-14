@@ -25,12 +25,10 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.client.event.InputEvent;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.fluids.FluidStack;
 
@@ -212,7 +210,9 @@ public class DebugItem extends IPItemBase{
 					
 					player.displayClientMessage(Component.literal(dimensionRL.toString()), false);
 					
-					for(ReservoirType res:ReservoirType.map.values()){
+					for(RecipeHolder<ReservoirType> holder:ReservoirType.map.values()){
+						ReservoirType res = holder.value();
+						
 						BWList dims = res.getDimensions();
 						BWList biom = res.getBiomes();
 						
@@ -254,7 +254,7 @@ public class DebugItem extends IPItemBase{
 		if(fluid == FluidStack.EMPTY){
 			textOut.append("Tank: Empty");
 		}else{
-			textOut.append("Tank: " + fluid.getAmount() + "/" + speedboatEntity.getMaxFuel() + "mB of ").append(fluid.getDisplayName());
+			textOut.append("Tank: " + fluid.getAmount() + "/" + speedboatEntity.getMaxFuel() + "mB of ").append(fluid.getHoverName());
 		}
 		
 		MutableComponent upgradesText = Component.literal("\n");
@@ -297,7 +297,9 @@ public class DebugItem extends IPItemBase{
 	}
 	
 	public static CompoundTag getSettings(ItemStack stack){
-		return stack.getOrCreateTagElement("settings");
+		// TODO FIXME etc.
+		return new CompoundTag();
+		//return stack.getOrCreateTagElement("settings");
 	}
 	
 	public static class ClientInputHandler{

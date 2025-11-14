@@ -31,11 +31,13 @@ import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.neoforged.fml.loading.FMLLoader;
+import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.level.LevelEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -65,6 +67,9 @@ public class ImmersivePetroleum{
 		NeoForge.EVENT_BUS.addListener(this::registerCommand);
 		NeoForge.EVENT_BUS.addListener(this::addReloadListeners);
 		
+		eBus.addListener(this::networking);
+		eBus.addListener(this::registerMenuScreens);
+		
 		IPRegisters.addRegistersToEventBus(eBus);
 		
 		IPContent.modConstruction(eBus);
@@ -72,7 +77,7 @@ public class ImmersivePetroleum{
 		IPRecipeTypes.modConstruction(eBus);
 	}
 	
-	public void setup(FMLCommonSetupEvent event){
+	private void setup(FMLCommonSetupEvent event){
 		proxy.setup();
 		
 		// ---------------------------------------------------------------------------------------------------------------------------------------------
@@ -80,7 +85,6 @@ public class ImmersivePetroleum{
 		proxy.preInit();
 		
 		IPContent.preInit();
-		IPPacketHandler.preInit();
 		IPToolShaders.preInit();
 		
 		proxy.preInitEnd();
@@ -105,15 +109,17 @@ public class ImmersivePetroleum{
 		
 		ReservoirHandler.recalculateChances();
 		ExternalModContent.init();
-		
-		proxy.registerContainersAndScreens();
 	}
 	
-	public void loadComplete(FMLLoadCompleteEvent event){
+	private void loadComplete(FMLLoadCompleteEvent event){
 		proxy.completed(event);
 	}
 	
-	public void registerCommand(RegisterCommandsEvent event){
+	private void registerMenuScreens(RegisterMenuScreensEvent ev){
+		proxy.registerContainersAndScreens(ev);
+	}
+	
+	private void registerCommand(RegisterCommandsEvent event){
 		LiteralArgumentBuilder<CommandSourceStack> ip = Commands.literal("ip");
 		
 		ip.then(IslandCommand.create());
@@ -121,18 +127,22 @@ public class ImmersivePetroleum{
 		event.getDispatcher().register(ip);
 	}
 	
-	public void addReloadListeners(AddReloadListenerEvent event){
+	private void addReloadListeners(AddReloadListenerEvent event){
 		event.addListener(new RecipeReloadListener(event.getServerResources()));
 	}
 	
-	public void worldLoad(LevelEvent.Load event){
+	private void worldLoad(LevelEvent.Load event){
 		if(!event.getLevel().isClientSide() && event.getLevel() instanceof ServerLevel world && world.dimension() == Level.OVERWORLD){
 			ReservoirRegionDataStorage.init(world.getDataStorage());
 			world.getDataStorage().computeIfAbsent(new SavedData.Factory<>(IPSaveData::new, IPSaveData::new), IPSaveData.dataName);
 		}
 	}
 	
-	public void serverStarting(ServerStartingEvent event){
+	private void serverStarting(ServerStartingEvent event){
 		ReservoirHandler.recalculateChances();
+	}
+	
+	private void networking(RegisterPayloadHandlersEvent event){
+		IPPacketHandler.init(event.registrar(MODID));
 	}
 }

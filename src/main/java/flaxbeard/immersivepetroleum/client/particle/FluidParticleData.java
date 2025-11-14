@@ -1,6 +1,5 @@
 package flaxbeard.immersivepetroleum.client.particle;
 
-import com.mojang.brigadier.StringReader;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -16,24 +15,12 @@ import net.neoforged.api.distmarker.OnlyIn;
 import javax.annotation.Nonnull;
 
 public class FluidParticleData implements ParticleOptions{
-	public static final MapCodec<FluidParticleData> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(Codec.STRING.fieldOf("fluid").forGetter(data -> RegistryUtils.getRegistryNameOf(data.fluid).toString())).apply(instance, FluidParticleData::new));
-	
-	@SuppressWarnings("deprecation")
-	public static final ParticleOptions.Deserializer<FluidParticleData> DESERIALIZER = new ParticleOptions.Deserializer<>(){
-		@Override
-		@Nonnull
-		public FluidParticleData fromCommand(@Nonnull ParticleType<FluidParticleData> particleTypeIn, StringReader reader){
-			String name = reader.getString();
-			return new FluidParticleData(name);
-		}
-		
-		@Override
-		@Nonnull
-		public FluidParticleData fromNetwork(@Nonnull ParticleType<FluidParticleData> particleTypeIn, FriendlyByteBuf buffer){
-			String name = buffer.readUtf();
-			return new FluidParticleData(name);
-		}
-	};
+	//@formatter:off
+	public static final MapCodec<FluidParticleData> CODEC = RecordCodecBuilder.mapCodec(instance -> instance
+		.group(Codec.STRING.fieldOf("fluid").forGetter(FluidParticleData::writeToString))
+		.apply(instance, FluidParticleData::new)
+	);
+	//@formatter:on
 	
 	private final Fluid fluid;
 	public FluidParticleData(String name){
@@ -50,12 +37,10 @@ public class FluidParticleData implements ParticleOptions{
 		return IPParticleTypes.FLUID_SPILL.get();
 	}
 	
-	@Override
 	public void writeToNetwork(FriendlyByteBuf buffer){
 		buffer.writeUtf(RegistryUtils.getRegistryNameOf(this.fluid).toString());
 	}
 	
-	@Override
 	@Nonnull
 	public String writeToString(){
 		return RegistryUtils.getRegistryNameOf(this.fluid).toString();

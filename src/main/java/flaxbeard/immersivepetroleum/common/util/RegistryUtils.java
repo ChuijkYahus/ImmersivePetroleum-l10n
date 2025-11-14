@@ -27,7 +27,7 @@ import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-@EventBusSubscriber(modid = ImmersivePetroleum.MODID, bus = Bus.MOD)
+@EventBusSubscriber(modid = ImmersivePetroleum.MODID, bus = Bus.GAME)
 public class RegistryUtils{
 	private static Registry<Biome> BIOME_REGISTRY;
 	private static Registry<Fluid> FLUID_REGISTRY;

@@ -15,15 +15,21 @@ import blusunrize.immersiveengineering.common.blocks.MultiblockBEType;
 import blusunrize.immersiveengineering.common.blocks.multiblocks.component.MultiblockGui;
 import blusunrize.immersiveengineering.common.register.IEMenuTypes;
 import com.google.common.collect.ImmutableSet;
-import flaxbeard.immersivepetroleum.ImmersivePetroleum;
+import com.mojang.serialization.Codec;
 import flaxbeard.immersivepetroleum.common.blocks.IPBlockBase;
 import flaxbeard.immersivepetroleum.common.blocks.IPMultiblockBase;
 import flaxbeard.immersivepetroleum.common.util.IPEffects.IPEffect;
 import flaxbeard.immersivepetroleum.common.util.ResourceUtils;
+import io.netty.buffer.ByteBuf;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Registry;
+import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.effect.MobEffect;
@@ -43,6 +49,7 @@ import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
+import net.minecraft.world.level.storage.loot.BuiltInLootTables;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -55,22 +62,33 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+
+import static flaxbeard.immersivepetroleum.ImmersivePetroleum.MODID;
 
 public class IPRegisters{
-	public static final DeferredRegister<Block> BLOCK_REGISTER = DeferredRegister.create(BuiltInRegistries.BLOCK, ImmersivePetroleum.MODID);
-	public static final DeferredRegister<Item> ITEM_REGISTER = DeferredRegister.create(BuiltInRegistries.ITEM, ImmersivePetroleum.MODID);
-	private static final DeferredRegister<Fluid> FLUID_REGISTER = DeferredRegister.create(BuiltInRegistries.FLUID, ImmersivePetroleum.MODID);
-	private static final DeferredRegister<BlockEntityType<?>> TE_REGISTER = DeferredRegister.create(BuiltInRegistries.BLOCK_ENTITY_TYPE, ImmersivePetroleum.MODID);
-	private static final DeferredRegister<EntityType<?>> ENTITY_REGISTER = DeferredRegister.create(BuiltInRegistries.ENTITY_TYPE, ImmersivePetroleum.MODID);
-	public static final DeferredRegister<MenuType<?>> MENU_REGISTER = DeferredRegister.create(BuiltInRegistries.MENU, ImmersivePetroleum.MODID);
-	private static final DeferredRegister<RecipeSerializer<?>> RECIPE_SERIALIZERS = DeferredRegister.create(BuiltInRegistries.RECIPE_SERIALIZER, ImmersivePetroleum.MODID);
-	private static final DeferredRegister<MobEffect> MOB_EFFECT = DeferredRegister.create(BuiltInRegistries.MOB_EFFECT, ImmersivePetroleum.MODID);
-	private static final DeferredRegister<SoundEvent> SOUND_EVENT = DeferredRegister.create(BuiltInRegistries.SOUND_EVENT, ImmersivePetroleum.MODID);
-	private static final DeferredRegister<ParticleType<?>> PARTICLE_TYPE = DeferredRegister.create(BuiltInRegistries.PARTICLE_TYPE, ImmersivePetroleum.MODID);
-	private static final DeferredRegister<EntityType<?>> ENTITY_TYPE = DeferredRegister.create(BuiltInRegistries.ENTITY_TYPE, ImmersivePetroleum.MODID);
-	public static final DeferredRegister<FluidType> FLUID_TYPE = DeferredRegister.create(NeoForgeRegistries.Keys.FLUID_TYPES, ImmersivePetroleum.MODID);
-	public static final DeferredRegister<CreativeModeTab> CREATIVE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, ImmersivePetroleum.MODID);
-	public static final DeferredRegister<Feature<?>> FEATURE_REGISTER = DeferredRegister.create(BuiltInRegistries.FEATURE, ImmersivePetroleum.MODID);
+	private static <T> DeferredRegister<T> make(Registry<T> registry){
+		return DeferredRegister.create(registry, MODID);
+	}
+	
+	private static <T> DeferredRegister<T> make(ResourceKey<Registry<T>> registry){
+		return DeferredRegister.create(registry, MODID);
+	}
+	
+	private static final DeferredRegister<Block> BLOCK_REGISTER = make(BuiltInRegistries.BLOCK);
+	private static final DeferredRegister<Item> ITEM_REGISTER = make(BuiltInRegistries.ITEM);
+	private static final DeferredRegister<Fluid> FLUID_REGISTER = make(BuiltInRegistries.FLUID);
+	private static final DeferredRegister<BlockEntityType<?>> TE_REGISTER = make(BuiltInRegistries.BLOCK_ENTITY_TYPE);
+	private static final DeferredRegister<MenuType<?>> MENU_REGISTER = make(BuiltInRegistries.MENU);
+	private static final DeferredRegister<RecipeSerializer<?>> RECIPE_SERIALIZERS = make(BuiltInRegistries.RECIPE_SERIALIZER);
+	private static final DeferredRegister<MobEffect> MOB_EFFECT = make(BuiltInRegistries.MOB_EFFECT);
+	private static final DeferredRegister<SoundEvent> SOUND_EVENT = make(BuiltInRegistries.SOUND_EVENT);
+	private static final DeferredRegister<ParticleType<?>> PARTICLE_TYPE = make(BuiltInRegistries.PARTICLE_TYPE);
+	private static final DeferredRegister<EntityType<?>> ENTITY_TYPE = make(BuiltInRegistries.ENTITY_TYPE);
+	private static final DeferredRegister<FluidType> FLUID_TYPE = make(NeoForgeRegistries.FLUID_TYPES);
+	private static final DeferredRegister<CreativeModeTab> CREATIVE_TABS = make(Registries.CREATIVE_MODE_TAB);
+	private static final DeferredRegister<Feature<?>> FEATURE_REGISTER = make(BuiltInRegistries.FEATURE);
+	private static final DeferredRegister<DataComponentType<?>> DATA_COMPONENT_REGISTER = make(BuiltInRegistries.DATA_COMPONENT_TYPE);
 	
 	private static final List<Consumer<IEventBus>> MOD_BUS_CALLBACKS = new ArrayList<>();
 	
@@ -79,7 +97,6 @@ public class IPRegisters{
 		BLOCK_REGISTER.register(eventBus);
 		ITEM_REGISTER.register(eventBus);
 		TE_REGISTER.register(eventBus);
-		ENTITY_REGISTER.register(eventBus);
 		MENU_REGISTER.register(eventBus);
 		RECIPE_SERIALIZERS.register(eventBus);
 		MOB_EFFECT.register(eventBus);
@@ -91,6 +108,14 @@ public class IPRegisters{
 		FEATURE_REGISTER.register(eventBus);
 		
 		MOD_BUS_CALLBACKS.forEach(e -> e.accept(eventBus));
+	}
+	
+	public static Iterable<Block> getAllBlocks(){
+		return BLOCK_REGISTER.getEntries().stream().map(DeferredHolder::get).filter(block -> !block.getLootTable().equals(BuiltInLootTables.EMPTY)).collect(Collectors.toList());
+	}
+	
+	public static Iterable<Item> getAllItems(){
+		return ITEM_REGISTER.getEntries().stream().map(DeferredHolder::get).collect(Collectors.toList());
 	}
 	
 	public static <S extends IMultiblockState> MultiblockRegistration<S> registerMetalMultiblock(String name, IMultiblockLogic<S> logic, Supplier<TemplateMultiblock> structure){
@@ -184,6 +209,10 @@ public class IPRegisters{
 		return FLUID_REGISTER.register(name, fluidConstructor);
 	}
 	
+	public static <T extends FluidType> DeferredHolder<FluidType, T> registerFluidType(String name, Supplier<T> supplier){
+		return FLUID_TYPE.register(name, supplier);
+	}
+	
 	public static <T extends BlockEntity> DeferredHolder<BlockEntityType<?>, BlockEntityType<T>> registerTE(String name, BlockEntityType.BlockEntitySupplier<T> factory, Supplier<? extends Block> valid){
 		// TODO That "nulL" there may come back to bite me later
 		return TE_REGISTER.register(name, () -> new BlockEntityType<>(factory, ImmutableSet.of(valid.get()), null));
@@ -191,10 +220,6 @@ public class IPRegisters{
 	
 	public static <T extends BlockEntity & IEBlockInterfaces.IGeneralMultiblock> MultiblockBEType<T> registerMultiblockTE(String name, MultiblockBEType.BEWithTypeConstructor<T> factory, Supplier<? extends Block> valid){
 		return new MultiblockBEType<>(name, TE_REGISTER, factory, valid, state -> state.hasProperty(IEProperties.MULTIBLOCKSLAVE) && !state.getValue(IEProperties.MULTIBLOCKSLAVE));
-	}
-	
-	public static <T extends EntityType<?>> DeferredHolder<EntityType<?>, T> registerEntity(String name, Supplier<T> entityConstructor){
-		return ENTITY_REGISTER.register(name, entityConstructor);
 	}
 	
 	public static <T extends RecipeSerializer<?>> DeferredHolder<RecipeSerializer<?>, T> registerSerializer(String name, Supplier<T> serializer){
@@ -213,16 +238,30 @@ public class IPRegisters{
 		return SOUND_EVENT.register(name, () -> SoundEvent.createVariableRangeEvent(ResourceUtils.ip(name)));
 	}
 	
-	public static <PType extends ParticleType<?>> DeferredHolder<ParticleType<?>, PType> registerParticleType(String name, Supplier<PType> particleType){
+	public static <T extends ParticleType<?>> DeferredHolder<ParticleType<?>, T> registerParticleType(String name, Supplier<T> particleType){
 		return PARTICLE_TYPE.register(name, particleType);
 	}
 	
-	public static <EType extends EntityType<?>> DeferredHolder<EntityType<?>, EType> registerEntityType(String name, Function<ResourceLocation, EType> entityType){
+	public static <T extends EntityType<?>> DeferredHolder<EntityType<?>, T> registerEntityType(String name, Function<ResourceLocation, T> entityType){
 		return ENTITY_TYPE.register(name, () -> entityType.apply(ResourceUtils.ip(name)));
 	}
 	
-	public static DeferredHolder<CreativeModeTab, CreativeModeTab> registerCreativeTab(String name, Supplier<CreativeModeTab> tab){
+	public static <T extends CreativeModeTab> DeferredHolder<CreativeModeTab, T> registerCreativeTab(String name, Supplier<T> tab){
 		return CREATIVE_TABS.register(name, tab);
+	}
+	
+	public static <T extends Feature<?>> DeferredHolder<Feature<?>, T> registerFeature(String name, Supplier<T> supplier){
+		return FEATURE_REGISTER.register(name, supplier);
+	}
+	
+	/** Using {@link ByteBuf} */
+	public static <T> DeferredHolder<DataComponentType<?>, DataComponentType<T>> registerDataComponent(String name, Codec<T> codec, StreamCodec<ByteBuf, T> streamCodec){
+		return DATA_COMPONENT_REGISTER.register(name, () -> DataComponentType.<T> builder().persistent(codec).networkSynchronized(streamCodec).build());
+	}
+	
+	/** Using {@link RegistryFriendlyByteBuf} */
+	public static <T> DeferredHolder<DataComponentType<?>, DataComponentType<T>> registerDataComponentF(String name, Codec<T> codec, StreamCodec<RegistryFriendlyByteBuf, T> streamCodec){
+		return DATA_COMPONENT_REGISTER.register(name, () -> DataComponentType.<T> builder().persistent(codec).networkSynchronized(streamCodec).build());
 	}
 	
 	private IPRegisters(){

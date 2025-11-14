@@ -1,6 +1,5 @@
 package flaxbeard.immersivepetroleum.client.particle;
 
-import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import flaxbeard.immersivepetroleum.common.IPRegisters;
 import net.minecraft.core.particles.ParticleOptions;
@@ -14,7 +13,7 @@ import javax.annotation.Nonnull;
 
 public class IPParticleTypes{
 	public static final DeferredHolder<ParticleType<?>, SimpleParticleType> FLARE_FIRE = createBasicParticle("flare_fire", false);
-	public static final DeferredHolder<ParticleType<?>, ParticleType<FluidParticleData>> FLUID_SPILL = createParticleWithData("fluid_spill", FluidParticleData.DESERIALIZER, FluidParticleData.CODEC);
+	public static final DeferredHolder<ParticleType<?>, ParticleType<FluidParticleData>> FLUID_SPILL = createParticleWithData("fluid_spill", FluidParticleData.CODEC);
 	
 	public static void forceClassLoad(){
 	}
@@ -23,10 +22,10 @@ public class IPParticleTypes{
 		return IPRegisters.registerParticleType(name, () -> new SimpleParticleType(alwaysShow));
 	}
 	
-	@SuppressWarnings("deprecation")
-	private static <T extends ParticleOptions> DeferredHolder<ParticleType<?>, ParticleType<T>> createParticleWithData(String name, ParticleOptions.Deserializer<T> deserializer, MapCodec<T> codec){
+	private static <T extends ParticleOptions> DeferredHolder<ParticleType<?>, ParticleType<T>> createParticleWithData(String name, MapCodec<T> codec){
 		ParticleType<T> type = new ParticleType<>(false){
 			
+			@Nonnull
 			@Override
 			public MapCodec<T> codec(){
 				return codec;

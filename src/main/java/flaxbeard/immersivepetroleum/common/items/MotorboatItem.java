@@ -3,9 +3,9 @@ package flaxbeard.immersivepetroleum.common.items;
 import blusunrize.immersiveengineering.api.tool.upgrade.IUpgrade;
 import blusunrize.immersiveengineering.api.tool.upgrade.IUpgradeableTool;
 import blusunrize.immersiveengineering.api.tool.upgrade.UpgradeData;
-import blusunrize.immersiveengineering.api.utils.ItemUtils;
 import blusunrize.immersiveengineering.common.gui.IESlot;
 import flaxbeard.immersivepetroleum.ImmersivePetroleum;
+import flaxbeard.immersivepetroleum.common.IPDataComponents;
 import flaxbeard.immersivepetroleum.common.entity.MotorboatEntity;
 import flaxbeard.immersivepetroleum.common.util.IPItemStackHandler;
 import net.minecraft.ChatFormatting;
@@ -33,9 +33,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.neoforge.capabilities.ICapabilityProvider;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.items.IItemHandler;
 
@@ -58,16 +56,16 @@ public class MotorboatItem extends IPItemBase implements IUpgradeableTool{
 	
 	@Override
 	public UpgradeData getUpgrades(ItemStack stack){
-		return stack.hasTag() ? stack.getOrCreateTag().getCompound("upgrades") : new CompoundTag();
+		return UpgradeData.EMPTY;//stack.hasTag() ? stack.getOrCreateTag().getCompound("upgrades") : new CompoundTag();
 	}
 	
 	@Override
 	public void clearUpgrades(ItemStack stack){
-		ItemUtils.removeTag(stack, "upgrades");
+		//ItemUtils.removeTag(stack, "upgrades");
 	}
 	
 	protected NonNullList<ItemStack> getContainedItems(ItemStack stack){
-		IItemHandler handler = stack.getCapability(ForgeCapabilities.ITEM_HANDLER).orElse(null);
+		IItemHandler handler = stack.getCapability(Capabilities.ItemHandler.ITEM);
 		
 		if(handler == null){
 			ImmersivePetroleum.log.debug("No valid inventory handler found for " + stack);
@@ -105,22 +103,24 @@ public class MotorboatItem extends IPItemBase implements IUpgradeableTool{
 		
 		clearUpgrades(stack);
 		
-		LazyOptional<IItemHandler> lazy = stack.getCapability(ForgeCapabilities.ITEM_HANDLER);
-		lazy.ifPresent(handler -> {
+		IItemHandler handler = stack.getCapability(Capabilities.ItemHandler.ITEM);
+		if(handler != null){
 			CompoundTag nbt = new CompoundTag();
 			
 			for(int i = 0;i < handler.getSlots();i++){
 				ItemStack u = handler.getStackInSlot(i);
 				if(u.getItem() instanceof IUpgrade upg){
+					/* // TODO
 					if(upg.getUpgradeTypes(u).contains(UPGRADE_TYPE) && upg.canApplyUpgrades(stack, u)){
 						upg.applyUpgrades(stack, u, nbt);
 					}
+					*/
 				}
 			}
 			
-			stack.getOrCreateTag().put("upgrades", nbt);
-			finishUpgradeRecalculation(stack);
-		});
+			//stack.getOrCreateTag().put("upgrades", nbt);
+			finishUpgradeRecalculation(stack, w.registryAccess());
+		}
 	}
 	
 	@Override
@@ -158,6 +158,12 @@ public class MotorboatItem extends IPItemBase implements IUpgradeableTool{
 	
 	@Override
 	public void appendHoverText(@Nonnull ItemStack stack, @Nonnull TooltipContext ctx, @Nonnull List<Component> tooltip, @Nonnull TooltipFlag flag){
+		FluidStack fluidStack;
+		if((fluidStack = stack.get(IPDataComponents.BOAT_TANK)) != null){
+			tooltip.add(((MutableComponent) fluidStack.getHoverName()).append(": " + fluidStack.getAmount() + "mB").withStyle(ChatFormatting.GRAY));
+		}
+		
+		/*
 		if(stack.hasTag()){
 			CompoundTag tag = stack.getTag();
 			
@@ -168,15 +174,17 @@ public class MotorboatItem extends IPItemBase implements IUpgradeableTool{
 				}
 			}
 		}
+		*/
 		
-		stack.getCapability(ForgeCapabilities.ITEM_HANDLER).ifPresent(handler -> {
+		IItemHandler handler = stack.getCapability(Capabilities.ItemHandler.ITEM);
+		if(handler != null){
 			for(int i = 0;i < handler.getSlots();i++){
 				if(handler.getStackInSlot(i).isEmpty())
 					continue;
 				
 				tooltip.add(Component.translatable("desc.immersivepetroleum.flavour.speedboat.upgrade", i + 1).append(handler.getStackInSlot(i).getHoverName()));
 			}
-		});
+		}
 		
 		super.appendHoverText(stack, ctx, tooltip, flag);
 	}
@@ -227,7 +235,7 @@ public class MotorboatItem extends IPItemBase implements IUpgradeableTool{
 			{
 				entityboat.setYRot(playerIn.yRotO);
 				entityboat.setUpgrades(getContainedItems(itemstack));
-				entityboat.readTank(itemstack.getTag());
+				entityboat.setContainedFluid(itemstack.get(IPDataComponents.BOAT_TANK));
 			}
 			
 			if(worldIn.getBlockCollisions(entityboat, entityboat.getBoundingBox().inflate(-0.1D)).iterator().hasNext()){

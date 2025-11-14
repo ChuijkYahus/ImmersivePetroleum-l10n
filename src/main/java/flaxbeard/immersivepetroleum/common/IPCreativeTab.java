@@ -17,11 +17,9 @@ public class IPCreativeTab{
 	//@formatter:on
 	
 	private static void fill(CreativeModeTab.ItemDisplayParameters parms, CreativeModeTab.Output out){
-		for(DeferredHolder<Item, ? extends Item> holder: IPRegisters.ITEM_REGISTER.getEntries()){
-			Item item = holder.get();
-			
+		for(Item item: IPRegisters.getAllItems()){
 			if(item instanceof IMightShowUpInCreativeTab i && i.addSelfToCreativeTab()){
-				out.accept(holder.get());
+				out.accept(item);
 			}
 		}
 	}

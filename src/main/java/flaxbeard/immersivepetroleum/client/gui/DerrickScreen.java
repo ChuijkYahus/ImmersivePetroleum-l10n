@@ -25,7 +25,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.material.Fluids;
-import net.minecraftforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -61,8 +61,8 @@ public class DerrickScreen extends AbstractContainerScreen<DerrickContainer>{
 		addRenderableWidget(this.cfgButton);
 		//@formatter:off
 		this.areas = List.of(
-			new FluidInfoArea(getMenu().tank, new Rect2i(leftPos + 11, topPos + 16, 16, 47), 200, 0, 20, 51, GUI_TEXTURE),
-			new EnergyInfoArea(leftPos + 185, topPos + 19, getMenu().energy)
+			new FluidInfoArea(getMenu().tank, new Rect2i(leftPos + 11, this.topPos + 16, 16, 47), 200, 0, GUI_TEXTURE),
+			new EnergyInfoArea(this.leftPos + 185, this.topPos + 19, getMenu().energy)
 		);
 		//@formatter:on
 	}
@@ -70,7 +70,6 @@ public class DerrickScreen extends AbstractContainerScreen<DerrickContainer>{
 	@Override
 	public void render(@Nonnull GuiGraphics guiGraphics, int mx, int my, float partialTicks){
 		this.inventoryLabelY = this.imageHeight - 40;
-		this.renderBackground(guiGraphics);
 		super.render(guiGraphics, mx, my, partialTicks);
 		this.renderTooltip(guiGraphics, mx, my);
 		
@@ -124,14 +123,14 @@ public class DerrickScreen extends AbstractContainerScreen<DerrickContainer>{
 						int concreteNeeded = (DerrickLogic.REQUIRED_CONCRETE_AMOUNT * (realPipeLength - well.wellPipeLength));
 						if(concreteNeeded > 0){
 							drawInfoText(guiGraphics, Component.translatable("gui.immersivepetroleum.derrick.msg.missing", Utils.fDecimal(concreteNeeded) + "mB"), 0, TEXT_COLOUR_ERROR);
-							drawInfoText(guiGraphics, ExternalModContent.IE.fluidConcrete(1).getDisplayName(), 1, TEXT_COLOUR_ERROR);
+							drawInfoText(guiGraphics, ExternalModContent.IE.fluidConcrete(1).getHoverName(), 1, TEXT_COLOUR_ERROR);
 							return;
 						}
 						
 						int waterNeeded = DerrickLogic.REQUIRED_WATER_AMOUNT * (well.getMaxPipeLength() - well.wellPipeLength);
 						if(waterNeeded > 0){
 							drawInfoText(guiGraphics, Component.translatable("gui.immersivepetroleum.derrick.msg.missing", Utils.fDecimal(waterNeeded) + "mB"), 0, TEXT_COLOUR_ERROR);
-							drawInfoText(guiGraphics, new FluidStack(Fluids.WATER, 1).getDisplayName(), 1, TEXT_COLOUR_ERROR);
+							drawInfoText(guiGraphics, new FluidStack(Fluids.WATER, 1).getHoverName(), 1, TEXT_COLOUR_ERROR);
 							return;
 						}
 					}

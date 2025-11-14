@@ -39,7 +39,6 @@ import flaxbeard.immersivepetroleum.common.util.RegistryUtils;
 import flaxbeard.immersivepetroleum.common.util.ResourceUtils;
 import flaxbeard.immersivepetroleum.common.util.Utils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
@@ -57,6 +56,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -66,6 +66,7 @@ import net.minecraft.world.level.material.Fluids;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.fml.event.lifecycle.FMLLoadCompleteEvent;
+import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.model.data.ModelData;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.fluids.FluidStack;
@@ -80,11 +81,11 @@ public class ClientProxy extends CommonProxy{
 	}
 	
 	@Override
-	public void registerContainersAndScreens(){
-		MenuScreens.create(IPMenuTypes.DISTILLATION_TOWER.getType(), DistillationTowerScreen::new);
-		MenuScreens.create(IPMenuTypes.COKER.getType(), CokerUnitScreen::new);
-		MenuScreens.create(IPMenuTypes.DERRICK.getType(), DerrickScreen::new);
-		MenuScreens.create(IPMenuTypes.HYDROTREATER.getType(), HydrotreaterScreen::new);
+	public void registerContainersAndScreens(RegisterMenuScreensEvent ev){
+		ev.register(IPMenuTypes.DISTILLATION_TOWER.getType(), DistillationTowerScreen::new);
+		ev.register(IPMenuTypes.COKER.getType(), CokerUnitScreen::new);
+		ev.register(IPMenuTypes.DERRICK.getType(), DerrickScreen::new);
+		ev.register(IPMenuTypes.HYDROTREATER.getType(), HydrotreaterScreen::new);
 	}
 	
 	@Override
@@ -99,7 +100,9 @@ public class ClientProxy extends CommonProxy{
 			case "pumpjack_days" -> {
 				int oil_min = 1000000;
 				int oil_max = 5000000;
-				for(ReservoirType reservoir:ReservoirType.map.values()){
+				for(RecipeHolder<ReservoirType> holder:ReservoirType.map.values()){
+					ReservoirType reservoir = holder.value();
+					
 					if(reservoir.name.equals("oil")){
 						oil_min = reservoir.minSize;
 						oil_max = reservoir.maxSize;

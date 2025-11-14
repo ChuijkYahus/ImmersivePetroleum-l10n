@@ -5,24 +5,27 @@ import flaxbeard.immersivepetroleum.api.reservoir.ReservoirIsland;
 import flaxbeard.immersivepetroleum.client.gui.SeismicSurveyScreen;
 import flaxbeard.immersivepetroleum.client.utils.MCUtil;
 import flaxbeard.immersivepetroleum.common.util.survey.SurveyScan;
+import io.netty.buffer.ByteBuf;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ColumnPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.network.NetworkEvent.Context;
+import net.neoforged.fml.LogicalSide;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.function.Supplier;
 
 import static flaxbeard.immersivepetroleum.common.util.survey.SurveyScan.SCAN_RADIUS;
 import static flaxbeard.immersivepetroleum.common.util.survey.SurveyScan.SCAN_SIZE;
@@ -39,32 +42,42 @@ public class MessageSurveyResultDetails{
 	}
 	
 	public static class ClientToServer implements INetMessage{
-		private int x, z;
-		private UUID scanId;
+		public static final Type<ClientToServer> ID = INetMessage.createType("survey_client_to_server");
+		
+		public static final StreamCodec<ByteBuf, ClientToServer> CODEC = ByteBufCodecs.COMPOUND_TAG.map(ClientToServer::new, ClientToServer::toTag);
+		
+		private final int x, z;
+		private final UUID scanId;
 		public ClientToServer(SurveyScan scan){
 			this.x = scan.getX();
 			this.z = scan.getZ();
 			this.scanId = scan.getUuid();
 		}
 		
-		public ClientToServer(FriendlyByteBuf buf){
-			this.x = buf.readInt();
-			this.z = buf.readInt();
-			this.scanId = buf.readUUID();
+		private ClientToServer(CompoundTag tag){
+			this.x = tag.getInt("x");
+			this.z = tag.getInt("z");
+			this.scanId = tag.getUUID("scanId");
+		}
+		
+		private CompoundTag toTag(){
+			CompoundTag tag = new CompoundTag();
+			tag.putInt("x", this.x);
+			tag.putInt("z", this.z);
+			tag.putUUID("scanId", this.scanId);
+			return tag;
+		}
+		
+		@Nonnull
+		@Override
+		public Type<? extends CustomPacketPayload> type(){
+			return ID;
 		}
 		
 		@Override
-		public void toBytes(FriendlyByteBuf buf){
-			buf.writeInt(this.x);
-			buf.writeInt(this.z);
-			buf.writeUUID(this.scanId);
-		}
-		
-		@SuppressWarnings("deprecation")
-		@Override
-		public void process(Supplier<Context> context){
-			context.get().enqueueWork(() -> {
-				final ServerPlayer sPlayer = Objects.requireNonNull(context.get().getSender());
+		public void process(IPayloadContext context){
+			context.enqueueWork(() -> {
+				final ServerPlayer sPlayer = (ServerPlayer) Objects.requireNonNull(context.player());
 				final ServerLevel sLevel = sPlayer.serverLevel();
 				
 				if(sLevel.isAreaLoaded(new BlockPos(this.x, 0, this.z), SCAN_RADIUS)){
@@ -109,27 +122,40 @@ public class MessageSurveyResultDetails{
 	}
 	
 	public static class ServerToClient implements INetMessage{
-		private BitSet replyBitSet;
-		private UUID scanId;
+		public static final Type<ServerToClient> ID = INetMessage.createType("survey_server_to_client");
+		
+		public static final StreamCodec<ByteBuf, ServerToClient> CODEC = ByteBufCodecs.COMPOUND_TAG.map(ServerToClient::new, ServerToClient::toTag);
+		
+		private final BitSet replyBitSet;
+		private final UUID scanId;
 		public ServerToClient(UUID scanId, BitSet replyBitSet){
 			this.scanId = scanId;
 			this.replyBitSet = replyBitSet;
 		}
 		
-		public ServerToClient(FriendlyByteBuf buf){
-			this.scanId = buf.readUUID();
-			this.replyBitSet = buf.readBitSet();
+		private ServerToClient(CompoundTag tag){
+			this(tag.getUUID("scanId"), BitSet.valueOf(tag.getByteArray("bitset")));
+		}
+		
+		private CompoundTag toTag(){
+			CompoundTag tag = new CompoundTag();
+			tag.putByteArray("bitset", this.replyBitSet.toByteArray());
+			tag.putUUID("scanId", this.scanId);
+			return tag;
+		}
+		
+		@Nonnull
+		@Override
+		public Type<? extends CustomPacketPayload> type(){
+			return ID;
 		}
 		
 		@Override
-		public void toBytes(FriendlyByteBuf buf){
-			buf.writeUUID(this.scanId);
-			buf.writeBitSet(this.replyBitSet);
-		}
-		
-		@Override
-		public void process(Supplier<Context> context){
-			DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
+		public void process(IPayloadContext context){
+			context.enqueueWork(() -> {
+				if(context.connection().getDirection().getReceptionSide() == LogicalSide.SERVER)
+					return;
+				
 				if(MCUtil.getScreen() instanceof SeismicSurveyScreen surveyScreen && this.scanId.equals(surveyScreen.scan.getUuid())){
 					surveyScreen.setBitSet(this.replyBitSet);
 				}

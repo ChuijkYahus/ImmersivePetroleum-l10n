@@ -9,6 +9,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ColumnPos;
 import net.minecraft.util.Mth;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.Fluid;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
@@ -304,7 +305,7 @@ public class ReservoirIsland{
 	
 	public static ReservoirIsland readFromNBT(CompoundTag nbt){
 		try{
-			ReservoirType reservoir = ReservoirType.map.get(ResourceLocation.parse(nbt.getString("reservoir")));
+			RecipeHolder<ReservoirType> reservoir = ReservoirType.map.get(ResourceLocation.parse(nbt.getString("reservoir")));
 			if(reservoir != null){
 				long amount = ((long) nbt.getInt("amount")) & MAX_AMOUNT;
 				long capacity = ((long) nbt.getInt("capacity")) & MAX_AMOUNT;
@@ -320,7 +321,7 @@ public class ReservoirIsland{
 				});
 				
 				ReservoirIsland island = new ReservoirIsland();
-				island.reservoir = reservoir;
+				island.reservoir = reservoir.value();
 				island.amount = amount;
 				island.capacity = capacity;
 				island.poly = points;
