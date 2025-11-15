@@ -5,7 +5,9 @@ import blusunrize.immersiveengineering.api.multiblocks.ClientMultiblocks.Multibl
 import blusunrize.immersiveengineering.api.multiblocks.MultiblockHandler;
 import blusunrize.immersiveengineering.api.multiblocks.MultiblockHandler.IMultiblock;
 import blusunrize.immersiveengineering.api.utils.TemplateWorldCreator;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.math.Axis;
+import flaxbeard.immersivepetroleum.ImmersivePetroleum;
 import flaxbeard.immersivepetroleum.client.gui.elements.GuiReactiveList;
 import flaxbeard.immersivepetroleum.client.render.IPRenderTypes;
 import flaxbeard.immersivepetroleum.client.render.RenderUtils;
@@ -19,6 +21,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -35,14 +38,18 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import net.neoforged.neoforge.client.event.ScreenEvent;
 import net.neoforged.neoforge.client.model.data.ModelData;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.util.Lazy;
+import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class ProjectorScreen extends Screen{
 	static final ResourceLocation GUI_TEXTURE = ResourceUtils.ip("textures/gui/projector.png");
@@ -61,11 +68,10 @@ public class ProjectorScreen extends Screen{
 	private int guiLeft;
 	private int guiTop;
 	
-	private Lazy<List<IMultiblock>> multiblocks;
+	private Supplier<List<IMultiblock>> multiblocks;
+	private GuiReactiveList<IMultiblock> list;
 	private Level templateWorld;
-	private IMultiblock multiblock;
-	private GuiReactiveList list;
-	private String[] listEntries;
+	private IMultiblock selectedMultiblock;
 	
 	private SearchField searchField;
 	
@@ -78,7 +84,25 @@ public class ProjectorScreen extends Screen{
 		
 		this.settings = projector.has(IPDataComponents.PROJECTOR_SETTINGS) ? projector.get(IPDataComponents.PROJECTOR_SETTINGS) : new Settings();
 		this.hand = hand;
-		this.multiblocks = Lazy.of(MultiblockHandler::getMultiblocks);
+		this.multiblocks = () -> {
+			//@formatter:off
+			return MultiblockHandler.getMultiblocks().stream()
+				.filter(mb -> {
+					if(mb.getUniqueName().toString().equals("immersiveengineering:feedthrough"))
+						return false;
+					
+					String name = mb.getDisplayName().getString().toLowerCase();
+					return name.contains(this.searchField.getValue().toLowerCase());
+				})
+				.sorted((a, b) -> { // Sorting in alphabetical order
+					String nameA = a.getDisplayName().getString();
+					String nameB = b.getDisplayName().getString();
+					
+					return nameA.compareToIgnoreCase(nameB);
+				})
+				.toList();
+			//@formatter:on
+		};
 		
 		if(this.settings.getMultiblock() != null){
 			this.move = 20F;
@@ -118,79 +142,41 @@ public class ProjectorScreen extends Screen{
 			this.settings.rotateCW();
 		}));
 		
-		updatelist();
-	}
-	
-	private void listaction(Button button){
-		GuiReactiveList l = (GuiReactiveList) button;
-		if(l.selectedOption >= 0 && l.selectedOption < listEntries.length){
-			String str = this.listEntries[l.selectedOption];
-			IMultiblock mb = this.multiblocks.get().get(Integer.parseInt(str));
-			this.settings.setMultiblock(mb);
-		}
-	}
-	
-	private void updatelist(){
-		boolean exists = this.renderables.contains(this.list);
-		
-		List<String> list = new ArrayList<>();
-		for(int i = 0;i < this.multiblocks.get().size();i++){
-			IMultiblock mb = this.multiblocks.get().get(i);
-			if(!mb.getUniqueName().toString().equals("immersiveengineering:feedthrough")){
-				list.add(Integer.toString(i));
-			}
-		}
-		
-		// Sorting in alphabetical order
-		list.sort((a, b) -> {
-			String nameA = getMBName(a);
-			String nameB = getMBName(b);
-			
-			return nameA.compareToIgnoreCase(nameB);
+		GuiReactiveList<IMultiblock> guiList = new GuiReactiveList<>(this.guiLeft + 15, this.guiTop + 29, 89, 127, this::listaction, this.multiblocks, iMultiblock -> {
+			return iMultiblock.getDisplayName().getString();
 		});
+		guiList.setPadding(1, 1, 1, 1);
+		guiList.setTextStyling(0, 0x7F7FFF, false);
 		
-		// Lazy search based on content
-		list.removeIf(str -> {
-			String name = getMBName(str);
-			return !name.toLowerCase().contains(this.searchField.getValue().toLowerCase());
-		});
-		
-		this.listEntries = list.toArray(new String[0]);
-		GuiReactiveList guilist = new GuiReactiveList(this, this.guiLeft + 15, this.guiTop + 29, 89, 127, this::listaction, this.listEntries);
-		guilist.setPadding(1, 1, 1, 1);
-		guilist.setTextColor(0);
-		guilist.setTextHoverColor(0x7F7FFF);
-		guilist.setTranslationFunc(this::getMBName);
-		
-		if(!exists){
-			this.list = addRenderableWidget(guilist);
-			return;
+		this.list = addRenderableWidget(guiList);
+	}
+	
+	private void listaction(GuiReactiveList<IMultiblock> button){
+		List<IMultiblock> mbList = this.multiblocks.get();
+		if(this.list.selectedOption >= 0 && this.list.selectedOption < mbList.size()){
+			IMultiblock iMultiblock = mbList.get(this.list.selectedOption);
+			this.settings.setMultiblock(iMultiblock);
 		}
-		
-		removeWidget(this.list);
-		this.list = guilist;
-		addRenderableWidget(this.list);
-	}
-	
-	private String getMBName(String str){
-		return getMBName(Integer.parseInt(str));
-	}
-	
-	private String getMBName(int index){
-		IMultiblock mb = this.multiblocks.get().get(index);
-		return mb.getDisplayName().getString();
 	}
 	
 	@Override
-	public void render(@Nonnull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks){
+	public void renderBackground(@Nonnull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks){
+		this.renderBlurredBackground(partialTicks);
+		this.renderMenuBackground(guiGraphics, partialTicks);
+	}
+	
+	protected void renderMenuBackground(GuiGraphics guiGraphics, float partialTicks){
 		// Over-GUI Text
 		if(this.settings.getMultiblock() != null){
 			IMultiblock mb = this.settings.getMultiblock();
 			int x = this.guiLeft + 28;
-			int y = this.guiTop - (int) (15 * (this.move / 20F));
+			int y = this.guiTop - (int) (15F * (this.move / 20F));
 			
-			if(this.move < 20){
-				this.move += 1.5 * partialTicks;
+			if(this.move < 20F){
+				this.move += 0.5F * partialTicks;
+				
+				if(this.move > 20F)
+					this.move = 20F;
 			}
 			
 			//ClientUtils.bindTexture(GUI_TEXTURE);
@@ -203,18 +189,17 @@ public class ProjectorScreen extends Screen{
 			FormattedCharSequence re = text.getVisualOrderText();
 			guiGraphics.drawString(this.font, re, (x - this.font.width(re) / 2), y, 0x3F3F3F, false);
 		}
-		background(guiGraphics, mouseX, mouseY, partialTicks);
-		super.render(guiGraphics, mouseX, mouseY, partialTicks);
-		this.searchField.render(guiGraphics, mouseX, mouseY, partialTicks);
 		
-		/*
-		for(Renderable rawWidget:this.renderables){
-			if(rawWidget instanceof AbstractWidget widget && widget.isHoveredOrFocused()){
-				guiGraphics.renderTooltip(this.font, widget.getTooltip()., mouseX, mouseY);
-				break;
-			}
-		}
-		*/
+		RenderSystem.enableBlend();
+		guiGraphics.blit(GUI_TEXTURE, this.guiLeft, this.guiTop, 0, 0, this.xSize, this.ySize);
+		RenderSystem.disableBlend();
+	}
+	
+	@Override
+	public void render(@Nonnull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks){
+		super.render(guiGraphics, mouseX, mouseY, partialTicks);
+		
+		this.searchField.render(guiGraphics, mouseX, mouseY, partialTicks);
 		
 		renderDirectionDisplay(guiGraphics, mouseX, mouseY);
 		
@@ -224,7 +209,7 @@ public class ProjectorScreen extends Screen{
 			MultiBufferSource.BufferSource buffer = RenderUtils.immediate();
 			try{
 				
-				this.rotation += 1.5F * partialTicks;
+				this.rotation += 0.5F * partialTicks;
 				
 				Vec3i size = mb.getSize(null);
 				
@@ -245,9 +230,9 @@ public class ProjectorScreen extends Screen{
 						}
 						guiGraphics.pose().popPose();
 					}else{
-						if(this.templateWorld == null || (!this.multiblock.getUniqueName().equals(mb.getUniqueName()))){
+						if(this.templateWorld == null || (!this.selectedMultiblock.getUniqueName().equals(mb.getUniqueName()))){
 							this.templateWorld = TemplateWorldCreator.CREATOR.get().makeWorld(mb.getStructure(this.getMinecraft().level), pos -> true, this.getMinecraft().level.registryAccess());
-							this.multiblock = mb;
+							this.selectedMultiblock = mb;
 						}
 						
 						final BlockRenderDispatcher blockRender = Minecraft.getInstance().getBlockRenderer();
@@ -290,11 +275,6 @@ public class ProjectorScreen extends Screen{
 			Component rotText = Component.translatable("desc.immersivepetroleum.info.projector.rotated." + dir);
 			guiGraphics.renderTooltip(this.font, rotText, mouseX, mouseY);
 		}
-	}
-	
-	private void background(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks){
-		//ClientUtils.bindTexture(GUI_TEXTURE);
-		guiGraphics.blit(GUI_TEXTURE, this.guiLeft, this.guiTop, 0, 0, this.xSize, this.ySize);
 	}
 	
 	@Override
@@ -377,7 +357,7 @@ public class ProjectorScreen extends Screen{
 		*/
 	}
 	
-	class SearchField extends EditBox{
+	static class SearchField extends EditBox{
 		public SearchField(Font font, int x, int y){
 			super(font, x, y, 60, 14, GUI_SEARCH); // Font, x, y, width, height, tooltip
 			setMaxLength(50);
@@ -388,12 +368,7 @@ public class ProjectorScreen extends Screen{
 		
 		@Override
 		public boolean keyPressed(int keyCode, int scanCode, int modifiers){
-			String s = getValue();
 			if(super.keyPressed(keyCode, scanCode, modifiers)){
-				if(!Objects.equals(s, getValue())){
-					ProjectorScreen.this.updatelist();
-				}
-				
 				return true;
 			}else{
 				return isFocused() && isVisible() && keyCode != 256 || super.keyPressed(keyCode, scanCode, modifiers);
@@ -403,20 +378,10 @@ public class ProjectorScreen extends Screen{
 		@Override
 		public boolean charTyped(char codePoint, int modifiers){
 			if(!isFocused()){
-				//changeFocus(this);
 				setFocused(true);
 			}
 			
-			String s = getValue();
-			if(super.charTyped(codePoint, modifiers)){
-				if(!Objects.equals(s, getValue())){
-					ProjectorScreen.this.updatelist();
-				}
-				
-				return true;
-			}else{
-				return false;
-			}
+			return super.charTyped(codePoint, modifiers);
 		}
 	}
 	

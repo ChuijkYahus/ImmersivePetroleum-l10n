@@ -9,102 +9,85 @@
 package flaxbeard.immersivepetroleum.client.gui.elements;
 
 import blusunrize.immersiveengineering.api.Lib;
-import flaxbeard.immersivepetroleum.client.utils.MCUtil;
-import flaxbeard.immersivepetroleum.common.util.ResourceUtils;
+import blusunrize.immersiveengineering.client.ClientUtils;
+import blusunrize.immersiveengineering.client.gui.elements.GuiButtonIE.IIEPressable;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
-import javax.annotation.Nonnull;
+import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
-@SuppressWarnings("unused")
-public class GuiReactiveList extends Button{
-	private final Screen gui;
-	private String[] entries;
-	private int[] padding = {0, 0, 0, 0};
-	private boolean needsSlider = false;
-	private int perPage;
-	private Function<String, String> translationFunction;
-	private int scrollMode = 0;
-	private float textScale = 1;
-	private int textColor = 0xE0E0E0;
-	private int textHoverColor = Lib.COLOUR_I_ImmersiveOrange;
+import static blusunrize.immersiveengineering.api.IEApi.ieLoc;
+
+/** Obviously copied from IE (blusunrize.immersiveengineering.client.gui.elements.GuiReactiveList) */
+public class GuiReactiveList<E> extends Button{
+	private static final ResourceLocation SCROLL_TOP = ieLoc("slider_vertical/top");
+	private static final ResourceLocation SCROLL_BOTTOM = ieLoc("slider_vertical/bottom");
+	private static final ResourceLocation SCROLL_CENTER = ieLoc("slider_vertical/center");
+	private static final ResourceLocation SCROLL_BUTTON_TOP = ieLoc("slider_vertical/button_top");
+	private static final ResourceLocation SCROLL_BUTTON_BOTTOM = ieLoc("slider_vertical/button_bottom");
+	private static final ResourceLocation SCROLL_BUTTON_CENTER = ieLoc("slider_vertical/button_center");
 	
-	private int offset;
+	protected Consumer<GuiReactiveList<E>> handler;
+	protected Supplier<List<E>> entries;
+	protected Function<E, String> toStringFunction;
+	private final int[] padding = {
+		0,
+		0,
+		0,
+		0
+	};
+	private boolean needsSlider = false;
+	protected int perPage;
+	private final float textScale = 1;
+	private int textColor = 0xE0E0E0;
+	private int textColorHovered = Lib.COLOUR_I_ImmersiveOrange;
+	private boolean textShadow = true;
+	
+	protected int offset;
 	private int maxOffset;
 	
-	private long prevWheelNano = 0;
 	private int targetEntry = -1;
-	private float hoverTimer = 0;
+	private int hoverTimer = 0;
 	
-	public GuiReactiveList(Screen gui, int x, int y, int w, int h, OnPress handler, String... entries){
-		super(x, y, w, h, Component.empty(), handler, DEFAULT_NARRATION);
-		this.gui = gui;
+	public GuiReactiveList(int x, int y, int w, int h, Consumer<GuiReactiveList<E>> handler, Supplier<List<E>> entries, Function<E, String> toStringFunction){
+		super(x, y, w, h, Component.empty(), s -> {
+		}, DEFAULT_NARRATION);
+		this.handler = handler;
 		this.entries = entries;
-		recalculateEntries();
+		this.toStringFunction = toStringFunction;
 	}
 	
 	private void recalculateEntries(){
-		perPage = (int) ((this.height - padding[0] - padding[1]) / (MCUtil.getFont().lineHeight * textScale));
-		if(perPage < entries.length){
+		final int length = this.entries.get().size();
+		perPage = (int) ((this.height - padding[0] - padding[1]) / (ClientUtils.mc().font.lineHeight * textScale));
+		if(perPage < length){
 			needsSlider = true;
-			maxOffset = entries.length - perPage;
-		}else
+			maxOffset = length - perPage;
+			this.offset = Math.min(this.offset, maxOffset);
+		}else{
 			needsSlider = false;
+			this.maxOffset = this.offset = 0;
+		}
 	}
 	
-	/**
-	 * Changes the default text color for entries
-	 * 
-	 * @param color RGB value
-	 */
-	public GuiReactiveList setTextColor(int color){
-		this.textColor = color;
+	public GuiReactiveList<E> setTextStyling(int textColor, int textColorHovered, boolean textShadow){
+		this.textColor = textColor;
+		this.textColorHovered = textColorHovered;
+		this.textShadow = textShadow;
 		return this;
 	}
 	
-	/**
-	 * Changes the text color for entries when being hovered over
-	 * 
-	 * @param color RGB value
-	 * @return {@link GuiReactiveList} self
-	 */
-	public GuiReactiveList setTextHoverColor(int color){
-		this.textHoverColor = color;
-		return this;
-	}
-	
-	public GuiReactiveList setPadding(int up, int down, int left, int right){
+	public GuiReactiveList<E> setPadding(int up, int down, int left, int right){
 		this.padding[0] = up;
 		this.padding[1] = down;
 		this.padding[2] = left;
 		this.padding[3] = right;
-		recalculateEntries();
-		return this;
-	}
-	
-	public GuiReactiveList setTranslationFunc(Function<String, String> func){
-		this.translationFunction = func;
-		return this;
-	}
-	
-	/**
-	 * @param mode 0: No scrolling<br>
-	 *             1: Scroll when hovered<br>
-	 *             2: Scroll all
-	 */
-	public GuiReactiveList setScrollMode(int mode){
-		this.scrollMode = mode;
-		return this;
-	}
-	
-	public GuiReactiveList setFormatting(float textScale){
-		this.textScale = textScale;
-		this.recalculateEntries();
 		return this;
 	}
 	
@@ -120,36 +103,35 @@ public class GuiReactiveList extends Button{
 		return this.maxOffset;
 	}
 	
-	static final ResourceLocation TEXTURE = ResourceUtils.ie("textures/gui/hud_elements.png");
-	
 	@Override
-	protected void renderWidget(@Nonnull GuiGraphics gui, int mx, int my, float partialTicks){
-		Font fr = MCUtil.getFont();
+	public void renderWidget(GuiGraphics graphics, int mx, int my, float partialTicks){
+		recalculateEntries();
+		final List<E> entries = this.entries.get();
+		Font fr = ClientUtils.mc().font;
 		
 		int mmY = my - this.getY();
 		int strWidth = width - padding[2] - padding[3] - (needsSlider ? 6 : 0);
 		if(needsSlider){
-			//ClientUtils.bindTexture(TEXTURE);
-			gui.blit(TEXTURE, getX() + width - 6, getY(), 16, 136, 6, 4);
-			gui.blit(TEXTURE, getX() + width - 6, getY() + height - 4, 16, 144, 6, 4);
+			graphics.blitSprite(SCROLL_TOP, getX() + width - 6, getY(), 6, 4);
+			graphics.blitSprite(SCROLL_BOTTOM, getX() + width - 6, getY() + height - 4, 6, 4);
 			for(int i = 0;i < height - 8;i += 2)
-				gui.blit(TEXTURE, getX() + width - 6, getY() + 4 + i, 16, 141, 6, 2);
+				graphics.blitSprite(SCROLL_CENTER, getX() + width - 6, getY() + 4 + i, 6, 2);
 			
 			int sliderSize = Math.max(6, height - maxOffset * fr.lineHeight);
 			float silderShift = (height - sliderSize) / (float) maxOffset * offset;
 			
-			gui.blit(TEXTURE, getX() + width - 5, (int) (getY() + silderShift + 1), 20, 129, 4, 2);
-			gui.blit(TEXTURE, getX() + width - 5, (int) (getY() + silderShift + sliderSize - 4), 20, 132, 4, 3);
+			graphics.blitSprite(SCROLL_BUTTON_TOP, getX() + width - 5, (int) (getY() + silderShift + 1), 4, 2);
+			graphics.blitSprite(SCROLL_BUTTON_BOTTOM, getX() + width - 5, (int) (getY() + silderShift + sliderSize - 4), 4, 3);
 			for(int i = 0;i < sliderSize - 7;i++)
-				gui.blit(TEXTURE, getX() + width - 5, (int) (getY() + silderShift + 3 + i), 20, 131, 4, 1);
+				graphics.blitSprite(SCROLL_BUTTON_CENTER, getX() + width - 5, (int) (getY() + silderShift + 3 + i), 4, 1);
 		}
 		
-		gui.pose().scale(textScale, textScale, 1);
-		this.isHovered = mx >= getX() && mx < getX() + width && my >= getY() && my < getY() + height;
+		graphics.pose().scale(textScale, textScale, 1);
+		this.isHovered = active && mx >= getX() && mx < getX() + width && my >= getY() && my < getY() + height;
 		boolean hasTarget = false;
-		for(int i = 0;i < Math.min(perPage, entries.length);i++){
+		for(int i = 0;i < Math.min(perPage, entries.size());i++){
 			int j = offset + i;
-			int col = textColor;
+			int col = this.textColor;
 			boolean selectionHover = isHovered && mmY >= i * fr.lineHeight && mmY < (i + 1) * fr.lineHeight;
 			if(selectionHover){
 				hasTarget = true;
@@ -157,28 +139,28 @@ public class GuiReactiveList extends Button{
 					targetEntry = j;
 					hoverTimer = 0;
 				}else
-					hoverTimer += 2.5 * partialTicks;
-				col = textHoverColor;
+					hoverTimer++;
+				col = this.textColorHovered;
 			}
-			if(j > entries.length - 1)
-				j = entries.length - 1;
-			String s = translationFunction != null ? translationFunction.apply(entries[j]) : entries[j];
+			if(j > entries.size() - 1)
+				j = entries.size() - 1;
+			String s = this.toStringFunction.apply(entries.get(j));
 			int overLength = s.length() - fr.plainSubstrByWidth(s, strWidth).length();
-			if(overLength > 0)// String is too long
+			if(overLength > 0)//String is too long
 			{
 				if(selectionHover && hoverTimer > 20){
-					int textOffset = ((int) hoverTimer / 10) % (s.length());
+					int textOffset = (hoverTimer / 10) % (s.length());
 					s = s.substring(textOffset) + " " + s.substring(0, textOffset);
 				}
 				s = fr.plainSubstrByWidth(s, strWidth);
 			}
 			float tx = ((getX() + padding[2]) / textScale);
 			float ty = ((getY() + padding[0] + (fr.lineHeight * i)) / textScale);
-			gui.pose().translate(tx, ty, 0);
-			gui.drawString(fr, s, 0, 0, col, false);
-			gui.pose().translate(-tx, -ty, 0);
+			graphics.pose().translate(tx, ty, 0);
+			graphics.drawString(fr, s, 0, 0, col, textShadow);
+			graphics.pose().translate(-tx, -ty, 0);
 		}
-		gui.pose().scale(1 / textScale, 1 / textScale, 1);
+		graphics.pose().scale(1 / textScale, 1 / textScale, 1);
 		if(!hasTarget){
 			targetEntry = -1;
 			hoverTimer = 0;
@@ -186,11 +168,16 @@ public class GuiReactiveList extends Button{
 	}
 	
 	@Override
-	public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY){
-		if(scrollY != 0 && maxOffset > 0){
-			if(scrollY < 0 && offset < maxOffset)
+	public void onPress(){
+		this.handler.accept(this);
+	}
+	
+	@Override
+	public boolean mouseScrolled(double mouseX, double mouseY, double deltaX, double deltaY){
+		if(deltaY != 0 && maxOffset > 0){
+			if(deltaY < 0 && offset < maxOffset)
 				offset++;
-			if(scrollY > 0 && offset > 0)
+			if(deltaY > 0 && offset > 0)
 				offset--;
 			return true;
 		}else
@@ -204,10 +191,9 @@ public class GuiReactiveList extends Button{
 		selectedOption = -1;
 		if(this.active && this.visible)
 			if(this.isValidClickButton(key) && this.clicked(mx, my)){
-				
-				Font fr = MCUtil.getFont();
+				Font fr = ClientUtils.mc().font;
 				double mmY = my - this.getY();
-				for(int i = 0;i < Math.min(perPage, entries.length);i++)
+				for(int i = 0;i < Math.min(perPage, entries.get().size());i++)
 					if(mmY >= i * fr.lineHeight && mmY < (i + 1) * fr.lineHeight)
 						selectedOption = offset + i;
 			}
