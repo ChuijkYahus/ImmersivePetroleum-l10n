@@ -1,10 +1,13 @@
 package flaxbeard.immersivepetroleum.common.network;
 
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 import javax.annotation.Nonnull;
@@ -21,42 +24,25 @@ public class IPPacketHandler{
 		registrar.commonToServer(MessageSurveyResultDetails.ServerToClient.ID, MessageSurveyResultDetails.ServerToClient.CODEC, MessageSurveyResultDetails.ServerToClient::process);
 	}
 	
-	private static <T extends INetMessage> void registerMessageRev(){
-		
-	}
-	
-	private static int id = 0;
-	public static <T extends INetMessage> void registerMessage(Class<T> type, Function<FriendlyByteBuf, T> decoder){
-		/*
-		INSTANCE.registerMessage(id++, type, INetMessage::toBytes, decoder, (t, ctx) -> {
-			t.process(ctx);
-			ctx.get().setPacketHandled(true);
-		});
-		*/
-	}
-	
 	/**
-	 * Sends a server message directly to the player. Will not do anything if the provided instance is not a {@link ServerPlayer} instance
+	 * Sends a server message directly to the player. Will not do anything if the provided instance is not {@link ServerPlayer}
 	 *
 	 * @param player  The {@link Player} to send to
 	 * @param message The message to send
 	 */
-	public static <MSG> void sendToPlayer(Player player, @Nonnull MSG message){
-		/*
-		if(message != null && player instanceof ServerPlayer serverPlayer){
-			INSTANCE.send(PacketDistributor.PLAYER.with(() -> serverPlayer), message);
-		}
-		*/
+	public static <MSG extends CustomPacketPayload> void sendToPlayer(Player player, MSG message){
+		if(message == null || !(player instanceof ServerPlayer serverPlayer))
+			return;
+		
+		PacketDistributor.sendToPlayer(serverPlayer, message);
 	}
 	
 	/** Client -> Server */
-	public static <MSG> void sendToServer(MSG message){
-		/*
+	public static <MSG extends CustomPacketPayload> void sendToServer(MSG message){
 		if(message == null)
 			return;
 		
-		INSTANCE.send(PacketDistributor.SERVER.noArg(), message);
-		*/
+		PacketDistributor.sendToServer(message);
 	}
 	
 	/**
@@ -65,20 +51,25 @@ public class IPPacketHandler{
 	 * Server -> Client
 	 * </pre>
 	 */
-	public static <MSG> void sendToDimension(ResourceKey<Level> dim, MSG message){
-		/*
-		if(message == null)
+	public static <MSG extends CustomPacketPayload> void sendToDimension(Level level, MSG message){
+		if(message == null || !(level instanceof ServerLevel serverLevel))
 			return;
 		
-		INSTANCE.send(PacketDistributor.DIMENSION.with(() -> dim), message);
-		*/
+		PacketDistributor.sendToPlayersInDimension(serverLevel, message);
 	}
 	
-	public static <MSG> void sendAll(MSG message){
-		/*
+	/**
+	 * Sends a packet to everyone.
+	 * <pre>
+	 * Server -> Client
+	 * </pre>
+	 */
+	public static <MSG extends CustomPacketPayload> void sendAll(MSG message){
 		if(message == null)
 			return;
 		
+		PacketDistributor.sendToAllPlayers(message);
+		/*
 		INSTANCE.send(PacketDistributor.ALL.noArg(), message);
 		*/
 	}
