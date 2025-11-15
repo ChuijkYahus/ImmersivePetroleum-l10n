@@ -187,26 +187,6 @@ public class ProjectorItem extends IPItemBase implements IUpgradeableTool{
 		return GLFW.glfwGetKey(window, key) == GLFW.GLFW_PRESS;
 	}
 	
-	/** Name cache for {@link ProjectorItem#getActualMBName(IMultiblock)} */
-	static final Map<Class<? extends IMultiblock>, String> nameCache = new HashMap<>();
-	/** Gets the name of the class */
-	public static String getActualMBName(IMultiblock multiblock){
-		if(!nameCache.containsKey(multiblock.getClass())){
-			String name = multiblock.getClass().getSimpleName();
-			name = name.substring(0, name.indexOf("Multiblock"));
-			
-			name = switch(name){
-				case "LightningRod" -> "Lightningrod";
-				case "ImprovedBlastfurnace" -> "BlastFurnaceAdvanced";
-				default -> name;
-			};
-			
-			nameCache.put(multiblock.getClass(), name);
-		}
-		
-		return nameCache.get(multiblock.getClass());
-	}
-	
 	@Override
 	@Nonnull
 	public InteractionResultHolder<ItemStack> use(Level world, Player player, @Nonnull InteractionHand hand){
@@ -238,8 +218,7 @@ public class ProjectorItem extends IPItemBase implements IUpgradeableTool{
 			}
 			
 			if(changeMode){
-				int modeId = settings.getMode().ordinal() + 1;
-				settings.setMode(Mode.values()[modeId >= Mode.values().length ? 0 : modeId]);
+				settings.switchMode();
 				settings.applyTo(held);
 				settings.sendPacketToServer(hand);
 				player.displayClientMessage(settings.getMode().getTranslated(), true);
@@ -348,11 +327,11 @@ public class ProjectorItem extends IPItemBase implements IUpgradeableTool{
 	// STATIC METHODS
 	
 	public static Settings getSettings(@Nullable ItemStack stack){
-		Settings settings;
+		Settings.SettingsRecord settings;
 		if(stack == null || (settings = stack.get(IPDataComponents.PROJECTOR_SETTINGS)) == null)
 			return new Settings();
 		
-		return settings;
+		return settings.convert();
 	}
 	
 	private static void alignHit(MutableBlockPos hit, Player playerIn, Vec3i size, Rotation rotation, boolean mirror){

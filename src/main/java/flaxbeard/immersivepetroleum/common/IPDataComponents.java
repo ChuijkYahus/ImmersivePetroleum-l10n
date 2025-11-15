@@ -19,7 +19,7 @@ public class IPDataComponents{
 	
 	public static final DeferredHolder<DataComponentType<?>, DataComponentType<DebugItem.Mode>> DEBUG_ITEM = IPRegisters.registerDataComponent("debug_item_modes", DebugItem.Mode.CODEC, DebugItem.Mode.CODEC_STREAM);
 	
-	public static final DeferredHolder<DataComponentType<?>, DataComponentType<Settings>> PROJECTOR_SETTINGS = IPRegisters.registerDataComponent("projector_settings", Settings.CODEC, Settings.CODEC_STREAM);
+	public static final DeferredHolder<DataComponentType<?>, DataComponentType<Settings.SettingsRecord>> PROJECTOR_SETTINGS = IPRegisters.registerDataComponent("projector_settings", Settings.SettingsRecord.CODEC, Settings.SettingsRecord.CODEC_STREAM);
 	
 	public static final DeferredHolder<DataComponentType<?>, DataComponentType<SurveyScan>> SURVEY_SCAN = IPRegisters.registerDataComponent("survey_scan", SurveyScan.CODEC, SurveyScan.CODEC_STREAM);
 	public static final DeferredHolder<DataComponentType<?>, DataComponentType<IslandInfo>> ISLAND_INFO = IPRegisters.registerDataComponent("island_info", IslandInfo.CODEC, IslandInfo.CODEC_STREAM);

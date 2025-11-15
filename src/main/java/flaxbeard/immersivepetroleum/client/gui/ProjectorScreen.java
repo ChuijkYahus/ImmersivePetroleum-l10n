@@ -7,21 +7,19 @@ import blusunrize.immersiveengineering.api.multiblocks.MultiblockHandler.IMultib
 import blusunrize.immersiveengineering.api.utils.TemplateWorldCreator;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.math.Axis;
-import flaxbeard.immersivepetroleum.ImmersivePetroleum;
 import flaxbeard.immersivepetroleum.client.gui.elements.GuiReactiveList;
 import flaxbeard.immersivepetroleum.client.render.IPRenderTypes;
 import flaxbeard.immersivepetroleum.client.render.RenderUtils;
 import flaxbeard.immersivepetroleum.client.utils.MCUtil;
 import flaxbeard.immersivepetroleum.common.IPDataComponents;
+import flaxbeard.immersivepetroleum.common.items.ProjectorItem;
 import flaxbeard.immersivepetroleum.common.util.ResourceUtils;
 import flaxbeard.immersivepetroleum.common.util.projector.Settings;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractButton;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -38,16 +36,10 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
-import net.neoforged.neoforge.client.event.ScreenEvent;
 import net.neoforged.neoforge.client.model.data.ModelData;
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.common.util.Lazy;
-import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -68,7 +60,7 @@ public class ProjectorScreen extends Screen{
 	private int guiLeft;
 	private int guiTop;
 	
-	private Supplier<List<IMultiblock>> multiblocks;
+	private final Supplier<List<IMultiblock>> multiblocks;
 	private GuiReactiveList<IMultiblock> list;
 	private Level templateWorld;
 	private IMultiblock selectedMultiblock;
@@ -82,7 +74,7 @@ public class ProjectorScreen extends Screen{
 	public ProjectorScreen(InteractionHand hand, ItemStack projector){
 		super(Component.literal("projector"));
 		
-		this.settings = projector.has(IPDataComponents.PROJECTOR_SETTINGS) ? projector.get(IPDataComponents.PROJECTOR_SETTINGS) : new Settings();
+		this.settings = ProjectorItem.getSettings(projector);
 		this.hand = hand;
 		this.multiblocks = () -> {
 			//@formatter:off
@@ -340,7 +332,7 @@ public class ProjectorScreen extends Screen{
 		}
 	}
 	
-	class ControlButton extends ProjectorScreen.PButton{
+	static class ControlButton extends ProjectorScreen.PButton{
 		Component hoverText;
 		public ControlButton(int x, int y, int width, int height, int overlayX, int overlayY, Consumer<PButton> action, Component hoverText){
 			super(x, y, width, height, overlayX, overlayY, action);

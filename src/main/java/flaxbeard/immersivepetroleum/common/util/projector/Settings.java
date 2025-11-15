@@ -4,8 +4,8 @@ import blusunrize.immersiveengineering.api.multiblocks.MultiblockHandler;
 import blusunrize.immersiveengineering.api.multiblocks.MultiblockHandler.IMultiblock;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import flaxbeard.immersivepetroleum.common.network.MessageProjectorSync;
 import flaxbeard.immersivepetroleum.common.IPDataComponents;
+import flaxbeard.immersivepetroleum.common.network.MessageProjectorSync;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -21,32 +21,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Rotation;
 
 import javax.annotation.Nullable;
+import java.util.Optional;
 
 public class Settings{
-	//@formatter:off
-	public static final Codec<Settings> CODEC = RecordCodecBuilder.create(inst -> inst.group(
-		Codec.INT.fieldOf("mode").forGetter(s -> s.mode.ordinal()),
-		Codec.INT.fieldOf("rotation").forGetter(s -> s.rotation.ordinal()),
-		BlockPos.CODEC.fieldOf("pos").forGetter(s -> s.pos),
-		Codec.STRING.fieldOf("multiblock").forGetter(s -> s.multiblock.getUniqueName().toString()),
-		Codec.BOOL.fieldOf("mirror").forGetter(s -> s.mirror),
-		Codec.BOOL.fieldOf("isPlaced").forGetter(s -> s.isPlaced)
-	).apply(inst, (modeId, rotId, pos, mbId, mirrored, placed) -> {
-		Settings settings = new Settings();
-		settings.mode = Mode.values()[modeId];
-		settings.rotation = Rotation.values()[rotId];
-		settings.pos = pos;
-		settings.multiblock = MultiblockHandler.getByUniqueName(ResourceLocation.parse(mbId));
-		settings.mirror = mirrored;
-		settings.isPlaced = placed;
-		return settings;
-	}));
-	//@formatter:on
-	
-	public static final StreamCodec<ByteBuf, Settings> CODEC_STREAM = ByteBufCodecs.COMPOUND_TAG.map(Settings::new, Settings::toNbt);
-	
-	public static final String KEY_SELF = "settings";
-	public static final String KEY_BLOCKS = "blocks";
 	public static final String KEY_MODE = "mode";
 	public static final String KEY_MULTIBLOCK = "multiblock";
 	public static final String KEY_MIRROR = "mirror";
@@ -54,40 +31,19 @@ public class Settings{
 	public static final String KEY_ROTATION = "rotation";
 	public static final String KEY_POSITION = "pos";
 	
-	private Mode mode;
-	private Rotation rotation;
-	private BlockPos pos = null;
-	private IMultiblock multiblock = null;
-	private boolean mirror;
-	private boolean isPlaced;
+	private @Nullable IMultiblock multiblock = null;
+	private @Nullable BlockPos pos = null;
+	private Mode mode = Mode.MULTIBLOCK_SELECTION;
+	private Rotation rotation = Rotation.NONE;
+	private boolean mirror = false;
+	private boolean isPlaced = false;
 	
 	public Settings(){
 		this(new CompoundTag());
 	}
 	
-	public Settings(@Nullable final ItemStack stack){
-		// TODO
-		/*
-		this(((Supplier<CompoundTag>) () -> {
-			CompoundTag nbt = null;
-			if(stack != null && (nbt = stack.getTagElement(KEY_SELF)) == null){
-				// Fail-Safe, checks if what it got is null and if that's
-				// the case just gives it an empty compound
-				nbt = new CompoundTag();
-			}
-			return nbt;
-		}).get());
-		*/
-		this();
-	}
-	
 	public Settings(CompoundTag settingsNbt){
-		if(settingsNbt == null || settingsNbt.isEmpty()){
-			this.mode = Mode.MULTIBLOCK_SELECTION;
-			this.rotation = Rotation.NONE;
-			this.mirror = false;
-			this.isPlaced = false;
-		}else{
+		if(settingsNbt != null && !settingsNbt.isEmpty()){
 			this.mode = Mode.values()[Mth.clamp(settingsNbt.getInt(KEY_MODE), 0, Mode.values().length - 1)];
 			this.rotation = Rotation.values()[settingsNbt.contains(KEY_ROTATION) ? settingsNbt.getInt(KEY_ROTATION) : 0];
 			this.mirror = settingsNbt.getBoolean(KEY_MIRROR);
@@ -212,11 +168,7 @@ public class Settings{
 	}
 	
 	public ItemStack applyTo(ItemStack stack){
-		stack.set(IPDataComponents.PROJECTOR_SETTINGS, this);
-		/*
-		stack.getOrCreateTagElement("settings");
-		stack.getTag().put("settings", this.toNbt());
-		*/
+		stack.set(IPDataComponents.PROJECTOR_SETTINGS, new SettingsRecord(this));
 		return stack;
 	}
 	
@@ -235,6 +187,98 @@ public class Settings{
 		
 		public Component getTranslated(){
 			return Component.translatable(this.translation);
+		}
+	}
+	
+	@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+	public record SettingsRecord(@Nullable IMultiblock multiblock, @Nullable BlockPos pos, Mode mode, Rotation rotation, boolean isMirrored, boolean isPlaced){
+		public static final String KEY_MODE = "mode";
+		public static final String KEY_MULTIBLOCK = "multiblock";
+		public static final String KEY_MIRROR = "mirror";
+		public static final String KEY_PLACED = "placed";
+		public static final String KEY_ROTATION = "rotation";
+		public static final String KEY_POSITION = "pos";
+		
+		public static final Codec<SettingsRecord> CODEC = RecordCodecBuilder.create(inst -> inst.group(Codec.STRING.optionalFieldOf("multiblock").forGetter(s -> {
+			if(s.multiblock == null)
+				return Optional.empty();
+			return Optional.of(s.multiblock.getUniqueName().toString());
+		}), BlockPos.CODEC.optionalFieldOf("pos").forGetter(s -> Optional.ofNullable(s.pos)), Codec.INT.fieldOf("mode").forGetter(s -> s.mode.ordinal()), Rotation.CODEC.fieldOf("rotation").forGetter(SettingsRecord::rotation), Codec.BOOL.fieldOf("isMirrored").forGetter(SettingsRecord::isMirrored), Codec.BOOL.fieldOf("isPlaced").forGetter(SettingsRecord::isPlaced)).apply(inst, SettingsRecord::new));
+		
+		public static final StreamCodec<ByteBuf, SettingsRecord> CODEC_STREAM = ByteBufCodecs.COMPOUND_TAG.map(SettingsRecord::fromNbt, SettingsRecord::toNbt);
+		
+		public static SettingsRecord fromNbt(CompoundTag settingsNbt){
+			@Nullable
+			IMultiblock multiblock = null;
+			@Nullable
+			BlockPos pos = null;
+			Mode mode = Mode.MULTIBLOCK_SELECTION;
+			Rotation rotation = Rotation.NONE;
+			boolean isMirrored = false;
+			boolean isPlaced = false;
+			
+			if(settingsNbt != null && !settingsNbt.isEmpty()){
+				mode = Mode.values()[Mth.clamp(settingsNbt.getInt(KEY_MODE), 0, Mode.values().length - 1)];
+				rotation = Rotation.values()[settingsNbt.contains(KEY_ROTATION) ? settingsNbt.getInt(KEY_ROTATION) : 0];
+				isMirrored = settingsNbt.getBoolean(KEY_MIRROR);
+				isPlaced = settingsNbt.getBoolean(KEY_PLACED);
+				
+				if(settingsNbt.contains(KEY_MULTIBLOCK, Tag.TAG_STRING)){
+					String str = settingsNbt.getString("multiblock");
+					multiblock = MultiblockHandler.getByUniqueName(ResourceLocation.parse(str));
+				}
+				
+				if(settingsNbt.contains(KEY_POSITION, Tag.TAG_COMPOUND)){
+					CompoundTag posNbt = settingsNbt.getCompound("pos");
+					int x = posNbt.getInt("x");
+					int y = posNbt.getInt("y");
+					int z = posNbt.getInt("z");
+					pos = new BlockPos(x, y, z);
+				}
+			}
+			
+			return new SettingsRecord(multiblock, pos, mode, rotation, isMirrored, isPlaced);
+		}
+		
+		public CompoundTag toNbt(){
+			CompoundTag nbt = new CompoundTag();
+			nbt.putInt(KEY_MODE, this.mode.ordinal());
+			nbt.putInt(KEY_ROTATION, this.rotation.ordinal());
+			nbt.putBoolean(KEY_MIRROR, this.isMirrored);
+			nbt.putBoolean(KEY_PLACED, this.isPlaced);
+			
+			if(this.multiblock != null){
+				nbt.putString(KEY_MULTIBLOCK, this.multiblock.getUniqueName().toString());
+			}
+			
+			if(this.pos != null){
+				CompoundTag pos = new CompoundTag();
+				pos.putInt("x", this.pos.getX());
+				pos.putInt("y", this.pos.getY());
+				pos.putInt("z", this.pos.getZ());
+				nbt.put(KEY_POSITION, pos);
+			}
+			
+			return nbt;
+		}
+		
+		private SettingsRecord(Optional<String> mbString, Optional<BlockPos> optPos, int mode, Rotation rotation, boolean isMirrored, boolean isPlaced){
+			this(mbString.map(s -> MultiblockHandler.getByUniqueName(ResourceLocation.parse(s))).orElse(null), optPos.orElse(null), Mode.values()[mode], rotation, isMirrored, isPlaced);
+		}
+		
+		public SettingsRecord(Settings settings){
+			this(settings.multiblock, settings.pos, settings.mode, settings.rotation, settings.mirror, settings.isPlaced);
+		}
+		
+		public Settings convert(){
+			Settings settings = new Settings();
+			settings.multiblock = this.multiblock;
+			settings.pos = this.pos;
+			settings.mode = this.mode;
+			settings.rotation = this.rotation;
+			settings.mirror = this.isMirrored;
+			settings.isPlaced = this.isPlaced;
+			return settings;
 		}
 	}
 }
