@@ -9,6 +9,7 @@ import flaxbeard.immersivepetroleum.ImmersivePetroleum;
 import flaxbeard.immersivepetroleum.common.IPContent;
 import flaxbeard.immersivepetroleum.common.blocks.metal.FlarestackBlock;
 import flaxbeard.immersivepetroleum.common.blocks.metal.GasGeneratorBlock;
+import flaxbeard.immersivepetroleum.common.blocks.metal.SeismicSurveyBlock;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.CokerUnitMultiblock;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.DerrickMultiblock;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.DistillationTowerMultiblock;
@@ -349,14 +350,14 @@ public class IPBlockStates extends BlockStateProvider{
 			.texture("particle", texture)
 			.renderType("cutout");
 		
-		VariantBlockStateBuilder flarestackBuilder = getVariantBuilder(IPContent.Blocks.SEISMIC_SURVEY.get());
+		VariantBlockStateBuilder surveyBuilder = getVariantBuilder(IPContent.Blocks.SEISMIC_SURVEY.get());
 		
-		flarestackBuilder.partialState()
-			.with(FlarestackBlock.SLAVE, false)
+		surveyBuilder.partialState()
+			.with(SeismicSurveyBlock.SLAVE, false)
 			.setModels(new ConfiguredModel(flarestackModel, 0, 0, false));
 		
-		flarestackBuilder.partialState()
-			.with(FlarestackBlock.SLAVE, true)
+		surveyBuilder.partialState()
+			.with(SeismicSurveyBlock.SLAVE, true)
 			.setModels(emptyModel);
 	}
 	
