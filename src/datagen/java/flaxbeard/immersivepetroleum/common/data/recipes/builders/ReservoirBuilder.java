@@ -17,14 +17,13 @@ public class ReservoirBuilder extends IPGenericBuilder<ReservoirType>{
 	
 	/**
 	 * Creates a new ReservoirType builder instance. This is a shorthand.
-	 *
 	 * <p><code>min</code>, <code>max</code> and <code>trace</code> are Following the Format below.
 	 * <pre><code>
 	 * 1.000 = 1 Bucket
 	 * 0.001 = 1 Millibucket
 	 * </code></pre>
 	 * </p>
-	 * 
+	 *
 	 * @param name   The name of the reservoir
 	 * @param fluid  The type of fluid it holds
 	 * @param min    The minimum amount of fluid the reservoir can hold
@@ -57,16 +56,21 @@ public class ReservoirBuilder extends IPGenericBuilder<ReservoirType>{
 		this.weight = weight;
 	}
 	
+	@Override
 	protected ReservoirType makeInstance(){
 		ReservoirType type = new ReservoirType(this.name, this.fluid, this.minSize, this.maxSize, this.residual, this.equilibrium, this.weight);
-		type.setBiomes(this.bioList);
-		type.setDimensions(this.dimList);
+		
+		if(this.bioList != null)
+			type.setBiomes(this.bioList);
+		
+		if(this.dimList != null)
+			type.setDimensions(this.dimList);
+		
 		return type;
 	}
 	
 	/**
 	 * Sets maximum fluid <code>amount</code> for trace fluid to regenerate.
-	 * 
 	 * <p>Following the Format below.
 	 * <pre><code>
 	 * 1.000 = 1 Bucket
