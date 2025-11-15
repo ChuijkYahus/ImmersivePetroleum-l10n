@@ -72,7 +72,7 @@ public class ClientEventHandler{
 		ItemStack off = player.getItemInHand(InteractionHand.OFF_HAND);
 		
 		if((main != ItemStack.EMPTY && main.getItem() == IPContent.DEBUGITEM.get()) || (off != ItemStack.EMPTY && off.getItem() == IPContent.DEBUGITEM.get())){
-			if(!((DebugItem.getMode(main) == DebugItem.Modes.SEEDBASED_RESERVOIR) || (DebugItem.getMode(off) == DebugItem.Modes.SEEDBASED_RESERVOIR))){
+			if(!((DebugItem.getMode(main) == DebugItem.Mode.SEEDBASED_RESERVOIR) || (DebugItem.getMode(off) == DebugItem.Mode.SEEDBASED_RESERVOIR))){
 				return;
 			}
 			

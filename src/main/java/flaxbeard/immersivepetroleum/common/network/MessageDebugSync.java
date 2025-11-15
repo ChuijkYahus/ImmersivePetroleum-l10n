@@ -1,6 +1,8 @@
 package flaxbeard.immersivepetroleum.common.network;
 
 import flaxbeard.immersivepetroleum.common.IPContent;
+import flaxbeard.immersivepetroleum.common.IPDataComponents;
+import flaxbeard.immersivepetroleum.common.items.DebugItem;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -16,12 +18,15 @@ import javax.annotation.Nonnull;
 public class MessageDebugSync implements INetMessage{
 	public static final Type<MessageDebugSync> ID = INetMessage.createType("debug_sync");
 	
-	// TODO Should probably just use Integer since DebugItem.Mode was/is being stored as such in NBT anyway
-	public static final StreamCodec<ByteBuf, MessageDebugSync> CODEC = ByteBufCodecs.COMPOUND_TAG.map(MessageDebugSync::new, message -> message.nbt);
+	public static final StreamCodec<ByteBuf, MessageDebugSync> CODEC = ByteBufCodecs.INT.map(MessageDebugSync::new, msg -> msg.mode.id());
 	
-	private final CompoundTag nbt;
-	public MessageDebugSync(CompoundTag nbt){
-		this.nbt = nbt;
+	private final DebugItem.Mode mode;
+	public MessageDebugSync(DebugItem.Mode mode){
+		this.mode = mode;
+	}
+	
+	private MessageDebugSync(int id){
+		this.mode = DebugItem.Mode.fromId(id);
 	}
 	
 	@Nonnull
@@ -43,10 +48,7 @@ public class MessageDebugSync implements INetMessage{
 				if(main || off){
 					ItemStack target = main ? mainItem : secondItem;
 					
-					/* // TODO FIXME etc.
-					CompoundTag targetNBT = target.getOrCreateTagElement("settings");
-					targetNBT.merge(this.nbt);
-					*/
+					target.set(IPDataComponents.DEBUG_ITEM, this.mode);
 				}
 			}
 		});

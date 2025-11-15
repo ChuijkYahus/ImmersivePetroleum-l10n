@@ -1,5 +1,8 @@
 package flaxbeard.immersivepetroleum.common.items;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import flaxbeard.immersivepetroleum.ImmersivePetroleum;
 import flaxbeard.immersivepetroleum.api.reservoir.ReservoirHandler;
 import flaxbeard.immersivepetroleum.api.reservoir.ReservoirIsland;
 import flaxbeard.immersivepetroleum.api.reservoir.ReservoirType;
@@ -7,16 +10,19 @@ import flaxbeard.immersivepetroleum.api.reservoir.ReservoirType.BWList;
 import flaxbeard.immersivepetroleum.client.model.IPModel;
 import flaxbeard.immersivepetroleum.client.model.IPModels;
 import flaxbeard.immersivepetroleum.common.IPContent;
+import flaxbeard.immersivepetroleum.common.IPDataComponents;
 import flaxbeard.immersivepetroleum.common.entity.MotorboatEntity;
 import flaxbeard.immersivepetroleum.common.network.IPPacketHandler;
 import flaxbeard.immersivepetroleum.common.network.MessageDebugSync;
 import flaxbeard.immersivepetroleum.common.util.RegistryUtils;
+import io.netty.buffer.ByteBuf;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -37,7 +43,7 @@ import java.util.List;
 import java.util.Locale;
 
 public class DebugItem extends IPItemBase{
-	public enum Modes{
+	public enum Mode{
 		DISABLED("Disabled"),
 		INFO_SPEEDBOAT("Info: Speedboat"),
 		
@@ -45,13 +51,35 @@ public class DebugItem extends IPItemBase{
 		SEEDBASED_RESERVOIR_AREA_TEST("Seed-Based Reservoir: Island Testing"),
 		
 		REFRESH_ALL_IPMODELS("Refresh all IPModels"),
-		UPDATE_SHAPES("Does nothing without Debugging Enviroment"),
+		UPDATE_SHAPES("Does nothing without Debugging Environment"),
 		GENERAL_TEST("This one could be dangerous to trigger!")
 		;
 		
+		public static final Codec<Mode> CODEC = RecordCodecBuilder.create(inst -> inst.group(
+			Codec.INT.fieldOf("mode").forGetter(Mode::id)
+		).apply(inst, Mode::fromId));
+		
+		public static final StreamCodec<ByteBuf, Mode> CODEC_STREAM = ByteBufCodecs.INT.map(Mode::fromId, Mode::id);
+		
 		public final String display;
-		Modes(String display){
+		Mode(String display){
 			this.display = display;
+		}
+		
+		public int id(){
+			return ordinal();
+		}
+		
+		public static Mode fromId(int id){
+			if(id < 0 || id >= values().length)
+				return DISABLED;
+			
+			return values()[id];
+		}
+		
+		public static Mode fromStack(ItemStack stack){
+			Mode mode = stack.get(IPDataComponents.DEBUG_ITEM);
+			return mode == null ? Mode.DISABLED : mode;
 		}
 	}
 	
@@ -68,8 +96,8 @@ public class DebugItem extends IPItemBase{
 	@Override
 	public void appendHoverText(@Nonnull ItemStack stack, @Nonnull TooltipContext ctx, List<Component> tooltip, @Nonnull TooltipFlag flag){
 		tooltip.add(Component.literal("[Shift + Scroll-UP/DOWN] Change mode.").withStyle(ChatFormatting.GRAY));
-		Modes mode = getMode(stack);
-		if(mode == Modes.DISABLED){
+		Mode mode = getMode(stack);
+		if(mode == Mode.DISABLED){
 			tooltip.add(Component.literal("  Disabled.").withStyle(ChatFormatting.DARK_GRAY));
 		}else{
 			tooltip.add(Component.literal("  " + mode.display).withStyle(ChatFormatting.DARK_GRAY));
@@ -89,7 +117,7 @@ public class DebugItem extends IPItemBase{
 	@Nonnull
 	public InteractionResultHolder<ItemStack> use(Level worldIn, @Nonnull Player playerIn, @Nonnull InteractionHand handIn){
 		if(!worldIn.isClientSide){
-			Modes mode = DebugItem.getMode(playerIn.getItemInHand(handIn));
+			Mode mode = DebugItem.getMode(playerIn.getItemInHand(handIn));
 			
 			switch(mode){
 				case GENERAL_TEST -> {
@@ -189,7 +217,7 @@ public class DebugItem extends IPItemBase{
 		}
 		
 		ItemStack held = player.getItemInHand(context.getHand());
-		Modes mode = DebugItem.getMode(held);
+		Mode mode = DebugItem.getMode(held);
 		
 		BlockEntity te = context.getLevel().getBlockEntity(context.getClickedPos());
 		switch(mode){
@@ -244,7 +272,7 @@ public class DebugItem extends IPItemBase{
 	}
 	
 	public void onSpeedboatClick(MotorboatEntity speedboatEntity, Player player, ItemStack debugStack){
-		if(speedboatEntity.level().isClientSide || DebugItem.getMode(debugStack) != Modes.INFO_SPEEDBOAT){
+		if(speedboatEntity.level().isClientSide || DebugItem.getMode(debugStack) != Mode.INFO_SPEEDBOAT){
 			return;
 		}
 		
@@ -272,34 +300,14 @@ public class DebugItem extends IPItemBase{
 		player.sendSystemMessage(textOut);
 	}
 	
-	public static void setModeServer(ItemStack stack, Modes mode){
-		CompoundTag nbt = getSettings(stack);
-		nbt.putInt("mode", mode.ordinal());
+	public static void setModeClient(ItemStack stack, Mode mode){
+		stack.set(IPDataComponents.DEBUG_ITEM, mode);
+		
+		IPPacketHandler.sendToServer(new MessageDebugSync(mode));
 	}
 	
-	public static void setModeClient(ItemStack stack, Modes mode){
-		CompoundTag nbt = getSettings(stack);
-		nbt.putInt("mode", mode.ordinal());
-		IPPacketHandler.sendToServer(new MessageDebugSync(nbt));
-	}
-	
-	public static Modes getMode(ItemStack stack){
-		CompoundTag nbt = getSettings(stack);
-		if(nbt.contains("mode")){
-			int mode = nbt.getInt("mode");
-			
-			if(mode < 0 || mode >= Modes.values().length)
-				mode = 0;
-			
-			return Modes.values()[mode];
-		}
-		return Modes.DISABLED;
-	}
-	
-	public static CompoundTag getSettings(ItemStack stack){
-		// TODO FIXME etc.
-		return new CompoundTag();
-		//return stack.getOrCreateTagElement("settings");
+	public static Mode getMode(ItemStack stack){
+		return Mode.fromStack(stack);
 	}
 	
 	public static class ClientInputHandler{
@@ -313,15 +321,15 @@ public class DebugItem extends IPItemBase{
 			if(main || off){
 				ItemStack target = main ? mainItem : secondItem;
 				
-				Modes mode = DebugItem.getMode(target);
+				Mode mode = DebugItem.getMode(target);
 				int id = mode.ordinal() + (int) scrollDelta;
 				if(id < 0){
-					id = Modes.values().length - 1;
+					id = Mode.values().length - 1;
 				}
-				if(id >= Modes.values().length){
+				if(id >= Mode.values().length){
 					id = 0;
 				}
-				mode = Modes.values()[id];
+				mode = Mode.values()[id];
 				
 				DebugItem.setModeClient(target, mode);
 				player.displayClientMessage(Component.literal(mode.display), true);

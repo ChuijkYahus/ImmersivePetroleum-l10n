@@ -287,7 +287,7 @@ public class DebugRenderHandler{
 		ItemStack off = player.getItemInHand(InteractionHand.OFF_HAND);
 		
 		if((main != ItemStack.EMPTY && main.getItem() == IPContent.DEBUGITEM.get()) || (off != ItemStack.EMPTY && off.getItem() == IPContent.DEBUGITEM.get())){
-			DebugItem.Modes mode = null;
+			DebugItem.Mode mode = null;
 			if(main != ItemStack.EMPTY){
 				mode = DebugItem.getMode(main);
 			}
@@ -295,7 +295,7 @@ public class DebugRenderHandler{
 				mode = DebugItem.getMode(off);
 			}
 			
-			if(mode == DebugItem.Modes.SEEDBASED_RESERVOIR || mode == DebugItem.Modes.SEEDBASED_RESERVOIR_AREA_TEST){
+			if(mode == DebugItem.Mode.SEEDBASED_RESERVOIR || mode == DebugItem.Mode.SEEDBASED_RESERVOIR_AREA_TEST){
 				PoseStack matrix = event.getPoseStack();
 				Level world = player.getCommandSenderWorld();
 				BlockPos playerPos = player.blockPosition();

@@ -311,7 +311,7 @@ public class ClientProxy extends CommonProxy{
 	
 	/** Creates a page for every single currently registered reservoir */
 	private static void createReservoirPages(StringBuilder contentBuilder, ArrayList<SpecialElementData> itemList){
-		final ReservoirType[] reservoirs = ReservoirType.map.values().toArray(new ReservoirType[0]);
+		ReservoirType[] reservoirs = ReservoirType.map.values().stream().map(RecipeHolder::value).toArray(ReservoirType[]::new);
 		
 		for(int i = 0;i < reservoirs.length;i++){
 			ReservoirType reservoir = reservoirs[i];
