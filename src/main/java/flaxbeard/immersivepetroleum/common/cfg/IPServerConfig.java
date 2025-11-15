@@ -138,7 +138,7 @@ public class IPServerConfig{
 					.comment("List of Motorboat fuels. Format: fluid_name, mb_used_per_tick")
 					.defineList("boat_fuels",
 							List.of("immersivepetroleum:gasoline, 1",
-									"immersivepetroleum:naphtha, 2",
+							"immersivepetroleum:naphtha, 2",
 									"immersivepetroleum:benzol, 2"), o -> true);
 			
 			autounlock_recipes = builder
@@ -154,7 +154,7 @@ public class IPServerConfig{
 	}
 	
 	@SubscribeEvent
-	public static void onConfigReload(ModConfigEvent ev){
+	public static void onConfigReload(ModConfigEvent.Reloading ev){
 		FuelHandler.onConfigReload(ev);
 	}
 }
