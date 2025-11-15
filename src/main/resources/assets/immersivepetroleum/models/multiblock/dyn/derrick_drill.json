@@ -1,5 +1,5 @@
 {
-	"loader": "forge:obj",
+	"loader": "neoforge:obj",
 	"render_type": "cutout",
 	"model": "immersivepetroleum:models/multiblock/obj/derrick_drill.obj",
     "textures": {

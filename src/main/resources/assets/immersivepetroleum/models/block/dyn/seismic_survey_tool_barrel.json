@@ -1,5 +1,5 @@
 {
-	"loader": "forge:obj",
+	"loader": "neoforge:obj",
 	"model": "immersivepetroleum:models/block/obj/seismic_survey_tool_barrel.obj",
     "textures": {
       "texture": "immersivepetroleum:block/obj/seismic_survey_tool",
