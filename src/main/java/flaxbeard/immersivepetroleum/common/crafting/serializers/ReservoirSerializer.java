@@ -31,7 +31,7 @@ public class ReservoirSerializer extends IERecipeSerializer<ReservoirType>{
 			Fluid fluid = RegistryUtils.getFluidFromRegistryName(f);
 			
 			if(fluid == null)
-				throw new RuntimeException(f+" is an invalid/unknown fluid");
+				throw new RuntimeException(f + " is an invalid/unknown fluid");
 			
 			ReservoirType type = new ReservoirType(name, fluid, min, max, trace, equilibrium, weight);
 			

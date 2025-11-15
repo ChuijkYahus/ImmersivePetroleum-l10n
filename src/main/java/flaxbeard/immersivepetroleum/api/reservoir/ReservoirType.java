@@ -24,15 +24,7 @@ import net.minecraft.world.level.material.Fluid;
 import net.neoforged.neoforge.common.util.Lazy;
 
 import javax.annotation.Nonnull;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class ReservoirType extends IESerializableRecipe{
@@ -94,7 +86,7 @@ public class ReservoirType extends IESerializableRecipe{
 	}
 	
 	public ReservoirType(CompoundTag nbt){
-		super(EMPTY, IPRecipeTypes.RESERVOIR);//, ResourceLocation.parse(nbt.getString("id")));
+		super(EMPTY, IPRecipeTypes.RESERVOIR);
 		
 		this.name = nbt.getString("name");
 		
@@ -155,7 +147,9 @@ public class ReservoirType extends IESerializableRecipe{
 		setBiomes(new BWList(new HashSet<>(names), blacklist));
 	}
 	
-	public void setBiomes(BWList list){
+	public void setBiomes(@Nonnull BWList list){
+		Objects.requireNonNull(list);
+		
 		this.biomes = list;
 	}
 	
@@ -175,7 +169,9 @@ public class ReservoirType extends IESerializableRecipe{
 		setDimensions(new BWList(new HashSet<>(names), blacklist));
 	}
 	
-	public void setDimensions(BWList list){
+	public void setDimensions(@Nonnull BWList list){
+		Objects.requireNonNull(list);
+		
 		this.dimensions = list;
 	}
 	
@@ -197,7 +193,7 @@ public class ReservoirType extends IESerializableRecipe{
 	
 	@Override
 	@Nonnull
-	public ItemStack getResultItem(HolderLookup.Provider provider){
+	public ItemStack getResultItem(@Nonnull HolderLookup.Provider provider){
 		return ItemStack.EMPTY;
 	}
 	
