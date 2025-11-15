@@ -108,7 +108,7 @@
     }
   },
   "flip_v": true,
-  "loader": "forge:obj",
+  "loader": "neoforge:obj",
   "model": "immersivepetroleum:models/multiblock/obj/hydrotreater.obj",
   "textures": {
     "texture": "immersivepetroleum:multiblock/hydrotreater"

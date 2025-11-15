@@ -22,7 +22,7 @@ import net.minecraft.world.level.material.Fluid;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.EventBusSubscriber.Bus;
-import net.neoforged.neoforge.event.server.ServerStartedEvent;
+import net.neoforged.neoforge.event.server.ServerStartingEvent;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -30,16 +30,10 @@ import javax.annotation.Nullable;
 @EventBusSubscriber(modid = ImmersivePetroleum.MODID, bus = Bus.GAME)
 public class RegistryUtils{
 	private static Registry<Biome> BIOME_REGISTRY;
-	private static Registry<Fluid> FLUID_REGISTRY;
 	
 	@SubscribeEvent
-	public static void serverStart(ServerStartedEvent event){
-		/*
-			Yes, I know. These are likely not the right way to do this.
-			But for the time being this should be enough.
-		 */
+	public static void serverStart(ServerStartingEvent event){
 		BIOME_REGISTRY = event.getServer().registryAccess().registryOrThrow(Registries.BIOME);
-		FLUID_REGISTRY = event.getServer().registryAccess().registryOrThrow(Registries.FLUID);
 	}
 	
 	@Nonnull
@@ -59,7 +53,9 @@ public class RegistryUtils{
 	
 	@Nullable
 	public static Fluid getFluidFromRegistryName(ResourceLocation rl){
-		Holder<Fluid> holder = FLUID_REGISTRY.getHolder(ResourceKey.create(Registries.FLUID, rl)).orElse(null);
+		ResourceKey<Fluid> resourceKey = ResourceKey.create(Registries.FLUID, rl);
+		
+		Holder<Fluid> holder = BuiltInRegistries.FLUID.getHolder(resourceKey).orElse(null);
 		return holder != null ? holder.value() : null;
 	}
 	
@@ -70,7 +66,9 @@ public class RegistryUtils{
 	
 	@Nullable
 	public static Biome getBiomeFromRegistryName(ResourceLocation rl){
-		Holder<Biome> holder = BIOME_REGISTRY.getHolder(ResourceKey.create(Registries.BIOME, rl)).orElse(null);
+		ResourceKey<Biome> resourceKey = ResourceKey.create(Registries.BIOME, rl);
+		
+		Holder<Biome> holder = BIOME_REGISTRY.getHolder(resourceKey).orElse(null);
 		return holder != null ? holder.value() : null;
 	}
 	

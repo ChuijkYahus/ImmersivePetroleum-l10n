@@ -106,6 +106,7 @@ public class IPRegisters{
 		FLUID_TYPE.register(eventBus);
 		CREATIVE_TABS.register(eventBus);
 		FEATURE_REGISTER.register(eventBus);
+		DATA_COMPONENT_REGISTER.register(eventBus);
 		
 		MOD_BUS_CALLBACKS.forEach(e -> e.accept(eventBus));
 	}

@@ -1,0 +1,17 @@
+{
+  "type": "immersivepetroleum:hydrotreater",
+  "energy": 300,
+  "input": {
+    "amount": 1500,
+    "tag": "neoforge:naphtha"
+  },
+  "result": {
+    "amount": 2000,
+    "id": "immersivepetroleum:petroleum_gas"
+  },
+  "secondary_input": {
+    "amount": 1500,
+    "tag": "neoforge:naphtha"
+  },
+  "time": 192000
+}

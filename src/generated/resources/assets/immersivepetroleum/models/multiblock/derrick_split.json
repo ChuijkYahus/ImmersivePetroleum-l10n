@@ -5,7 +5,7 @@
     "parent": "minecraft:block/block",
     "automatic_culling": false,
     "flip_v": true,
-    "loader": "forge:obj",
+    "loader": "neoforge:obj",
     "model": "immersivepetroleum:models/multiblock/obj/derrick.obj",
     "render_type": "minecraft:cutout",
     "textures": {
@@ -14,10 +14,6 @@
     }
   },
   "loader": "immersiveengineering:basic_split",
-  "textures": {
-    "particle": "immersivepetroleum:multiblock/derrick",
-    "texture": "immersivepetroleum:multiblock/derrick"
-  },
   "split_parts": [
     [
       -1,

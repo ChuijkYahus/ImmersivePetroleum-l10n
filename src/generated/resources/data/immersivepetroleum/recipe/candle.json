@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "s": {
+      "tag": "c:strings"
+    },
+    "w": {
+      "tag": "neoforge:wax/paraffin"
+    }
+  },
+  "pattern": [
+    "s",
+    "w"
+  ],
+  "result": {
+    "count": 1,
+    "id": "minecraft:candle"
+  }
+}

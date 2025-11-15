@@ -1,0 +1,19 @@
+{
+  "type": "immersivepetroleum:distillation",
+  "energy": 1024,
+  "input": {
+    "amount": 10,
+    "tag": "neoforge:kerosene"
+  },
+  "results": [
+    {
+      "amount": 5,
+      "id": "immersivepetroleum:benzol"
+    },
+    {
+      "amount": 5,
+      "id": "immersivepetroleum:diesel_sulfur"
+    }
+  ],
+  "time": 1
+}

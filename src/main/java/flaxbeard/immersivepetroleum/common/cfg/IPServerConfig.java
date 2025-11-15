@@ -6,6 +6,7 @@ import flaxbeard.immersivepetroleum.ImmersivePetroleum;
 import flaxbeard.immersivepetroleum.api.energy.FuelHandler;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.common.EventBusSubscriber.Bus;
 import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.neoforged.neoforge.common.ModConfigSpec.BooleanValue;
@@ -14,7 +15,7 @@ import net.neoforged.neoforge.common.ModConfigSpec.ConfigValue;
 import java.lang.reflect.Field;
 import java.util.List;
 
-@EventBusSubscriber(modid = ImmersivePetroleum.MODID, bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = ImmersivePetroleum.MODID, bus = Bus.MOD)
 public class IPServerConfig{
 	public static final Extraction EXTRACTION;
 	public static final Refining REFINING;

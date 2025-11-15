@@ -1,7 +1,7 @@
 {
   "parent": "minecraft:block/block",
   "flip_v": true,
-  "loader": "forge:obj",
+  "loader": "neoforge:obj",
   "model": "immersivepetroleum:models/block/obj/autolubricator.obj",
   "render_type": "minecraft:translucent",
   "textures": {

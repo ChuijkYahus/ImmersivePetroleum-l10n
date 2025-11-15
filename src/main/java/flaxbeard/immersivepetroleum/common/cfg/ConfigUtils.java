@@ -49,7 +49,7 @@ public class ConfigUtils{
 					throw new IllegalArgumentException("Invalid value for fuel RF/tick for generator fuel " + (i + 1), e);
 				}
 				
-				if(RegistryUtils.getFluidFromRegistryName(fluidRL) != null){
+				if(RegistryUtils.getFluidFromRegistryName(fluidRL) == null){
 					throw new RuntimeException("\"" + fluidRL + "\" did not resolve into a valid fluid. (" + fluidRL + ")");
 				}
 				
@@ -88,7 +88,7 @@ public class ConfigUtils{
 					throw new IllegalArgumentException("Invalid value for fuel mB/tick for boat fuel " + (i + 1), e);
 				}
 				
-				if(RegistryUtils.getFluidFromRegistryName(fluidRL) != null){
+				if(RegistryUtils.getFluidFromRegistryName(fluidRL) == null){
 					throw new RuntimeException("\"" + fluidRL + "\" did not resolve into a valid fluid. (" + fluidRL + ")");
 				}
 				

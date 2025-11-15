@@ -5,7 +5,7 @@
     "parent": "minecraft:block/block",
     "automatic_culling": false,
     "flip_v": true,
-    "loader": "forge:obj",
+    "loader": "neoforge:obj",
     "model": "immersivepetroleum:models/multiblock/obj/hydrotreater_mirrored.obj",
     "render_type": "minecraft:cutout",
     "textures": {

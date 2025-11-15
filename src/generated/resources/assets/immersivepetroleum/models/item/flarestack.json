@@ -103,7 +103,7 @@
     }
   },
   "flip_v": true,
-  "loader": "forge:obj",
+  "loader": "neoforge:obj",
   "model": "immersivepetroleum:models/block/obj/flarestack.obj",
   "textures": {
     "texture": "immersivepetroleum:block/obj/flarestack"

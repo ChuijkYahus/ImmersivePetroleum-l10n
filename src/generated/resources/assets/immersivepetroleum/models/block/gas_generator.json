@@ -1,6 +1,6 @@
 {
   "flip_v": true,
-  "loader": "forge:obj",
+  "loader": "neoforge:obj",
   "model": "immersivepetroleum:models/block/obj/generator.obj",
   "render_type": "minecraft:cutout",
   "textures": {

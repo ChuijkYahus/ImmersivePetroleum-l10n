@@ -93,7 +93,7 @@
     }
   },
   "flip_v": true,
-  "loader": "forge:obj",
+  "loader": "neoforge:obj",
   "model": "immersivepetroleum:models/block/obj/seismic_survey_tool.obj",
   "textures": {
     "texture": "immersivepetroleum:block/obj/seismic_survey_tool"

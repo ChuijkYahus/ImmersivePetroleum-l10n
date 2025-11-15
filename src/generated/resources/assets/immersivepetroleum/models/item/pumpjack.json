@@ -123,7 +123,7 @@
     }
   },
   "flip_v": true,
-  "loader": "forge:obj",
+  "loader": "neoforge:obj",
   "model": "immersivepetroleum:models/item/obj/pumpjack_itemmockup.obj",
   "textures": {
     "texture_armature": "immersivepetroleum:models/pumpjack_armature",

@@ -113,7 +113,7 @@
     }
   },
   "flip_v": true,
-  "loader": "forge:obj",
+  "loader": "neoforge:obj",
   "model": "immersivepetroleum:models/multiblock/obj/cokerunit.obj",
   "textures": {
     "texture": "immersivepetroleum:multiblock/cokerunit"

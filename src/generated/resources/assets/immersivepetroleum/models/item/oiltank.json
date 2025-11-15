@@ -93,7 +93,7 @@
     }
   },
   "flip_v": true,
-  "loader": "forge:obj",
+  "loader": "neoforge:obj",
   "model": "immersivepetroleum:models/multiblock/obj/oiltank.obj",
   "textures": {
     "texture": "immersivepetroleum:multiblock/oiltank"

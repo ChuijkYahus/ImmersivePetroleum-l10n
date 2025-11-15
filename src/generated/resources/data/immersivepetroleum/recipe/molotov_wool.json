@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "M": {
+      "item": "immersivepetroleum:gasoline_bottle"
+    },
+    "W": {
+      "tag": "minecraft:wool"
+    }
+  },
+  "pattern": [
+    "W",
+    "M"
+  ],
+  "result": {
+    "count": 1,
+    "id": "immersivepetroleum:molotov"
+  }
+}
