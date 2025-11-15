@@ -281,7 +281,7 @@ public class IPBlockStates extends BlockStateProvider{
 		try{
 			final Resource resource = this.exFileHelper.getResource(shortLoc, PackType.SERVER_DATA, "", prefix);
 			try(final InputStream input = resource.open()){
-				final CompoundTag nbt = NbtIo.readCompressed(input, NbtAccounter.create(65536));
+				final CompoundTag nbt = NbtIo.readCompressed(input, NbtAccounter.unlimitedHeap());
 				final StructureTemplate template = new StructureTemplate();
 				template.load(BuiltInRegistries.BLOCK.asLookup(), nbt);
 				TemplateMultiblock.SYNCED_CLIENT_TEMPLATES.put(name, template);
