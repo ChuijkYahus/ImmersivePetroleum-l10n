@@ -69,7 +69,7 @@ public class ReservoirHandler{
 					return;
 				
 				
-				ReservoirType reservoir = null;
+				RecipeHolder<ReservoirType> reservoir = null;
 				int totalWeight = getTotalWeight(dimensionRL, biomeRL);
 				if(totalWeight > 0){
 					int weight = Math.abs(randomSource.nextInt() % totalWeight);
@@ -79,7 +79,7 @@ public class ReservoirHandler{
 						if(res.getDimensions().valid(dimensionRL) && res.getBiomes().valid(biomeRL)){
 							weight -= res.weight;
 							if(weight < 0){
-								reservoir = res;
+								reservoir = holder;
 								break;
 							}
 						}
@@ -91,7 +91,7 @@ public class ReservoirHandler{
 						List<ColumnPos> poly = optimizeIsland(world, new ArrayList<>(pol));
 						
 						if(!poly.isEmpty()){
-							int amount = (int) Mth.lerp(randomSource.nextFloat(), reservoir.minSize, reservoir.maxSize);
+							int amount = (int) Mth.lerp(randomSource.nextFloat(), reservoir.value().minSize, reservoir.value().maxSize);
 							
 							ReservoirIsland island = new ReservoirIsland(poly, reservoir, amount);
 							storage.addIsland(dimensionKey, island);

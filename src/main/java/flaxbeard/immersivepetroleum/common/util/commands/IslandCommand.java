@@ -150,7 +150,7 @@ public class IslandCommand{
 		
 		ReservoirIsland finalClosestIsland = closestIsland;
 		ColumnPos finalP = p;
-		source.sendSuccess(() -> Component.translatable("chat.immersivepetroleum.command.reservoir.locate", finalClosestIsland.getType().name, ComponentUtils.wrapInSquareBrackets(Component.literal(finalP.x() + " " + finalP.z())).withStyle((s) -> {
+		source.sendSuccess(() -> Component.translatable("chat.immersivepetroleum.command.reservoir.locate", finalClosestIsland.getType().value().name, ComponentUtils.wrapInSquareBrackets(Component.literal(finalP.x() + " " + finalP.z())).withStyle((s) -> {
 			return s.withColor(ChatFormatting.GREEN).withItalic(true).withClickEvent(clickEvent).withHoverEvent(hoverEvent);
 		})), true);
 		
@@ -191,12 +191,10 @@ public class IslandCommand{
 	
 	private static int setReservoirType(CommandContext<CommandSourceStack> context, @Nonnull ReservoirIsland island){
 		String name = context.getArgument("name", String.class);
-		ReservoirType reservoir = null;
+		RecipeHolder<ReservoirType> reservoir = null;
 		for(RecipeHolder<ReservoirType> holder: ReservoirType.map.values()){
-			ReservoirType res = holder.value();
-			
-			if(res.name.equalsIgnoreCase(name))
-				reservoir = res;
+			if(holder.value().name.equalsIgnoreCase(name))
+				reservoir = holder;
 		}
 		
 		if(reservoir == null){
@@ -207,7 +205,7 @@ public class IslandCommand{
 		island.setReservoirType(reservoir);
 		island.setDirty();
 		
-		CommandUtils.sendTranslated(context.getSource(), "chat.immersivepetroleum.command.reservoir.set.type.success", reservoir.name);
+		CommandUtils.sendTranslated(context.getSource(), "chat.immersivepetroleum.command.reservoir.set.type.success", reservoir.value().name);
 		return Command.SINGLE_SUCCESS;
 	}
 	

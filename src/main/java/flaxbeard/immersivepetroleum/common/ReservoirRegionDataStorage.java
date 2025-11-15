@@ -51,7 +51,7 @@ public class ReservoirRegionDataStorage extends SavedData{
 			log.debug("Creating ReservoirRegionDataStorage instance.");
 			return new ReservoirRegionDataStorage(dimData);
 		}, (t, p) -> {
-			log.debug("Creating and Loading Data ReservoirRegionDataStorage instance.");
+			log.debug("Creating and Loading Data for ReservoirRegionDataStorage instance.");
 			return new ReservoirRegionDataStorage(dimData, t, p);
 		}), DATA_NAME);
 	}
@@ -266,7 +266,7 @@ public class ReservoirRegionDataStorage extends SavedData{
 			}
 			nbt.put("reservoirs", reservoirs);
 			
-			log.debug("{} Saved.", this);
+			log.debug("{} Saved with {} Reservoirs.", this, this.reservoirlist.size());
 			return nbt;
 		}
 		
@@ -288,7 +288,7 @@ public class ReservoirRegionDataStorage extends SavedData{
 						this.reservoirlist.putAll(dimType, list);
 					}
 				}
-				log.debug("{} Loaded.", this);
+				log.debug("{} Loaded with {} Reservoirs.", this, this.reservoirlist.size());
 			}
 		}
 		
