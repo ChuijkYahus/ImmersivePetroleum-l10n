@@ -53,7 +53,7 @@ public class GuiReactiveList<E> extends Button{
 	private int maxOffset;
 	
 	private int targetEntry = -1;
-	private int hoverTimer = 0;
+	private float hoverTimer = 0;
 	
 	public GuiReactiveList(int x, int y, int w, int h, Consumer<GuiReactiveList<E>> handler, Supplier<List<E>> entries, Function<E, String> toStringFunction){
 		super(x, y, w, h, Component.empty(), s -> {
@@ -139,7 +139,7 @@ public class GuiReactiveList<E> extends Button{
 					targetEntry = j;
 					hoverTimer = 0;
 				}else
-					hoverTimer++;
+					hoverTimer += 0.5F * partialTicks;
 				col = this.textColorHovered;
 			}
 			if(j > entries.size() - 1)
@@ -149,7 +149,7 @@ public class GuiReactiveList<E> extends Button{
 			if(overLength > 0)//String is too long
 			{
 				if(selectionHover && hoverTimer > 20){
-					int textOffset = (hoverTimer / 10) % (s.length());
+					int textOffset = (int) ((hoverTimer / 10) % (s.length()));
 					s = s.substring(textOffset) + " " + s.substring(0, textOffset);
 				}
 				s = fr.plainSubstrByWidth(s, strWidth);
