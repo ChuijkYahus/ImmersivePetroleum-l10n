@@ -82,6 +82,7 @@ public class IPRenderTypes extends RenderStateShard{
 				RenderType.CompositeState.builder()
 					.setShaderState(PROJECTION_SHADER)
 					.setTextureState(BLOCK_SHEET_MIPPED)
+					.setLightmapState(LIGHTMAP)
 					.setTransparencyState(TRANSLUCENT_TRANSPARENCY)
 					.setOutputState(TRANSLUCENT_TARGET)
 					.setDepthTestState(DEPTH_ALWAYS)

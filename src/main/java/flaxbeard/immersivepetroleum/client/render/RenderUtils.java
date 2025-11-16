@@ -7,10 +7,11 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import org.joml.Matrix4f;
 
 public class RenderUtils{
-	
-	static final ByteBufferBuilder BUFFER = new ByteBufferBuilder(0x10000);
-	
+	static final int BYTE_BUFFER_SIZE = 0x100000;
+	static final ByteBufferBuilder BUFFER = new ByteBufferBuilder(BYTE_BUFFER_SIZE);
 	public static MultiBufferSource.BufferSource immediate(){
+		// This should probably be done individually
+		// Like I have done for the Projector
 		return MultiBufferSource.immediate(BUFFER);
 	}
 	

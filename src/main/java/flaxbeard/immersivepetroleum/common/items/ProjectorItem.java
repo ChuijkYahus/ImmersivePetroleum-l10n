@@ -1,30 +1,29 @@
 package flaxbeard.immersivepetroleum.common.items;
 
-import blusunrize.immersiveengineering.api.multiblocks.MultiblockHandler.IMultiblock;
 import blusunrize.immersiveengineering.api.tool.upgrade.IUpgradeableTool;
 import blusunrize.immersiveengineering.api.tool.upgrade.UpgradeData;
+import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import flaxbeard.immersivepetroleum.ImmersivePetroleum;
 import flaxbeard.immersivepetroleum.api.event.ProjectorEvent;
 import flaxbeard.immersivepetroleum.client.IPShaders;
 import flaxbeard.immersivepetroleum.client.gui.ProjectorScreen;
 import flaxbeard.immersivepetroleum.client.render.IPRenderTypes;
-import flaxbeard.immersivepetroleum.client.render.RenderUtils;
 import flaxbeard.immersivepetroleum.client.utils.MCUtil;
 import flaxbeard.immersivepetroleum.common.IPContent;
 import flaxbeard.immersivepetroleum.common.IPContent.Items;
 import flaxbeard.immersivepetroleum.common.IPDataComponents;
 import flaxbeard.immersivepetroleum.common.IPKeyBinds;
-import flaxbeard.immersivepetroleum.common.util.Utils;
 import flaxbeard.immersivepetroleum.common.util.projector.MultiblockProjection;
 import flaxbeard.immersivepetroleum.common.util.projector.Settings;
 import flaxbeard.immersivepetroleum.common.util.projector.Settings.Mode;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.color.block.BlockColors;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.block.ModelBlockRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -34,7 +33,6 @@ import net.minecraft.core.BlockPos.MutableBlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.Vec3i;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.dedicated.DedicatedServer;
@@ -78,9 +76,7 @@ import org.lwjgl.glfw.GLFW;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiPredicate;
 import java.util.function.Supplier;
@@ -358,6 +354,18 @@ public class ProjectorItem extends IPItemBase implements IUpgradeableTool{
 	@OnlyIn(Dist.CLIENT)
 	@EventBusSubscriber(modid = ImmersivePetroleum.MODID, value = Dist.CLIENT)
 	public static class ClientRenderHandler{
+		static final int BYTE_BUFFER_SIZE = 0x100000;
+		static final ByteBufferBuilder BUFFER_MAIN = new ByteBufferBuilder(BYTE_BUFFER_SIZE);
+		static final ByteBufferBuilder BUFFER_PHANTOM = new ByteBufferBuilder(BYTE_BUFFER_SIZE);
+		
+		public static MultiBufferSource.BufferSource bufferSource_MAIN(){
+			return MultiBufferSource.immediate(BUFFER_MAIN);
+		}
+		
+		public static MultiBufferSource.BufferSource bufferSource_PHANTOM(){
+			return MultiBufferSource.immediate(BUFFER_PHANTOM);
+		}
+		
 		@SubscribeEvent
 		public static void renderLevelStage(RenderLevelStageEvent event){
 			if(event.getStage() == RenderLevelStageEvent.Stage.AFTER_TRIPWIRE_BLOCKS){
@@ -377,11 +385,11 @@ public class ProjectorItem extends IPItemBase implements IUpgradeableTool{
 					matrix.translate(-renderView.x, -renderView.y, -renderView.z);
 					
 					ItemStack secondItem = mc.player.getOffhandItem();
-					boolean off = secondItem.is(Items.PROJECTOR.get()) && Utils.hasKey(secondItem, "settings", Tag.TAG_COMPOUND);
+					boolean off = secondItem.is(Items.PROJECTOR.get()) && secondItem.has(IPDataComponents.PROJECTOR_SETTINGS);
 					
 					for(int i = 0;i <= 10;i++){
 						ItemStack stack = (i == 10 ? secondItem : mc.player.getInventory().getItem(i));
-						if(stack.is(Items.PROJECTOR.get()) && Utils.hasKey(stack, "settings", Tag.TAG_COMPOUND)){
+						if(stack.is(Items.PROJECTOR.get()) && stack.has(IPDataComponents.PROJECTOR_SETTINGS)){
 							Settings settings = getSettings(stack);
 							matrix.pushPose();
 							{
@@ -497,7 +505,7 @@ public class ProjectorItem extends IPItemBase implements IUpgradeableTool{
 					return 0;
 				});
 				
-				MultiBufferSource.BufferSource mainBuffer = RenderUtils.immediate();
+				MultiBufferSource.BufferSource mainBuffer = bufferSource_MAIN();
 				
 				ItemStack heldStack = player.getMainHandItem();
 				for(Pair<RenderLayer, MultiblockProjection.Info> pair:toRender){
@@ -550,7 +558,7 @@ public class ProjectorItem extends IPItemBase implements IUpgradeableTool{
 					matrix.popPose();
 					
 					// Debugging Stuff
-					if(!player.getOffhandItem().isEmpty() && player.getOffhandItem().getItem() == IPContent.DEBUGITEM.get()){
+					if(!player.getOffhandItem().isEmpty() && player.getOffhandItem().is(IPContent.DEBUGITEM.get())){
 						matrix.pushPose();
 						{
 							// Min (Red)
@@ -582,7 +590,6 @@ public class ProjectorItem extends IPItemBase implements IUpgradeableTool{
 			}
 		}
 		
-		private static final Tesselator PHANTOM_TESSELATOR = new Tesselator();
 		private static void renderPhantom(PoseStack matrix, Level realWorld, MultiblockProjection.Info rInfo, boolean mirror, float flicker, float alpha, float partialTicks){
 			BlockRenderDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();
 			ModelBlockRenderer blockRenderer = dispatcher.getModelRenderer();
@@ -591,7 +598,7 @@ public class ProjectorItem extends IPItemBase implements IUpgradeableTool{
 			// Centers the preview block
 			matrix.translate(rInfo.tPos.getX(), rInfo.tPos.getY(), rInfo.tPos.getZ());
 			
-			MultiBufferSource.BufferSource buffer = RenderUtils.immediate();
+			MultiBufferSource.BufferSource buffer = bufferSource_PHANTOM();
 			
 			BlockState state = rInfo.getModifiedState(realWorld, rInfo.tPos);
 			
@@ -620,14 +627,14 @@ public class ProjectorItem extends IPItemBase implements IUpgradeableTool{
 						
 						IPShaders.projNoise(flicker * alpha, MCUtil.getPlayer().tickCount + partialTicks);
 						
-						VertexConsumer vc = buffer.getBuffer(IPRenderTypes.PROJECTION);
-						//vc = buffer.getBuffer(RenderType.translucent());
-						blockRenderer.renderModel(matrix.last(), vc, state, ibakedmodel, red, green, blue, 0xF000F0, OverlayTexture.NO_OVERLAY, modelData, null);
+						RenderType renderType = IPRenderTypes.PROJECTION;
+						VertexConsumer vc = buffer.getBuffer(renderType);
+						blockRenderer.renderModel(matrix.last(), vc, state, ibakedmodel, red, green, blue, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, modelData, renderType);
 					}
 					case ENTITYBLOCK_ANIMATED -> {
 						ItemStack stack = new ItemStack(state.getBlock());
 						
-						MCUtil.getItemRenderer().renderStatic(stack, ItemDisplayContext.NONE, 0xF000F0, OverlayTexture.NO_OVERLAY, matrix, buffer, realWorld, 0);
+						MCUtil.getItemRenderer().renderStatic(stack, ItemDisplayContext.NONE, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, matrix, buffer, realWorld, 0);
 					}
 					default -> {}
 				}
@@ -710,8 +717,8 @@ public class ProjectorItem extends IPItemBase implements IUpgradeableTool{
 			ItemStack mainItem = player.getMainHandItem();
 			ItemStack secondItem = player.getOffhandItem();
 			
-			boolean main = mainItem.is(Items.PROJECTOR.get()) && Utils.hasKey(mainItem, "settings", Tag.TAG_COMPOUND);
-			boolean off = secondItem.is(Items.PROJECTOR.get()) && Utils.hasKey(secondItem, "settings", Tag.TAG_COMPOUND);
+			boolean main = mainItem.is(Items.PROJECTOR.get()) && mainItem.has(IPDataComponents.PROJECTOR_SETTINGS);
+			boolean off = secondItem.is(Items.PROJECTOR.get()) && secondItem.has(IPDataComponents.PROJECTOR_SETTINGS);
 			
 			if(main || off){
 				ItemStack target = main ? mainItem : secondItem;
@@ -739,8 +746,8 @@ public class ProjectorItem extends IPItemBase implements IUpgradeableTool{
 			ItemStack mainItem = player.getMainHandItem();
 			ItemStack secondItem = player.getOffhandItem();
 			
-			boolean main = mainItem.is(Items.PROJECTOR.get()) && Utils.hasKey(mainItem, "settings", Tag.TAG_COMPOUND);
-			boolean off = secondItem.is(Items.PROJECTOR.get()) && Utils.hasKey(mainItem, "settings", Tag.TAG_COMPOUND);
+			boolean main = mainItem.is(Items.PROJECTOR.get()) && mainItem.has(IPDataComponents.PROJECTOR_SETTINGS);
+			boolean off = secondItem.is(Items.PROJECTOR.get()) && secondItem.has(IPDataComponents.PROJECTOR_SETTINGS);
 			ItemStack target = main ? mainItem : secondItem;
 			
 			if(main || off){

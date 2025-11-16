@@ -36,7 +36,7 @@ public class IPShaders{
 			shader_line = s;
 		});
 		
-		event.registerShader(new ShaderInstance(event.getResourceProvider(), ResourceUtils.ip("rendertype_projection"), DefaultVertexFormat.POSITION_TEX_COLOR), s -> {
+		event.registerShader(new ShaderInstance(event.getResourceProvider(), ResourceUtils.ip("rendertype_projection"), DefaultVertexFormat.BLOCK), s -> {
 			ImmersivePetroleum.log.debug("rendertype_projection shader loaded.");
 			shader_projection = s;
 			
