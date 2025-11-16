@@ -8,17 +8,10 @@ import org.joml.Matrix4f;
 
 public class RenderUtils{
 	
-	/*
-		Both "immediate" methods may not be a good idea.
-		But for now, this is only a tool to make the red go away.
-	 */
+	static final ByteBufferBuilder BUFFER = new ByteBufferBuilder(0x10000);
 	
 	public static MultiBufferSource.BufferSource immediate(){
-		return immediate(0x4000);
-	}
-	
-	public static MultiBufferSource.BufferSource immediate(int bufferCapacity){
-		return MultiBufferSource.immediate(new ByteBufferBuilder(bufferCapacity));
+		return MultiBufferSource.immediate(BUFFER);
 	}
 	
 	public static void drawColouredRect(GuiGraphics graphics, int x, int y, int w, int h){
