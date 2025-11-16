@@ -1,6 +1,7 @@
 package flaxbeard.immersivepetroleum.client.render;
 
 import blusunrize.immersiveengineering.api.ApiUtils;
+import blusunrize.immersiveengineering.api.multiblocks.blocks.env.IMultiblockBEHelperMaster;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.registry.MultiblockBlockEntityMaster;
 import blusunrize.immersiveengineering.client.render.tile.IEBlockEntityRenderer;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -14,6 +15,8 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.resources.model.ModelResourceLocation;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.client.model.data.ModelData;
 
 import javax.annotation.Nonnull;
@@ -25,16 +28,26 @@ public class DerrickRenderer extends IEBlockEntityRenderer<MultiblockBlockEntity
 	public static final ModelResourceLocation PIPE_TOP = ResourceUtils.ipModel("multiblock/dyn/derrick_pipe_top");
 	
 	@Override
-	public boolean shouldRenderOffScreen(@Nonnull MultiblockBlockEntityMaster<DerrickLogic.State> te){
-		return true;
+	public int getViewDistance(){
+		return 512;
+	}
+	
+	@Nonnull
+	@Override
+	public AABB getRenderBoundingBox(MultiblockBlockEntityMaster<DerrickLogic.State> blockEntity){
+		IMultiblockBEHelperMaster<DerrickLogic.State> helper = blockEntity.getHelper();
+		if(!helper.getPositionInMB().equals(helper.getMultiblock().masterPosInMB()))
+			return super.getRenderBoundingBox(blockEntity);
+		
+		BlockPos pos = blockEntity.getBlockPos();
+		return new AABB(pos.getX() - 1, pos.getY(), pos.getZ() - 1, pos.getX() + 1, pos.getY() + 8, pos.getZ() + 1);
 	}
 	
 	@SuppressWarnings("deprecation")
 	@Override
 	public void render(MultiblockBlockEntityMaster<DerrickLogic.State> te, float partialTicks, @Nonnull PoseStack matrix, @Nonnull MultiBufferSource bufferIn, int combinedLightIn, int combinedOverlayIn){
-		if(te.isRemoved() || !te.getLevel().hasChunkAt(te.getBlockPos())){
+		if(te.isRemoved() || te.getLevel() == null || !te.getLevel().hasChunkAt(te.getBlockPos()))
 			return;
-		}
 		
 		matrix.pushPose();
 		{
