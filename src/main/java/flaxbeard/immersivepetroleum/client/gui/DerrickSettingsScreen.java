@@ -24,6 +24,7 @@ import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 public class DerrickSettingsScreen extends Screen{
 	static final ResourceLocation GUI_TEXTURE = ResourceUtils.ip("textures/gui/derrick_settings.png");
@@ -42,49 +43,52 @@ public class DerrickSettingsScreen extends Screen{
 	
 	@Override
 	protected void init(){
-		this.width = this.minecraft.getWindow().getGuiScaledWidth();
-		this.height = this.minecraft.getWindow().getGuiScaledHeight();
-		
 		this.guiLeft = (this.width - this.xSize) / 2;
 		this.guiTop = (this.height - this.ySize) / 2;
 		
 		BlockEntity tile = this.derrickScreen.getMenu().level.getBlockEntity(DerrickContainer.getPos(this.derrickScreen.getMenu().pos.get()));
 		if(tile instanceof IMultiblockBE<?> be && be.getHelper().getState() instanceof DerrickLogic.State){
+			
 			this.pipeConfig = new PipeConfig(be.getHelper().asType(IPContent.Multiblock.DERRICK), this.guiLeft + 10, this.guiTop + 10, 138, 138, 69, 69, 2);
 			addRenderableWidget(this.pipeConfig);
 			
-			// IDEA Users: these lambdas are like this for readability: Don't Change Them!
-			//@formatter:off
-			final Component set = Component.translatable("gui.immersivepetroleum.derrick.settings.button.set");
-			addRenderableWidget(Button.builder(set, b ->
-			{
+			final int halfSize = this.xSize / 2;
+			
+			addButton("set", b -> {
 				MessageDerrick.sendToServer(be.getHelper().getContext().getLevel().getAbsoluteOrigin(), this.pipeConfig.getGrid());
-			}).		bounds(this.guiLeft + (this.xSize / 2) - 65, this.guiTop + this.ySize - 25, 40, 20).
-					tooltip(Tooltip.create(Component.translatable("gui.immersivepetroleum.derrick.settings.button.set.desc"))).
-					build());
+			}, halfSize - 65, this.ySize - 25, 40, 20);
 			
-			final Component reset = Component.translatable("gui.immersivepetroleum.derrick.settings.button.reset");
-			addRenderableWidget(Button.builder(reset, b -> {
+			addButton("reset", b -> {
 				this.pipeConfig.reset(be.getHelper().asType(IPContent.Multiblock.DERRICK));
-			}).
-					bounds(this.guiLeft + (this.xSize / 2) - 20, this.guiTop + this.ySize - 25, 40, 20).
-					tooltip(Tooltip.create(Component.translatable("gui.immersivepetroleum.derrick.settings.button.reset.desc"))).
-					build());
+			}, halfSize - 20, this.ySize - 25, 40, 20);
 			
-			final Component close = Component.translatable("gui.immersivepetroleum.derrick.settings.button.close");
-			addRenderableWidget(Button.builder(close, b -> {
+			addButton("close", b -> {
 				DerrickSettingsScreen.this.onClose();
-			}).
-					bounds(this.guiLeft + (this.xSize / 2) + 25, this.guiTop + this.ySize - 25, 40, 20).
-					tooltip(Tooltip.create(Component.translatable("gui.immersivepetroleum.derrick.settings.button.close.desc"))).
-					build());
-			//@formatter:on
+			}, halfSize + 25, this.ySize - 25, 40, 20);
 		}
+	}
+	
+	private void addButton(String name, Button.OnPress onPress, int x, int y, int w, int h){
+		MutableComponent nameText = Component.translatable("gui.immersivepetroleum.derrick.settings.button." + name);
+		MutableComponent descText = Component.translatable("gui.immersivepetroleum.derrick.settings.button." + name + ".desc");
+		
+		//@formatter:off
+		Button button = Button.builder(nameText, onPress)
+			.bounds(this.guiLeft + x, this.guiTop + y, w, h)
+			.tooltip(Tooltip.create(descText))
+			.build();
+		addRenderableWidget(button);
+		//@formatter:on
+	}
+	
+	
+	@Override
+	public void renderBackground(@Nonnull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick){
+		guiGraphics.blit(GUI_TEXTURE, this.guiLeft, this.guiTop, 0, 0, this.xSize, this.ySize);
 	}
 	
 	@Override
 	public void render(@Nonnull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick){
-		background(guiGraphics, mouseX, mouseY, partialTick);
 		super.render(guiGraphics, mouseX, mouseY, partialTick);
 		
 		final List<Component> tooltip = new ArrayList<>();
@@ -162,9 +166,5 @@ public class DerrickSettingsScreen extends Screen{
 		super.resize(minecraft, width, height);
 		this.pipeConfig.copyDataFrom(oldGrid);
 		oldGrid.dispose();
-	}
-	
-	private void background(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks){
-		guiGraphics.blit(GUI_TEXTURE, this.guiLeft, this.guiTop, 0, 0, this.xSize, this.ySize);
 	}
 }

@@ -21,6 +21,7 @@ import flaxbeard.immersivepetroleum.client.ClientProxy;
 import flaxbeard.immersivepetroleum.client.gui.elements.PipeConfig;
 import flaxbeard.immersivepetroleum.common.ExternalModContent;
 import flaxbeard.immersivepetroleum.common.IPContent;
+import flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.DerrickLogic.State;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.shapes.DerrickShape;
 import flaxbeard.immersivepetroleum.common.blocks.stone.WellPipeBlock;
 import flaxbeard.immersivepetroleum.common.blocks.tileentities.WellTileEntity;
@@ -49,9 +50,12 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage;
+import net.neoforged.neoforge.capabilities.Capabilities.FluidHandler;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
+import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
 import javax.annotation.Nonnull;
@@ -61,10 +65,6 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
-
-import static flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.DerrickLogic.State;
-import static net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage;
-import static net.neoforged.neoforge.capabilities.Capabilities.FluidHandler;
 
 public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableComponent<State>, IClientTickableComponent<State>{
 	public static final int REQUIRED_WATER_AMOUNT = 125;
@@ -81,27 +81,39 @@ public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableCom
 	
 	public static final FluidTank DUMMY_TANK = new FluidTank(0);
 	
-	/** Template-Location of the Fluid Input Port. (2 0 4)<br> */
-	public static final CapabilityPosition Fluid_IN = new CapabilityPosition(2, 0, 4, RelativeBlockFace.BACK);
+	/** Template-Location of the Fluid Input Port. (2 0 4) */
+	public static final CapabilityPosition FLUID_IN = new CapabilityPosition(2, 0, 4, RelativeBlockFace.BACK);
 	
-	/** Template-Location of the Fluid Output Port. (4 0 2)<br> */
-	//public static final CapabilityPosition Fluid_OUT = new CapabilityPosition(4, 0, 2, RelativeBlockFace.LEFT);
+	/** Template-Location of the Fluid Output Port. (4 0 2) */
 	public static final CapabilityPosition FLUID_OUT = new CapabilityPosition(4, 0, 2, RelativeBlockFace.LEFT);
 	
-	/** Template-Location of the Energy Input Ports.<br><pre>2 1 0</pre><br> */
-	public static final CapabilityPosition Energy_IN = new CapabilityPosition(2, 1, 0, RelativeBlockFace.UP);
+	/** Template-Location of the Energy Input Ports. (2 1 0) */
+	public static final CapabilityPosition ENERGY_IN = new CapabilityPosition(2, 1, 0, RelativeBlockFace.UP);
 	
-	/** Template-Location of the Redstone Input Port. (0 1 1)<br> */
-	public static final BlockPos Redstone_IN = new BlockPos(0, 1, 1);
+	/** Template-Location of the Redstone Input Port. (0 1 1) */
+	public static final BlockPos REDSTONE_IN = new BlockPos(0, 1, 1);
 	
 	@Override
 	public State createInitialState(IInitialMultiblockContext<State> capabilitySource){
-		InitialMultiblockContext<State> capSource = (InitialMultiblockContext<State>) capabilitySource;
-		return new State(capabilitySource, capSource.masterBE().getBlockPos());
+		return new State(capabilitySource);
+	}
+	
+	@Override
+	public void registerCapabilities(CapabilityRegistrar<State> register){
+		register.registerAtOrNull(EnergyStorage.BLOCK, ENERGY_IN, state -> state.energy);
+		register.register(FluidHandler.BLOCK, (state, pos) -> {
+			if(FLUID_IN.equals(pos))
+				return state.fluidHandler;
+			
+			if(FLUID_OUT.equals(pos))
+				return state.emptyHandler;
+			
+			return null;
+		});
 	}
 	
 	//@formatter:off
-	private static final BlockState[] PARTICLESTATES = new BlockState[]{
+	private static final BlockState[] PARTICLE_STATES = new BlockState[]{
 			Blocks.STONE.defaultBlockState(),
 			Blocks.GRANITE.defaultBlockState(),
 			Blocks.GRAVEL.defaultBlockState(),
@@ -117,13 +129,6 @@ public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableCom
 		final State state = context.getState();
 		final IMultiblockLevel level = context.getLevel();
 		
-		/*
-		if(state.level == null)
-			state.level = level.getRawLevel();
-		if(state.originPos == null)
-			state.originPos = level.getAbsoluteOrigin();
-		*/
-		
 		if(state.drilling){
 			state.rotation += 10;
 			state.rotation %= 2160; // 360 * 6
@@ -131,13 +136,13 @@ public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableCom
 			double x = (level.toAbsolute(IPContent.Multiblock.DERRICK.masterPosInMB()).getX() + 0.5);
 			double y = (level.toAbsolute(IPContent.Multiblock.DERRICK.masterPosInMB()).getY() + 1.0);
 			double z = (level.toAbsolute(IPContent.Multiblock.DERRICK.masterPosInMB()).getZ() + 0.5);
-			int r = level.getRawLevel().random.nextInt(PARTICLESTATES.length);
+			int r = level.getRawLevel().random.nextInt(PARTICLE_STATES.length);
 			for(int i = 0;i < 5;i++){
 				float xa = (level.getRawLevel().random.nextFloat() - 0.5F) * 10.0F;
 				float ya = 5.0F;
 				float za = (level.getRawLevel().random.nextFloat() - 0.5F) * 10.0F;
 				
-				level.getRawLevel().addParticle(new BlockParticleOption(ParticleTypes.BLOCK, PARTICLESTATES[r]), x, y, z, xa, ya, za);
+				level.getRawLevel().addParticle(new BlockParticleOption(ParticleTypes.BLOCK, PARTICLE_STATES[r]), x, y, z, xa, ya, za);
 			}
 		}
 		
@@ -369,8 +374,9 @@ public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableCom
 	
 	@Override
 	public void dropExtraItems(State state, Consumer<ItemStack> drop){
-		if(!state.inventory.get(0).isEmpty())
-			drop.accept(state.inventory.get(0));
+		ItemStack stack = state.inventory.getFirst();
+		if(!stack.isEmpty())
+			drop.accept(stack);
 	}
 	
 	private boolean advanceTimer(State state){
@@ -501,19 +507,6 @@ public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableCom
 		
 		return new FluidStack(extractedFluid, extractedAmount);
 	}
-	@Override
-	public void registerCapabilities(CapabilityRegistrar<State> register){
-		register.registerAtOrNull(EnergyStorage.BLOCK, Energy_IN, state -> state.energy);
-		register.register(FluidHandler.BLOCK, (state, pos) -> {
-			if(Fluid_IN.equalsOrNullFace(pos))
-				return state.fluidHandler;
-			
-			if(FLUID_OUT.equalsOrNullFace(pos))
-				return state.emptyHandler;
-			
-			return null;
-		});
-	}
 	
 	@Override
 	public Function<BlockPos, VoxelShape> shapeGetter(ShapeType forType){
@@ -540,18 +533,20 @@ public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableCom
 		private Supplier<Level> level;
 		public BlockPos originPos;
 		
-		private final ArrayFluidHandler fluidHandler;
-		private final ArrayFluidHandler emptyHandler;
-		private final ItemStackHandler itemHandler;
+		private final IFluidHandler fluidHandler;
+		private final IFluidHandler emptyHandler;
+		private final IItemHandler itemHandler;
 		
-		public State(IInitialMultiblockContext<State> context, BlockPos pos){
-			this.emptyHandler = ArrayFluidHandler.drainOnly(DUMMY_TANK, context.getMarkDirtyRunnable());
-			this.itemHandler = new ItemStackHandler(this.inventory);
+		public State(IInitialMultiblockContext<State> context){
+			this.originPos = ((InitialMultiblockContext<State>) context).masterBE().getBlockPos();
 			this.level = context.levelSupplier();
-			this.originPos = pos;
-			this.tank = new FluidTank(8000, fluidStack -> acceptsFluid(level, this, pos, fluidStack));
-			this.fluidHandler = ArrayFluidHandler.fillOnly(tank, context.getMarkDirtyRunnable());
 			
+			Runnable markDirtyRunnable = context.getMarkDirtyRunnable();
+			this.tank = new FluidTank(8000, fluidStack -> acceptsFluid(this.level, this, this.originPos, fluidStack));
+			
+			this.fluidHandler = ArrayFluidHandler.fillOnly(this.tank, markDirtyRunnable);
+			this.emptyHandler = ArrayFluidHandler.drainOnly(DUMMY_TANK, markDirtyRunnable);
+			this.itemHandler = new ItemStackHandler(this.inventory);
 		}
 		
 		@Override

@@ -105,7 +105,7 @@ public class IPContent{
 		);
 		public static final MultiblockRegistration<DerrickLogic.State> DERRICK = IPRegisters.registerMetalMultiblock(
 				"derrick", new DerrickLogic(), () -> DerrickMultiblock.INSTANCE,
-				builder -> builder.redstone(st -> st.rsState, DerrickLogic.Redstone_IN).gui(IPMenuTypes.DERRICK)
+				builder -> builder.redstone(st -> st.rsState, DerrickLogic.REDSTONE_IN).gui(IPMenuTypes.DERRICK)
 		);
 		public static final MultiblockRegistration<OilTankLogic.State> OILTANK = IPRegisters.registerMetalMultiblock(
 				"oiltank", new OilTankLogic(), () -> OilTankMultiblock.INSTANCE,

@@ -97,8 +97,12 @@ public class SeismicSurveyScreen extends Screen{
 	}
 	
 	@Override
-	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick){
-		background(guiGraphics, mouseX, mouseY, partialTick);
+	public void renderBackground(@Nonnull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick){
+		guiGraphics.blit(GUI_TEXTURE, this.guiLeft, this.guiTop, 0, 0, X_SIZE, Y_SIZE);
+	}
+	
+	@Override
+	public void render(@Nonnull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick){
 		super.render(guiGraphics, mouseX, mouseY, partialTick);
 		
 		DynamicTextureWrapper wrapper = DynamicTextureWrapper.getOrCreate(SurveyScan.SCAN_SIZE, SurveyScan.SCAN_SIZE, this.scan);
@@ -218,15 +222,10 @@ public class SeismicSurveyScreen extends Screen{
 		buffer.endBatch();
 	}
 	
-	private void background(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks){
-		//MCUtil.bindTexture(GUI_TEXTURE);
-		guiGraphics.blit(GUI_TEXTURE, this.guiLeft, this.guiTop, 0, 0, X_SIZE, Y_SIZE);
-	}
-	
 	@Override
 	public boolean keyPressed(int pKeyCode, int pScanCode, int pModifiers){
 		InputConstants.Key key = InputConstants.getKey(pKeyCode, pScanCode);
-		if(this.minecraft.options.keyInventory.isActiveAndMatches(key)){
+		if(this.minecraft != null && this.minecraft.options.keyInventory.isActiveAndMatches(key)){
 			this.onClose();
 			return true;
 		}

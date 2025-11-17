@@ -152,12 +152,7 @@ public class ProjectorScreen extends Screen{
 	}
 	
 	@Override
-	public void renderBackground(@Nonnull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks){
-		this.renderBlurredBackground(partialTicks);
-		this.renderMenuBackground(guiGraphics, partialTicks);
-	}
-	
-	protected void renderMenuBackground(GuiGraphics guiGraphics, float partialTicks){
+	public void renderBackground(@Nonnull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick){
 		// Over-GUI Text
 		if(this.settings.getMultiblock() != null){
 			IMultiblock mb = this.settings.getMultiblock();
@@ -165,7 +160,7 @@ public class ProjectorScreen extends Screen{
 			int y = this.guiTop - (int) (15F * (this.move / 20F));
 			
 			if(this.move < 20F){
-				this.move += 0.5F * partialTicks;
+				this.move += 0.5F * partialTick;
 				
 				if(this.move > 20F)
 					this.move = 20F;
@@ -188,10 +183,10 @@ public class ProjectorScreen extends Screen{
 	}
 	
 	@Override
-	public void render(@Nonnull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks){
-		super.render(guiGraphics, mouseX, mouseY, partialTicks);
+	public void render(@Nonnull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick){
+		super.render(guiGraphics, mouseX, mouseY, partialTick);
 		
-		this.searchField.render(guiGraphics, mouseX, mouseY, partialTicks);
+		this.searchField.render(guiGraphics, mouseX, mouseY, partialTick);
 		
 		renderDirectionDisplay(guiGraphics, mouseX, mouseY);
 		
@@ -201,7 +196,7 @@ public class ProjectorScreen extends Screen{
 			MultiBufferSource.BufferSource buffer = RenderUtils.immediate();
 			try{
 				
-				this.rotation += 0.5F * partialTicks;
+				this.rotation += 0.5F * partialTick;
 				
 				Vec3i size = mb.getSize(null);
 				
