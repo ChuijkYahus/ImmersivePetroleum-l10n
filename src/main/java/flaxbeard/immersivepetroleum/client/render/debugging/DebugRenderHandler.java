@@ -6,7 +6,6 @@ import blusunrize.immersiveengineering.api.multiblocks.blocks.env.IMultiblockLev
 import blusunrize.immersiveengineering.api.multiblocks.blocks.logic.IMultiblockBE;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.logic.IMultiblockState;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.registry.MultiblockBlockEntityMaster;
-import blusunrize.immersiveengineering.common.blocks.multiblocks.process.ProcessContext;
 import blusunrize.immersiveengineering.common.util.inventory.MultiFluidTank;
 import com.google.common.collect.Multimap;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -65,6 +64,7 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.client.event.RenderGuiLayerEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent.Stage;
@@ -72,6 +72,7 @@ import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.neoforged.neoforge.energy.IEnergyStorage;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.IFluidTank;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 import org.joml.Matrix4f;
 
@@ -103,15 +104,16 @@ public class DebugRenderHandler{
 				if(rt != null){
 					switch(rt.getType()){
 						case BLOCK -> {
-							BlockHitResult result = (BlockHitResult) rt;
-							Level world = player.level();
+							final BlockHitResult result = (BlockHitResult) rt;
+							final Level world = player.level();
+							final BlockPos hitPos = result.getBlockPos();
 							
-							BlockState blockState = world.getBlockState(result.getBlockPos());
+							BlockState blockState = world.getBlockState(hitPos);
 							
 							List<Component> debugOut = new ArrayList<>();
 							
 							if(blockState.getBlock() instanceof EntityBlock){
-								BlockEntity te = world.getBlockEntity(result.getBlockPos());
+								BlockEntity te = world.getBlockEntity(hitPos);
 								
 								if(te instanceof GasGeneratorTileEntity gas){
 									debugOut.add(toTranslation(te.getBlockState().getBlock().getDescriptionId()).withStyle(ChatFormatting.GOLD));
@@ -156,15 +158,31 @@ public class DebugRenderHandler{
 										
 										debugOut.add(name);
 										
-										// FIXME Both work sometimes, that's not enough!
-										if(masterState instanceof ProcessContext<?> poweredGeneric){
-											debugOut.add(toText(poweredGeneric.getEnergy().getEnergyStored() + "/" + poweredGeneric.getEnergy().getMaxEnergyStored() + " RF"));
-										}else{
-											// Fallback
-											/* // TODO 1.21.1: Fallback is kaput now
-											masterHelper.getCapabilityPosition(ForgeCapabilities.ENERGY, null)
-												.ifPresent(energy -> energyCapabilityDebugDisplay(energy, debugOut));
-											*/
+										IEnergyStorage energyStorage = world.getCapability(Capabilities.EnergyStorage.BLOCK, hitPos, null);
+										if(energyStorage != null){
+											int amount = energyStorage.getEnergyStored();
+											int max = energyStorage.getMaxEnergyStored();
+											
+											MutableComponent text = toText(amount + "/" + max + " RF");
+											if(max == 0){
+												text.append(toText(" (Dummy-Storage)").withStyle(ChatFormatting.GRAY));
+											}
+											debugOut.add(text);
+										}
+										
+										IFluidHandler fluidHandler = world.getCapability(Capabilities.FluidHandler.BLOCK, hitPos, null);
+										if(fluidHandler != null){
+											int tanks = fluidHandler.getTanks();
+											for(int i = 0;i < tanks;i++){
+												int cap = fluidHandler.getTankCapacity(i);
+												FluidStack stack = fluidHandler.getFluidInTank(i);
+												MutableComponent text = toText(stack.getAmount() + "/" + cap + " mB");
+												
+												if(!stack.isEmpty())
+													text.append(toText(" (" + stack.getHoverName().getString()) + ")");
+												
+												debugOut.add(text);
+											}
 										}
 									}
 									
@@ -192,7 +210,7 @@ public class DebugRenderHandler{
 							}
 							
 							if(!debugOut.isEmpty()){
-								BlockPos hit = result.getBlockPos();
+								BlockPos hit = hitPos;
 								debugOut.add(0, toText("World XYZ: " + hit.getX() + ", " + hit.getY() + ", " + hit.getZ()));
 								
 								renderOverlay(event.getGuiGraphics(), debugOut);
@@ -310,7 +328,7 @@ public class DebugRenderHandler{
 					{
 						MultiBufferSource.BufferSource buffer = RenderUtils.immediate();
 						
-						int radius = 12;
+						int radius = 16;
 						for(int i = -radius;i <= radius;i++){
 							for(int j = -radius;j <= radius;j++){
 								ChunkPos cPos = new ChunkPos(playerPos.offset(16 * i, 0, 16 * j));
@@ -401,9 +419,9 @@ public class DebugRenderHandler{
 						{
 							MultiBufferSource.BufferSource buffer = RenderUtils.immediate();
 							
-							if(islands != null && !islands.isEmpty()){
+							if(!islands.isEmpty()){
 								float y = 128.0625F;
-								int radius = 128;
+								int radius = 256;
 								radius = radius * radius + radius * radius;
 								for(ReservoirIsland island:islands){
 									BlockPos center = island.getBoundingBox().getCenter();
