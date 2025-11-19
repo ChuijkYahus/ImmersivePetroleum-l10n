@@ -73,6 +73,8 @@ public class ImmersivePetroleum{
 		IPRegisters.addRegistersToEventBus(eBus);
 		
 		IPContent.modConstruction(eBus);
+		IPRegisters.runCallbacks(eBus);
+		
 		IPLootFunctions.modConstruction(eBus);
 		IPRecipeTypes.modConstruction(eBus);
 	}
