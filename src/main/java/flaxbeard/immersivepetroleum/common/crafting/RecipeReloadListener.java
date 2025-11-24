@@ -52,11 +52,11 @@ public class RecipeReloadListener implements ResourceManagerReloadListener{
 		if(recipes.isEmpty())
 			return;
 		
-		ImmersivePetroleum.log.info("Loading Distillation Recipes.");
-		DistillationTowerRecipe.recipes = filterRecipes(recipes, DistillationTowerRecipe.class, IPRecipeTypes.DISTILLATION);
-		
 		ImmersivePetroleum.log.info("Loading Reservoirs.");
 		ReservoirType.map = filterRecipes(recipes, ReservoirType.class, IPRecipeTypes.RESERVOIR);
+		
+		ImmersivePetroleum.log.info("Loading Distillation Recipes.");
+		DistillationTowerRecipe.recipes = filterRecipes(recipes, DistillationTowerRecipe.class, IPRecipeTypes.DISTILLATION);
 		
 		ImmersivePetroleum.log.info("Loading Coker-Unit Recipes.");
 		CokerUnitRecipe.recipes = filterRecipes(recipes, CokerUnitRecipe.class, IPRecipeTypes.COKER);

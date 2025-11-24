@@ -1,5 +1,6 @@
 package flaxbeard.immersivepetroleum.common.util.compat.jei;
 
+import blusunrize.immersiveengineering.api.crafting.FluidTagInput;
 import flaxbeard.immersivepetroleum.api.crafting.HighPressureRefineryRecipe;
 import flaxbeard.immersivepetroleum.client.utils.MCUtil;
 import flaxbeard.immersivepetroleum.common.IPContent;
@@ -20,6 +21,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.fluids.FluidStack;
 
 import javax.annotation.Nonnull;
 import java.util.Locale;
@@ -39,29 +41,35 @@ public class HighPressureRefineryRecipeCategory extends IPRecipeCategory<HighPre
 	
 	@Override
 	public void setRecipe(IRecipeLayoutBuilder builder, HighPressureRefineryRecipe recipe, @Nonnull IFocusGroup focuses){
-		int primaryInputAmount = recipe.inputFluid.getAmount();
-		int secondaryInputAmount = recipe.inputFluidSecondary != null ? recipe.inputFluidSecondary.getAmount() : 0;
-		int outputAmount = recipe.output.getAmount();
+		final FluidTagInput primaryInputFluid = recipe.getPrimaryInputFluid();
+		final FluidTagInput secondaryInputFluid = recipe.getSecondaryInputFluid();
+		final FluidStack output = recipe.getOutputFluid();
+		final ItemStack outputItem = recipe.getOutputItem();
+		
+		int primaryInputAmount = primaryInputFluid.getAmount();
+		int secondaryInputAmount = secondaryInputFluid != null ? secondaryInputFluid.getAmount() : 0;
+		int outputAmount = output.getAmount();
 		int guiTankSize = Math.min(Math.max(Math.max(primaryInputAmount, secondaryInputAmount), outputAmount), 1000);
 		
 		builder.addSlot(RecipeIngredientRole.INPUT, 25, 3)
 			.setFluidRenderer(guiTankSize, false, 20, 51)
 			.setOverlay(this.tankOverlay, 0, 0)
-			.addIngredients(ForgeTypes.FLUID_STACK, recipe.inputFluid.getMatchingFluidStacks());
+			.addIngredients(ForgeTypes.FLUID_STACK, primaryInputFluid.getMatchingFluidStacks());
 		
 		IRecipeSlotBuilder secondary = builder.addSlot(RecipeIngredientRole.INPUT, 3, 3)
 			.setFluidRenderer(guiTankSize, false, 20, 51)
 			.setOverlay(this.tankOverlay, 0, 0);
-		if(recipe.inputFluidSecondary != null)
-			secondary.addIngredients(ForgeTypes.FLUID_STACK, recipe.inputFluidSecondary.getMatchingFluidStacks());
+		
+		if(secondaryInputFluid != null)
+			secondary.addIngredients(ForgeTypes.FLUID_STACK, secondaryInputFluid.getMatchingFluidStacks());
 		
 		builder.addSlot(RecipeIngredientRole.OUTPUT, 71, 3)
 			.setFluidRenderer(guiTankSize, false, 20, 51)
 			.setOverlay(this.tankOverlay, 0, 0)
-			.addIngredient(ForgeTypes.FLUID_STACK, recipe.output);
+			.addIngredient(ForgeTypes.FLUID_STACK, output);
 		
 		builder.addSlot(RecipeIngredientRole.OUTPUT, 94, 21)
-			.addIngredient(VanillaTypes.ITEM_STACK, recipe.outputItem);
+			.addIngredient(VanillaTypes.ITEM_STACK, outputItem);
 	}
 	
 	@Override
@@ -73,7 +81,7 @@ public class HighPressureRefineryRecipeCategory extends IPRecipeCategory<HighPre
 		
 		int time = recipe.getTotalProcessTime();
 		int energy = recipe.getTotalProcessEnergy()/recipe.getTotalProcessTime();
-		int chance = (int) (100 * recipe.chance);
+		int chance = (int) (100 * recipe.getOutputItemChance());
 		
 		guiGraphics.pose().pushPose();
 		String text0 = I18n.get("desc.immersiveengineering.info.ift", Utils.fDecimal(energy));

@@ -51,7 +51,7 @@ public class CokerUnitRecipeTweaker implements IRecipeManager<CokerUnitRecipe>{
 	@Method
 	public void remove(IIngredient output){
 		CokerUnitRecipe.recipes.values().
-				removeIf(recipe -> output.matches(new MCItemStack(recipe.outputItem.copy())));
+				removeIf(recipe -> output.matches(new MCItemStack(recipe.getOutputItem())));
 	}
 	
 	/**
@@ -62,7 +62,7 @@ public class CokerUnitRecipeTweaker implements IRecipeManager<CokerUnitRecipe>{
 	@Method
 	public void remove(IFluidStack output){
 		CokerUnitRecipe.recipes.values().
-				removeIf(recipe -> recipe.outputFluid.isFluidEqual(output.<FluidStack>getInternal()));
+				removeIf(recipe -> recipe.getOutputFluid().isFluidEqual(output.<FluidStack>getInternal()));
 	}
 	
 	/**

@@ -62,16 +62,17 @@ public class HighPressureRefineryRecipeSerializer extends IERecipeSerializer<Hig
 	
 	@Override
 	public void toNetwork(FriendlyByteBuf buffer, HighPressureRefineryRecipe recipe){
-		buffer.writeItem(recipe.outputItem);
-		buffer.writeDouble(recipe.chance);
+		buffer.writeItem(recipe.getOutputItem());
+		buffer.writeDouble(recipe.getOutputItemChance());
 		
-		buffer.writeFluidStack(recipe.output);
-		recipe.inputFluid.write(buffer);
+		buffer.writeFluidStack(recipe.getOutputFluid());
+		recipe.getPrimaryInputFluid().write(buffer);
 		
-		boolean hasSecondary = recipe.getSecondaryInputFluid() != null;
+		FluidTagInput secondaryInputFluid = recipe.getSecondaryInputFluid();
+		boolean hasSecondary = secondaryInputFluid != null;
 		buffer.writeBoolean(hasSecondary);
 		if(hasSecondary){
-			recipe.inputFluidSecondary.write(buffer);
+			secondaryInputFluid.write(buffer);
 		}
 		
 		buffer.writeInt(recipe.getTotalProcessEnergy());

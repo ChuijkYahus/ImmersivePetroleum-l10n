@@ -39,12 +39,12 @@ public class SulfurRecoveryRecipeTweaker implements IRecipeManager<HighPressureR
 	
 	@Method
 	public void removeByOutputItem(IIngredient output){
-		HighPressureRefineryRecipe.recipes.values().removeIf(recipe -> output.matches(new MCItemStack(recipe.outputItem)));
+		HighPressureRefineryRecipe.recipes.values().removeIf(recipe -> output.matches(new MCItemStack(recipe.getOutputItem())));
 	}
 	
 	@Method
 	public void removeByOutputFluid(IFluidStack output){
-		HighPressureRefineryRecipe.recipes.values().removeIf(recipe -> recipe.output.isFluidEqual(output.<FluidStack>getInternal()));
+		HighPressureRefineryRecipe.recipes.values().removeIf(recipe -> recipe.getOutputFluid().isFluidEqual(output.<FluidStack>getInternal()));
 	}
 	
 	@Method

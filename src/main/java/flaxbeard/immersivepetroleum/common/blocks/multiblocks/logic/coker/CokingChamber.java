@@ -109,9 +109,9 @@ public class CokingChamber{
 	
 	/** Always returns 0 if the recipe hasn't been set yet, otherwise it pretty much does what you'd expect it to */
 	public int addStack(@Nonnull ItemStack stack, boolean simulate){
-		if(this.recipe != null && !stack.isEmpty() && this.recipe.inputItem.test(stack)){
-			int capacity = getCapacity() * this.recipe.inputItem.getCount();
-			int current = getTotalAmount() * this.recipe.inputItem.getCount();
+		if(this.recipe != null && !stack.isEmpty() && this.recipe.getInputItem().test(stack)){
+			int capacity = getCapacity() * this.recipe.getInputItem().getCount();
+			int current = getTotalAmount() * this.recipe.getInputItem().getCount();
 			
 			if(simulate){
 				return Math.min(capacity - current, stack.getCount());
@@ -172,7 +172,7 @@ public class CokingChamber{
 		if(this.recipe == null){
 			return ItemStack.EMPTY;
 		}
-		return this.recipe.inputItem.getMatchingStacks()[0];
+		return this.recipe.getInputItem().getMatchingStacks()[0];
 	}
 	
 	/** Expected output. */
@@ -181,7 +181,7 @@ public class CokingChamber{
 			return ItemStack.EMPTY;
 		}
 		
-		return this.recipe.outputItem.copy();
+		return this.recipe.getOutputItem();
 	}
 	
 	public FluidTank getTank(){
@@ -203,15 +203,15 @@ public class CokingChamber{
 				}
 			}
 			case PROCESSING -> {
-				if(this.inputAmount > 0 && !getInputItem().isEmpty() && (this.tank.getCapacity() - this.tank.getFluidAmount()) >= this.recipe.outputFluid.getAmount()){
+				if(this.inputAmount > 0 && !getInputItem().isEmpty() && (this.tank.getCapacity() - this.tank.getFluidAmount()) >= this.recipe.getOutputFluid().getAmount()){
 					if(logicState.energy.getEnergyStored() >= this.recipe.getTotalProcessEnergy() / this.recipe.getTotalProcessTime()){
 						logicState.energy.extractEnergy(this.recipe.getTotalProcessEnergy() / this.recipe.getTotalProcessTime(), false);
 						
 						this.timer++;
-						if(this.timer >= (this.recipe.getTotalProcessTime() * this.recipe.inputItem.getCount())){
+						if(this.timer >= (this.recipe.getTotalProcessTime() * this.recipe.getInputItem().getCount())){
 							this.timer = 0;
 							
-							this.tank.fill(Utils.copyFluidStackWithAmount(this.recipe.outputFluid, this.recipe.outputFluid.getAmount(), false), IFluidHandler.FluidAction.EXECUTE);
+							this.tank.fill(Utils.copyFluidStackWithAmount(this.recipe.getOutputFluid(), this.recipe.getOutputFluid().getAmount(), false), IFluidHandler.FluidAction.EXECUTE);
 							this.inputAmount--;
 							this.outputAmount++;
 							
@@ -247,11 +247,11 @@ public class CokingChamber{
 				if(this.timer >= 2){
 					this.timer = 0;
 					
-					int max = getTotalAmount() * this.recipe.inputFluid.getAmount();
+					int max = getTotalAmount() * this.recipe.getInputFluid().getAmount();
 					if(this.tank.getFluidAmount() < max){
-						FluidStack accepted = logicState.bufferTanks.input().drain(this.recipe.inputFluid.getAmount(), IFluidHandler.FluidAction.SIMULATE);
-						if(accepted.getAmount() >= this.recipe.inputFluid.getAmount()){
-							logicState.bufferTanks.input().drain(this.recipe.inputFluid.getAmount(), IFluidHandler.FluidAction.EXECUTE);
+						FluidStack accepted = logicState.bufferTanks.input().drain(this.recipe.getInputFluid().getAmount(), IFluidHandler.FluidAction.SIMULATE);
+						if(accepted.getAmount() >= this.recipe.getInputFluid().getAmount()){
+							logicState.bufferTanks.input().drain(this.recipe.getInputFluid().getAmount(), IFluidHandler.FluidAction.EXECUTE);
 							this.tank.fill(accepted, IFluidHandler.FluidAction.EXECUTE);
 						}
 					}else if(this.tank.getFluidAmount() >= max){
@@ -270,7 +270,7 @@ public class CokingChamber{
 						IMultiblockLevel multiLevel = context.getLevel();
 						Level world = multiLevel.getRawLevel();
 						int amount = Math.min(this.outputAmount, 1);
-						ItemStack copy = this.recipe.outputItem.copy();
+						ItemStack copy = this.recipe.getOutputItem();
 						copy.setCount(amount);
 						
 						// Drop item(s) at the designated chamber output location

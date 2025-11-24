@@ -49,11 +49,11 @@ public class CokerUnitRecipeSerializer extends IERecipeSerializer<CokerUnitRecip
 	
 	@Override
 	public void toNetwork(@Nonnull FriendlyByteBuf buffer, CokerUnitRecipe recipe){
-		recipe.inputItem.write(buffer);
-		buffer.writeItem(recipe.outputItem.copy());
+		recipe.getInputItem().write(buffer);
+		buffer.writeItem(recipe.getOutputItem());
 		
-		recipe.inputFluid.write(buffer);
-		recipe.outputFluid.writeToPacket(buffer);
+		recipe.getInputFluid().write(buffer);
+		recipe.getOutputFluid().writeToPacket(buffer);
 		
 		buffer.writeInt(recipe.getTotalProcessEnergy());
 		buffer.writeInt(recipe.getTotalProcessTime());

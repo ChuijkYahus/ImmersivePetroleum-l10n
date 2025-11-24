@@ -149,7 +149,7 @@ public class CokerUnitLogic implements IMultiblockLogic<State>, IServerTickableC
 			if(!inputStack.isEmpty() && inputFluid.getAmount() > 0 && CokerUnitRecipe.hasRecipeWithInput(inputStack, inputFluid)){
 				CokerUnitRecipe recipe = CokerUnitRecipe.findRecipe(inputStack, inputFluid);
 				
-				if(recipe != null && inputStack.getCount() >= recipe.inputItem.getCount() && inputFluid.getAmount() >= recipe.inputFluid.getAmount()){
+				if(recipe != null && inputStack.getCount() >= recipe.getInputItem().getCount() && inputFluid.getAmount() >= recipe.getInputFluid().getAmount()){
 					for(CokingChamber chamber: state.chambers.get()){
 						boolean skipNext = false;
 						
@@ -161,8 +161,8 @@ public class CokerUnitLogic implements IMultiblockLogic<State>, IServerTickableC
 								}
 							}
 							case PROCESSING -> {
-								int acceptedStack = chamber.addStack(state.copyStack(inputStack, recipe.inputItem.getCount()), true);
-								if(acceptedStack >= recipe.inputItem.getCount()){
+								int acceptedStack = chamber.addStack(state.copyStack(inputStack, recipe.getInputItem().getCount()), true);
+								if(acceptedStack >= recipe.getInputItem().getCount()){
 									acceptedStack = Math.min(acceptedStack, inputStack.getCount());
 									
 									chamber.addStack(state.copyStack(inputStack, acceptedStack), false);

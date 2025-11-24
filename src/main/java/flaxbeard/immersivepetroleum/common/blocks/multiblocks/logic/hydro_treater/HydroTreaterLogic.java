@@ -94,15 +94,15 @@ public class HydroTreaterLogic implements IMultiblockLogic<State>, IServerTickab
 				if(state.tanks.primary().getFluidAmount() > 0 || state.tanks.secondary().getFluidAmount() > 0){
 					HighPressureRefineryRecipe recipe = HighPressureRefineryRecipe.findRecipe(state.tanks.primary().getFluid(), state.tanks.secondary().getFluid());
 					if(recipe != null && state.energy.getEnergyStored() >= recipe.getTotalProcessEnergy() / recipe.getTotalProcessTime()){
-						if(state.tanks.primary().getFluidAmount() >= recipe.getInputFluid().getAmount() && (recipe.getSecondaryInputFluid() == null || (state.tanks.secondary().getFluidAmount() >= recipe.getSecondaryInputFluid().getAmount()))){
+						if(state.tanks.primary().getFluidAmount() >= recipe.getPrimaryInputFluid().getAmount() && (recipe.getSecondaryInputFluid() == null || (state.tanks.secondary().getFluidAmount() >= recipe.getSecondaryInputFluid().getAmount()))){
 							int[] inputs, inputAmounts;
 							
 							if(recipe.getSecondaryInputFluid() != null){
 								inputs = new int[]{TANK_INPUT_A, TANK_INPUT_B};
-								inputAmounts = new int[]{recipe.getInputFluid().getAmount(), recipe.getSecondaryInputFluid().getAmount()};
+								inputAmounts = new int[]{recipe.getPrimaryInputFluid().getAmount(), recipe.getSecondaryInputFluid().getAmount()};
 							}else{
 								inputs = new int[]{TANK_INPUT_A};
-								inputAmounts = new int[]{recipe.getInputFluid().getAmount()};
+								inputAmounts = new int[]{recipe.getPrimaryInputFluid().getAmount()};
 							}
 							
 							MultiblockProcessInMachine<HighPressureRefineryRecipe> process = new HydroTreaterProcess(recipe).setInputTanks(inputs).setInputAmounts(inputAmounts);

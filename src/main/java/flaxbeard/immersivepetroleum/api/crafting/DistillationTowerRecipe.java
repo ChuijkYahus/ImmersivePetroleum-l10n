@@ -5,6 +5,7 @@ import blusunrize.immersiveengineering.api.crafting.IERecipeSerializer;
 import flaxbeard.immersivepetroleum.common.cfg.IPServerConfig;
 import flaxbeard.immersivepetroleum.common.crafting.Serializers;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
@@ -46,23 +47,34 @@ public class DistillationTowerRecipe extends IPMultiblockRecipe{
 		return findRecipe(input);
 	}
 	
-	protected final FluidTagInput input;
-	protected final FluidStack[] fluidOutput;
-	protected final ItemStack[] itemOutput;
-	protected final double[] chances;
+	private final FluidTagInput input;
+	private final ItemStack[] itemOutput;
+	private final double[] chances;
 	
 	public DistillationTowerRecipe(ResourceLocation id, FluidStack[] fluidOutput, ItemStack[] itemOutput, FluidTagInput input, int energy, int time, double[] chances){
 		super(IPRecipeTypes.DISTILLATION, id, time, energy);
-		this.fluidOutput = fluidOutput;
 		this.itemOutput = itemOutput;
 		this.chances = chances;
 		
 		this.input = input;
 		this.fluidInputList = Collections.singletonList(input);
-		this.fluidOutputList = Arrays.asList(this.fluidOutput);
-		this.outputList = Lazy.of(() -> NonNullList.of(ItemStack.EMPTY, itemOutput));
+		this.fluidOutputList = Arrays.asList(fluidOutput);
+		this.outputList = Lazy.of(() -> {
+			NonNullList<ItemStack> output = NonNullList.create();
+			for(ItemStack stack: this.itemOutput)
+				output.add(stack.copy());
+			return output;
+		});
 		
 		modifyTimeAndEnergy(IPServerConfig.REFINING.distillationTower_timeModifier::get, IPServerConfig.REFINING.distillationTower_energyModifier::get);
+	}
+	
+	public FluidTagInput getInputFluid(){
+		return this.input;
+	}
+	
+	public double[] chances(){
+		return this.chances;
 	}
 	
 	@Override
@@ -76,25 +88,26 @@ public class DistillationTowerRecipe extends IPMultiblockRecipe{
 	}
 	
 	@Override
+	public ItemStack getResultItem(RegistryAccess access){
+		NonNullList<ItemStack> outputs = getItemOutputs();
+		if(outputs != null && !outputs.isEmpty())
+			return outputs.get(0).copy();
+		return ItemStack.EMPTY;
+	}
+	
+	@Override
 	public NonNullList<ItemStack> getActualItemOutputs(){
 		if(this.itemOutput.length == 0 && this.chances.length == 0)
 			return NonNullList.create();
 		
 		NonNullList<ItemStack> output = NonNullList.create();
 		for(int i = 0;i < this.itemOutput.length;i++){
-			if(RANDOM.nextFloat() <= this.chances[i]){
-				output.add(this.itemOutput[i]);
+			double chance = this.chances[i];
+			if(chance == 1.0F || RANDOM.nextFloat() <= chance){
+				output.add(this.itemOutput[i].copy());
 			}
 		}
 		
 		return output;
-	}
-	
-	public FluidTagInput getInputFluid(){
-		return this.input;
-	}
-	
-	public double[] chances(){
-		return this.chances;
 	}
 }
