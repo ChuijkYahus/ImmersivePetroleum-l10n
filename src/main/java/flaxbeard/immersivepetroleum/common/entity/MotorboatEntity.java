@@ -244,7 +244,7 @@ public class MotorboatEntity extends Boat implements IEntityAdditionalSpawnData{
 	}
 	
 	public void setContainedFluid(FluidStack stack){
-		if(stack == null){
+		if(stack == null || stack.isEmpty()){
 			this.entityData.set(TANK_FLUID, "");
 			this.entityData.set(TANK_AMOUNT, 0);
 		}else{
@@ -700,11 +700,11 @@ public class MotorboatEntity extends Boat implements IEntityAdditionalSpawnData{
 			}else{
 				FluidStack fluid = getContainedFluid();
 				int consumeAmount = 0;
-				if(fluid != FluidStack.EMPTY){
+				if(!fluid.isEmpty()){
 					consumeAmount = FuelHandler.getBoatFuelUse(fluid.getFluid());
 				}
 				
-				if(fluid != FluidStack.EMPTY && fluid.getAmount() >= consumeAmount && (this.inputUp || this.inputDown)){
+				if(!fluid.isEmpty() && fluid.getAmount() >= consumeAmount && (this.inputUp || this.inputDown)){
 					int toConsume = consumeAmount;
 					if(this.inputUp){
 						f += 0.05F;
@@ -718,7 +718,8 @@ public class MotorboatEntity extends Boat implements IEntityAdditionalSpawnData{
 						f -= 0.01F;
 					}
 					
-					fluid.setAmount(Math.max(0, fluid.getAmount() - toConsume));
+					if(!fluid.isEmpty()) // Last second check to be absolutely sure.
+						fluid.setAmount(Math.max(0, fluid.getAmount() - toConsume));
 					setContainedFluid(fluid);
 					
 					IPPacketHandler.sendToServer(new MessageConsumeBoatFuel(toConsume));
