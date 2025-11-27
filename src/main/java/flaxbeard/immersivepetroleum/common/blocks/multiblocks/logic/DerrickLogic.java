@@ -509,6 +509,24 @@ public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableCom
 	}
 	
 	@Override
+	public void onRemoved(IMultiblockContext<State> context){
+		if(context.getLevel().getRawLevel().isClientSide)
+			return;
+		
+		IMultiblockLevel mbLevel = context.getLevel();
+		Level rawLevel = mbLevel.getRawLevel();
+		
+		WellTileEntity well = context.getState().getWell(mbLevel, mbLevel.toRelative(IPContent.Multiblock.DERRICK.masterPosInMB()));
+		if(well != null && !well.drillingCompleted){
+			if(well.wellPipeLength > 0){
+				well.startSelfDestructSequence();
+			}else{
+				rawLevel.setBlockAndUpdate(well.getBlockPos(), Blocks.BEDROCK.defaultBlockState());
+			}
+		}
+	}
+	
+	@Override
 	public Function<BlockPos, VoxelShape> shapeGetter(ShapeType forType){
 		return DerrickShape.GETTER;
 	}
