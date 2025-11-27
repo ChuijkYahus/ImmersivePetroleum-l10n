@@ -66,9 +66,9 @@ public class PipeConfig extends Button{
 		MCUtil.getTextureManager().register(this.dynTextureRL, this.gridTexture);
 		this.gridTextureRenderType = RenderType.text(this.dynTextureRL);
 		
-		this.pipeNormalColor = Integer.valueOf(IPClientConfig.GRID_COLORS.pipe_normal_color.get(), 16);
-		this.pipePerforatedColor = Integer.valueOf(IPClientConfig.GRID_COLORS.pipe_perforated_color.get(), 16);
-		this.pipePerforatedFixedColor = Integer.valueOf(IPClientConfig.GRID_COLORS.pipe_perforated_fixed_color.get(), 16);
+		this.pipeNormalColor = IPClientConfig.GRID_COLORS.getPipeColorNormal();
+		this.pipePerforatedColor = IPClientConfig.GRID_COLORS.getPipeColorPerforated();
+		this.pipePerforatedFixedColor = IPClientConfig.GRID_COLORS.getPipeColorPerforatedFixed();
 		
 		updateTexture();
 	}
