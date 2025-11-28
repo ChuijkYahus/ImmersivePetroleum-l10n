@@ -150,7 +150,7 @@ public class CokerUnitLogic implements IMultiblockLogic<State>, IServerTickableC
 				RecipeHolder<CokerUnitRecipe> holder = CokerUnitRecipe.findRecipe(inputStack, inputFluid);
 				
 				if(holder != null){
-					CokerUnitRecipe recipe = holder.value();
+					final CokerUnitRecipe recipe = holder.value();
 					
 					if(inputStack.getCount() >= recipe.inputItem.getCount() && inputFluid.getAmount() >= recipe.inputFluid.amount()){
 						for(CokingChamber chamber: state.chambers.get()){
@@ -158,7 +158,7 @@ public class CokerUnitLogic implements IMultiblockLogic<State>, IServerTickableC
 							
 							switch(chamber.getState()){
 								case STANDBY -> {
-									if(chamber.setRecipe(recipe)){
+									if(chamber.setRecipe(holder)){
 										update = true;
 										skipNext = true;
 									}

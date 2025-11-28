@@ -13,6 +13,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.fluids.FluidStack;
@@ -46,7 +47,7 @@ public class CokingChamber{
 	}
 	
 	@Nullable
-	CokerUnitRecipe recipe = null;
+	RecipeHolder<CokerUnitRecipe> rHolder = null;
 	State state = State.STANDBY;
 	FluidTank tank;
 	
@@ -73,12 +74,16 @@ public class CokingChamber{
 		
 		if(nbt.contains("recipe", Tag.TAG_STRING)){
 			try{
-				this.recipe = CokerUnitRecipe.recipes.get(ResourceLocation.parse(nbt.getString("recipe"))).value();
+				ResourceLocation recipeName = ResourceLocation.parse(nbt.getString("recipe"));
+				RecipeHolder<CokerUnitRecipe> recipe = CokerUnitRecipe.recipes.get(recipeName);
+				if(recipe == null){
+					ImmersivePetroleum.log.warn("Recipe {} is an unknown or removed recipe! Skipping...", recipeName);
+				}
 			}catch(ResourceLocationException e){
 				ImmersivePetroleum.log.error("Tried to load a coking recipe with an invalid name", e);
 			}
 		}else{
-			this.recipe = null;
+			this.rHolder = null;
 		}
 		
 		return this;
@@ -91,17 +96,17 @@ public class CokingChamber{
 		nbt.putInt("output", this.outputAmount);
 		nbt.putInt("state", this.state.id());
 		
-		if(this.recipe != null){
-			nbt.putString("recipe", this.recipe.getType().toString());
+		if(this.rHolder != null){
+			nbt.putString("recipe", this.rHolder.id().toString());
 		}
 		
 		return nbt;
 	}
 	
 	/** Returns true when the recipe has been set, false if it already is set and the chamber is working */
-	public boolean setRecipe(@Nullable CokerUnitRecipe recipe){
+	public boolean setRecipe(@Nullable RecipeHolder<CokerUnitRecipe> recipe){
 		if(state == State.STANDBY){
-			this.recipe = recipe;
+			this.rHolder = recipe;
 			return true;
 		}
 		
@@ -110,9 +115,9 @@ public class CokingChamber{
 	
 	/** Always returns 0 if the recipe hasn't been set yet, otherwise it pretty much does what you'd expect it to */
 	public int addStack(@Nonnull ItemStack stack, boolean simulate){
-		if(this.recipe != null && !stack.isEmpty() && this.recipe.inputItem.test(stack)){
-			int capacity = getCapacity() * this.recipe.inputItem.getCount();
-			int current = getTotalAmount() * this.recipe.inputItem.getCount();
+		if(this.rHolder != null && !stack.isEmpty() && this.rHolder.value().inputItem.test(stack)){
+			int capacity = getCapacity() * this.rHolder.value().inputItem.getCount();
+			int current = getTotalAmount() * this.rHolder.value().inputItem.getCount();
 			
 			if(simulate){
 				return Math.min(capacity - current, stack.getCount());
@@ -164,25 +169,25 @@ public class CokingChamber{
 	}
 	
 	@Nullable
-	public CokerUnitRecipe getRecipe(){
-		return this.recipe;
+	public RecipeHolder<CokerUnitRecipe> getRecipe(){
+		return this.rHolder;
 	}
 	
 	/** Expected input. */
 	public ItemStack getInputItem(){
-		if(this.recipe == null){
+		if(this.rHolder == null){
 			return ItemStack.EMPTY;
 		}
-		return this.recipe.inputItem.getMatchingStacks()[0];
+		return this.rHolder.value().inputItem.getMatchingStacks()[0];
 	}
 	
 	/** Expected output. */
 	public ItemStack getOutputItem(){
-		if(this.recipe == null){
+		if(this.rHolder == null){
 			return ItemStack.EMPTY;
 		}
 		
-		return this.recipe.outputItem.copy();
+		return this.rHolder.value().outputItem.copy();
 	}
 	
 	public FluidTank getTank(){
@@ -191,7 +196,7 @@ public class CokingChamber{
 	
 	/** returns true when the coker should update, false otherwise */
 	public boolean tick(IMultiblockContext<CokerUnitLogic.State> context, int chamberId){
-		if(this.recipe == null){
+		if(this.rHolder == null){
 			return setStage(State.STANDBY);
 		}
 		
@@ -199,20 +204,22 @@ public class CokingChamber{
 		
 		switch(this.state){
 			case STANDBY -> {
-				if(this.recipe != null){
+				if(this.rHolder != null){
 					return setStage(State.PROCESSING);
 				}
 			}
 			case PROCESSING -> {
-				if(this.inputAmount > 0 && !getInputItem().isEmpty() && (this.tank.getCapacity() - this.tank.getFluidAmount()) >= this.recipe.outputFluid.getAmount()){
-					if(logicState.energy.getEnergyStored() >= this.recipe.getTotalProcessEnergy() / this.recipe.getTotalProcessTime()){
-						logicState.energy.extractEnergy(this.recipe.getTotalProcessEnergy() / this.recipe.getTotalProcessTime(), false);
+				final CokerUnitRecipe recipe = this.rHolder.value();
+				
+				if(this.inputAmount > 0 && !getInputItem().isEmpty() && (this.tank.getCapacity() - this.tank.getFluidAmount()) >= recipe.outputFluid.getAmount()){
+					if(logicState.energy.getEnergyStored() >= recipe.getTotalProcessEnergy() / recipe.getTotalProcessTime()){
+						logicState.energy.extractEnergy(recipe.getTotalProcessEnergy() / recipe.getTotalProcessTime(), false);
 						
 						this.timer++;
-						if(this.timer >= (this.recipe.getTotalProcessTime() * this.recipe.inputItem.getCount())){
+						if(this.timer >= (recipe.getTotalProcessTime() * recipe.inputItem.getCount())){
 							this.timer = 0;
 							
-							this.tank.fill(Utils.copyFluidStackWithAmount(this.recipe.outputFluid, this.recipe.outputFluid.getAmount(), false), IFluidHandler.FluidAction.EXECUTE);
+							this.tank.fill(Utils.copyFluidStackWithAmount(recipe.outputFluid, recipe.outputFluid.getAmount(), false), IFluidHandler.FluidAction.EXECUTE);
 							this.inputAmount--;
 							this.outputAmount++;
 							
@@ -248,11 +255,13 @@ public class CokingChamber{
 				if(this.timer >= 2){
 					this.timer = 0;
 					
-					int max = getTotalAmount() * this.recipe.inputFluid.amount();
+					final CokerUnitRecipe recipe = this.rHolder.value();
+					
+					int max = getTotalAmount() * recipe.inputFluid.amount();
 					if(this.tank.getFluidAmount() < max){
-						FluidStack accepted = logicState.bufferTanks.input().drain(this.recipe.inputFluid.amount(), IFluidHandler.FluidAction.SIMULATE);
-						if(accepted.getAmount() >= this.recipe.inputFluid.amount()){
-							logicState.bufferTanks.input().drain(this.recipe.inputFluid.amount(), IFluidHandler.FluidAction.EXECUTE);
+						FluidStack accepted = logicState.bufferTanks.input().drain(recipe.inputFluid.amount(), IFluidHandler.FluidAction.SIMULATE);
+						if(accepted.getAmount() >= recipe.inputFluid.amount()){
+							logicState.bufferTanks.input().drain(recipe.inputFluid.amount(), IFluidHandler.FluidAction.EXECUTE);
 							this.tank.fill(accepted, IFluidHandler.FluidAction.EXECUTE);
 						}
 					}else if(this.tank.getFluidAmount() >= max){
@@ -271,7 +280,7 @@ public class CokingChamber{
 						IMultiblockLevel multiLevel = context.getLevel();
 						Level world = multiLevel.getRawLevel();
 						int amount = Math.min(this.outputAmount, 1);
-						ItemStack copy = this.recipe.outputItem.copy();
+						ItemStack copy = this.rHolder.value().outputItem.copy();
 						copy.setCount(amount);
 						
 						// Drop item(s) at the designated chamber output location
@@ -294,7 +303,7 @@ public class CokingChamber{
 				}
 				
 				if(this.outputAmount <= 0 && this.tank.isEmpty()){
-					this.recipe = null;
+					this.rHolder = null;
 					setStage(State.STANDBY);
 					
 					update = true;
