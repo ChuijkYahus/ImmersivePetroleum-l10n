@@ -14,11 +14,13 @@ import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 public class HighPressureRefineryRecipe extends IPMultiblockRecipe{
 	
@@ -30,7 +32,7 @@ public class HighPressureRefineryRecipe extends IPMultiblockRecipe{
 		Objects.requireNonNull(input);
 		Objects.requireNonNull(secondary);
 		
-		for(RecipeHolder<HighPressureRefineryRecipe> holder : recipes.values()){
+		for(RecipeHolder<HighPressureRefineryRecipe> holder: recipes.values()){
 			HighPressureRefineryRecipe recipe = holder.value();
 			
 			if(secondary.isEmpty()){
@@ -50,7 +52,7 @@ public class HighPressureRefineryRecipe extends IPMultiblockRecipe{
 		Objects.requireNonNull(fluid);
 		
 		if(!fluid.isEmpty()){
-			for(RecipeHolder<HighPressureRefineryRecipe> holder : recipes.values()){
+			for(RecipeHolder<HighPressureRefineryRecipe> holder: recipes.values()){
 				HighPressureRefineryRecipe recipe = holder.value();
 				
 				if(recipe.inputFluid != null && test(recipe.inputFluid, fluid, ignoreAmount)){
@@ -58,6 +60,7 @@ public class HighPressureRefineryRecipe extends IPMultiblockRecipe{
 				}
 			}
 		}
+		
 		return false;
 	}
 	
@@ -65,7 +68,7 @@ public class HighPressureRefineryRecipe extends IPMultiblockRecipe{
 		Objects.requireNonNull(fluid);
 		
 		if(!fluid.isEmpty()){
-			for(RecipeHolder<HighPressureRefineryRecipe> holder : recipes.values()){
+			for(RecipeHolder<HighPressureRefineryRecipe> holder: recipes.values()){
 				HighPressureRefineryRecipe recipe = holder.value();
 				
 				if(recipe.inputFluidSecondary != null && test(recipe.inputFluidSecondary, fluid, ignoreAmount)){
@@ -73,14 +76,15 @@ public class HighPressureRefineryRecipe extends IPMultiblockRecipe{
 				}
 			}
 		}
+		
 		return false;
 	}
 	
-	public final FluidStack output;
-	public final @Nullable StackWithChance outputItem;
+	private final FluidStack output;
+	private final @Nullable StackWithChance outputItem;
 	
-	public final SizedFluidIngredient inputFluid;
-	public final @Nullable SizedFluidIngredient inputFluidSecondary;
+	private final SizedFluidIngredient inputFluid;
+	private final @Nullable SizedFluidIngredient inputFluidSecondary;
 	
 	/**
 	 * @param output              {@link FluidStack} to output
@@ -90,38 +94,46 @@ public class HighPressureRefineryRecipe extends IPMultiblockRecipe{
 	 * @param energy              amount of FE to consume
 	 * @param time                duration of the recipe
 	 */
-	public HighPressureRefineryRecipe(FluidStack output, @Nullable StackWithChance outputItem, SizedFluidIngredient inputFluid, @Nullable SizedFluidIngredient inputFluidSecondary, int energy, int time){
+	@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+	public HighPressureRefineryRecipe(FluidStack output, Optional<StackWithChance> outputItem, SizedFluidIngredient inputFluid, Optional<SizedFluidIngredient> inputFluidSecondary, Integer energy, Integer time){
 		super(IPRecipeTypes.HYDROTREATER, time, energy);
 		this.output = output;
-		this.outputItem = outputItem;
+		this.outputItem = outputItem.orElse(null);
 		this.inputFluid = inputFluid;
-		this.inputFluidSecondary = inputFluidSecondary;
+		this.inputFluidSecondary = inputFluidSecondary.orElse(null);
 		
 		this.fluidOutputList = Collections.singletonList(output);
-		this.fluidInputList = Arrays.asList(inputFluidSecondary != null ? new SizedFluidIngredient[]{
-			inputFluid,
-			inputFluidSecondary
-		} : new SizedFluidIngredient[]{inputFluid});
+		
+		List<SizedFluidIngredient> list = new ArrayList<>(2);
+		list.add(inputFluid);
+		if(this.inputFluidSecondary != null)
+			list.add(this.inputFluidSecondary);
+		this.fluidInputList = list;
 		
 		modifyTimeAndEnergy(IPServerConfig.REFINING.hydrotreater_timeModifier::get, IPServerConfig.REFINING.hydrotreater_energyModifier::get);
 	}
 	
-	public boolean hasSecondaryItem(){
-		return this.outputItem != null;
+	public FluidStack getOutputFluid(){
+		return this.output.copy();
 	}
 	
-	@Override
-	public int getMultipleProcessTicks(){
-		return 0;
+	@Nullable
+	public StackWithChance getSecondaryItem(){
+		return this.outputItem;
 	}
 	
-	public SizedFluidIngredient getInputFluid(){
+	public SizedFluidIngredient getPrimaryInputFluid(){
 		return this.inputFluid;
 	}
 	
 	@Nullable
 	public SizedFluidIngredient getSecondaryInputFluid(){
 		return this.inputFluidSecondary;
+	}
+	
+	@Override
+	public int getMultipleProcessTicks(){
+		return 0;
 	}
 	
 	@Override

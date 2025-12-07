@@ -16,10 +16,10 @@ public class CokerUnitRecipeSerializer extends IERecipeSerializer<CokerUnitRecip
 	
 	//@formatter:off
 	public static final DualMapCodec<RegistryFriendlyByteBuf, CokerUnitRecipe> CODECS = DualCompositeMapCodecs.composite(
-		DualCodecs.ITEM_STACK.fieldOf("result"), r -> r.outputItem,
-		IEDualCodecs.FLUID_STACK.fieldOf("resultfluid"), r -> r.outputFluid,
-		IngredientWithSize.CODECS.fieldOf("input"), r -> r.inputItem,
-		IEDualCodecs.SIZED_FLUID_INGREDIENT.fieldOf("inputfluid"), r -> r.inputFluid,
+		DualCodecs.ITEM_STACK.fieldOf("result"), CokerUnitRecipe::getOutputItem,
+		IEDualCodecs.FLUID_STACK.fieldOf("resultfluid"), CokerUnitRecipe::getOutputFluid,
+		IngredientWithSize.CODECS.fieldOf("input"), CokerUnitRecipe::getInputItem,
+		IEDualCodecs.SIZED_FLUID_INGREDIENT.fieldOf("inputfluid"), CokerUnitRecipe::getInputFluid,
 		DualCodecs.INT.fieldOf("energy"), IPMultiblockRecipe::getBaseEnergy,
 		DualCodecs.INT.fieldOf("time"), IPMultiblockRecipe::getBaseTime,
 		CokerUnitRecipe::new

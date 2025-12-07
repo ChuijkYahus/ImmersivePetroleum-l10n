@@ -41,25 +41,25 @@ public class CokerUnitRecipeCategory extends IPRecipeCategory<CokerUnitRecipe>{
 	
 	@Override
 	public void setRecipe(@Nonnull IRecipeLayoutBuilder builder, CokerUnitRecipe recipe, @Nonnull IFocusGroup focuses){
-		int inputAmount = recipe.inputFluid.amount();
-		int outputAmount = recipe.outputFluid.getAmount();
+		int inputAmount = recipe.getInputFluid().amount();
+		int outputAmount = recipe.getOutputFluid().getAmount();
 		int guiTankSize = Math.max(inputAmount, outputAmount);
 		
 		builder.addSlot(RecipeIngredientRole.INPUT, 2, 2)
 			.setFluidRenderer(guiTankSize, false, 20, 51)
 			.setOverlay(this.tankOverlay, 0, 0)
-			.addIngredients(NeoForgeTypes.FLUID_STACK, Arrays.asList(recipe.inputFluid.getFluids()));
+			.addIngredients(NeoForgeTypes.FLUID_STACK, Arrays.asList(recipe.getInputFluid().getFluids()));
 		
 		builder.addSlot(RecipeIngredientRole.OUTPUT, 50, 2)
 			.setFluidRenderer(guiTankSize, false, 20, 51)
 			.setOverlay(this.tankOverlay, 0, 0)
-			.addIngredient(NeoForgeTypes.FLUID_STACK, recipe.outputFluid);
+			.addIngredient(NeoForgeTypes.FLUID_STACK, recipe.getOutputFluid());
 		
 		builder.addSlot(RecipeIngredientRole.INPUT, 4, 58)
-			.addIngredients(VanillaTypes.ITEM_STACK, Arrays.asList(recipe.inputItem.getMatchingStacks()));
+			.addIngredients(VanillaTypes.ITEM_STACK, Arrays.asList(recipe.getInputItem().getMatchingStacks()));
 		
 		builder.addSlot(RecipeIngredientRole.OUTPUT, 52, 58)
-			.addIngredients(VanillaTypes.ITEM_STACK, Collections.singletonList(recipe.outputItem.copy()));
+			.addIngredients(VanillaTypes.ITEM_STACK, Collections.singletonList(recipe.getOutputItem()));
 	}
 	
 	@Override
@@ -69,7 +69,7 @@ public class CokerUnitRecipeCategory extends IPRecipeCategory<CokerUnitRecipe>{
 		int bHeight = background.getHeight();
 		Font font = MCUtil.getFont();
 		
-		int time = (recipe.getTotalProcessTime() + 2 + 5) * recipe.inputItem.getCount();
+		int time = (recipe.getTotalProcessTime() + 2 + 5) * recipe.getInputItem().getCount();
 		int energy = recipe.getTotalProcessEnergy()/recipe.getTotalProcessTime();
 		
 		guiGraphics.pose().pushPose();

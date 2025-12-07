@@ -40,30 +40,30 @@ public class HighPressureRefineryRecipeCategory extends IPRecipeCategory<HighPre
 	
 	@Override
 	public void setRecipe(IRecipeLayoutBuilder builder, HighPressureRefineryRecipe recipe, @Nonnull IFocusGroup focuses){
-		int primaryInputAmount = recipe.inputFluid.amount();
-		int secondaryInputAmount = recipe.inputFluidSecondary != null ? recipe.inputFluidSecondary.amount() : 0;
-		int outputAmount = recipe.output.getAmount();
+		int primaryInputAmount = recipe.getPrimaryInputFluid().amount();
+		int secondaryInputAmount = recipe.getSecondaryInputFluid() != null ? recipe.getSecondaryInputFluid().amount() : 0;
+		int outputAmount = recipe.getOutputFluid().getAmount();
 		int guiTankSize = Math.min(Math.max(Math.max(primaryInputAmount, secondaryInputAmount), outputAmount), 1000);
 		
 		builder.addSlot(RecipeIngredientRole.INPUT, 25, 3)
 			.setFluidRenderer(guiTankSize, false, 20, 51)
 			.setOverlay(this.tankOverlay, 0, 0)
-			.addIngredients(NeoForgeTypes.FLUID_STACK, Arrays.asList(recipe.inputFluid.getFluids()));
+			.addIngredients(NeoForgeTypes.FLUID_STACK, Arrays.asList(recipe.getPrimaryInputFluid().getFluids()));
 		
 		IRecipeSlotBuilder secondary = builder.addSlot(RecipeIngredientRole.INPUT, 3, 3)
 			.setFluidRenderer(guiTankSize, false, 20, 51)
 			.setOverlay(this.tankOverlay, 0, 0);
-		if(recipe.inputFluidSecondary != null)
-			secondary.addIngredients(NeoForgeTypes.FLUID_STACK, Arrays.asList(recipe.inputFluidSecondary.getFluids()));
+		if(recipe.getSecondaryInputFluid() != null)
+			secondary.addIngredients(NeoForgeTypes.FLUID_STACK, Arrays.asList(recipe.getSecondaryInputFluid().getFluids()));
 		
 		builder.addSlot(RecipeIngredientRole.OUTPUT, 71, 3)
 			.setFluidRenderer(guiTankSize, false, 20, 51)
 			.setOverlay(this.tankOverlay, 0, 0)
-			.addIngredient(NeoForgeTypes.FLUID_STACK, recipe.output);
+			.addIngredient(NeoForgeTypes.FLUID_STACK, recipe.getOutputFluid());
 		
-		if(recipe.hasSecondaryItem()){
+		if(recipe.getSecondaryItem() != null){
 			builder.addSlot(RecipeIngredientRole.OUTPUT, 94, 21)
-				.addIngredient(VanillaTypes.ITEM_STACK, recipe.outputItem.stack().get());
+				.addIngredient(VanillaTypes.ITEM_STACK, recipe.getSecondaryItem().stack().get());
 		}
 	}
 	
@@ -84,8 +84,8 @@ public class HighPressureRefineryRecipeCategory extends IPRecipeCategory<HighPre
 		String text1 = I18n.get("desc.immersiveengineering.info.seconds", Utils.fDecimal(time / 20D));
 		guiGraphics.drawString(font, text1, bWidth / 2 - font.width(text1) / 2, bHeight - font.lineHeight, -1, false);
 		
-		if(recipe.hasSecondaryItem()){
-			int chance = (int) (100 * recipe.outputItem.chance());
+		if(recipe.getSecondaryItem() != null){
+			int chance = (int) (100 * recipe.getSecondaryItem().chance());
 			
 			String text2 = String.format(Locale.US, "%d%%", chance);
 			guiGraphics.drawString(font, text2, bWidth + 3 - font.width(text2), bHeight / 2 + 4, -1, false);

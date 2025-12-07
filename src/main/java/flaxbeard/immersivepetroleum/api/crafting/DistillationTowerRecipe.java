@@ -4,6 +4,7 @@ import blusunrize.immersiveengineering.api.crafting.IERecipeSerializer;
 import blusunrize.immersiveengineering.api.crafting.StackWithChance;
 import flaxbeard.immersivepetroleum.common.cfg.IPServerConfig;
 import flaxbeard.immersivepetroleum.common.crafting.Serializers;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
@@ -13,11 +14,11 @@ import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 
 import javax.annotation.Nullable;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class DistillationTowerRecipe extends IPMultiblockRecipe{
 	public static Map<ResourceLocation, RecipeHolder<DistillationTowerRecipe>> recipes = new HashMap<>();
@@ -26,35 +27,47 @@ public class DistillationTowerRecipe extends IPMultiblockRecipe{
 	
 	/** May return null! */
 	public static RecipeHolder<DistillationTowerRecipe> findRecipe(FluidStack input){
-		if(!recipes.isEmpty()){
-			for(RecipeHolder<DistillationTowerRecipe> holder: recipes.values()){
-				DistillationTowerRecipe recipe = holder.value();
-				
-				if(recipe.input != null && recipe.input.ingredient().test(input)){
-					return holder;
-				}
+		if(recipes.isEmpty())
+			return null;
+		
+		for(RecipeHolder<DistillationTowerRecipe> holder: recipes.values()){
+			DistillationTowerRecipe recipe = holder.value();
+			
+			if(recipe.input != null && recipe.input.ingredient().test(input)){
+				return holder;
 			}
 		}
 		
 		return null;
 	}
 	
-	public final FluidStack[] fluidOutput;
-	public final @Nullable StackWithChance[] itemOutput;
+	private final @Nullable StackWithChance[] itemOutput;
 	
-	public final SizedFluidIngredient input;
+	private final SizedFluidIngredient input;
 	
-	public DistillationTowerRecipe(FluidStack[] fluidOutput, @Nullable List<StackWithChance> itemOutput, SizedFluidIngredient input, int energy, int time){
+	@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+	public DistillationTowerRecipe(List<FluidStack> fluidOutput, Optional<List<StackWithChance>> itemOutput, SizedFluidIngredient input, int energy, int time){
 		super(IPRecipeTypes.DISTILLATION, time, energy);
-		this.fluidOutput = fluidOutput;
-		
-		this.itemOutput = (itemOutput != null && !itemOutput.isEmpty()) ? itemOutput.toArray(StackWithChance[]::new) : null;
 		
 		this.input = input;
+		
+		this.itemOutput = itemOutput.map(list -> list.toArray(StackWithChance[]::new)).orElse(null);
+		
 		this.fluidInputList = Collections.singletonList(input);
-		this.fluidOutputList = Arrays.asList(this.fluidOutput);
+		this.fluidOutputList = fluidOutput;
 		
 		modifyTimeAndEnergy(IPServerConfig.REFINING.distillationTower_timeModifier::get, IPServerConfig.REFINING.distillationTower_energyModifier::get);
+	}
+	
+	public SizedFluidIngredient getInputFluid(){
+		return this.input;
+	}
+	
+	public List<StackWithChance> getItemOutput(){
+		if(this.itemOutput == null)
+			return Collections.emptyList();
+		
+		return List.of(this.itemOutput);
 	}
 	
 	@Override
@@ -65,6 +78,14 @@ public class DistillationTowerRecipe extends IPMultiblockRecipe{
 	@Override
 	public int getMultipleProcessTicks(){
 		return 0;
+	}
+	
+	@Override
+	public ItemStack getResultItem(HolderLookup.Provider access){
+		NonNullList<ItemStack> outputs = getItemOutputs();
+		if(outputs != null && !outputs.isEmpty())
+			return outputs.getFirst().copy();
+		return ItemStack.EMPTY;
 	}
 	
 	@Override
@@ -81,10 +102,6 @@ public class DistillationTowerRecipe extends IPMultiblockRecipe{
 		}
 		
 		return output;
-	}
-	
-	public SizedFluidIngredient getInputFluid(){
-		return this.input;
 	}
 	
 	@Deprecated(forRemoval = true)

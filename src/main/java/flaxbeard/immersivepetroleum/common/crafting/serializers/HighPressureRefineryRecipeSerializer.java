@@ -11,6 +11,7 @@ import malte0811.dualcodecs.DualCompositeMapCodecs;
 import malte0811.dualcodecs.DualMapCodec;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 
 import java.util.Optional;
 
@@ -18,25 +19,29 @@ public class HighPressureRefineryRecipeSerializer extends IERecipeSerializer<Hig
 	
 	//@formatter:off
 	public static final DualMapCodec<RegistryFriendlyByteBuf, HighPressureRefineryRecipe> CODEC = DualCompositeMapCodecs.composite(
-		IEDualCodecs.FLUID_STACK.fieldOf("result"), r -> r.output,
-		StackWithChance.CODECS.optionalFieldOf("secondary_result"), r -> {
-			if(r.outputItem == null)
-				return Optional.empty();
-			return Optional.of(r.outputItem);
-		},
-		IEDualCodecs.SIZED_FLUID_INGREDIENT.fieldOf("input"), r -> r.inputFluid,
-		IEDualCodecs.SIZED_FLUID_INGREDIENT.optionalFieldOf("secondary_input"), r -> {
-			if(r.inputFluid == null)
-				return Optional.empty();
-			return Optional.of(r.inputFluid);
-		},
+		IEDualCodecs.FLUID_STACK.fieldOf("result"), HighPressureRefineryRecipe::getOutputFluid,
+		StackWithChance.CODECS.optionalFieldOf("secondary_result"), HighPressureRefineryRecipeSerializer::itemResult,
+		IEDualCodecs.SIZED_FLUID_INGREDIENT.fieldOf("input"), HighPressureRefineryRecipe::getPrimaryInputFluid,
+		IEDualCodecs.SIZED_FLUID_INGREDIENT.optionalFieldOf("secondary_input"), HighPressureRefineryRecipeSerializer::secondaryInputFluid,
 		DualCodecs.INT.fieldOf("energy"), MultiblockRecipe::getBaseEnergy,
 		DualCodecs.INT.fieldOf("time"), MultiblockRecipe::getBaseTime,
-		(output, outputItem, inputFluid, inputFluidSecondary, energy, time)->{
-			return new HighPressureRefineryRecipe(output, outputItem.orElse(null), inputFluid, inputFluidSecondary.orElse(null), energy, time);
-		}
+		HighPressureRefineryRecipe::new
 	);
 	//@formatter:on
+	
+	private static Optional<StackWithChance> itemResult(HighPressureRefineryRecipe r){
+		if(r.getSecondaryItem() != null)
+			return Optional.of(r.getSecondaryItem());
+		
+		return Optional.empty();
+	}
+	
+	private static Optional<SizedFluidIngredient> secondaryInputFluid(HighPressureRefineryRecipe r){
+		if(r.getSecondaryInputFluid() == null)
+			return Optional.empty();
+		
+		return Optional.of(r.getSecondaryInputFluid());
+	}
 	
 	@Override
 	protected DualMapCodec<RegistryFriendlyByteBuf, HighPressureRefineryRecipe> codecs(){

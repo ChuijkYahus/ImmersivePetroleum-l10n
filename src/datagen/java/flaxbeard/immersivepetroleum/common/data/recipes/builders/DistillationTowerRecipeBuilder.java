@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * @author TwistedGate
@@ -29,7 +30,9 @@ public class DistillationTowerRecipeBuilder extends IPMultiblockRecipeBuilder<Di
 	}
 	
 	private final List<FluidStack> fluidOutput;
-	private List<StackWithChance> itemOutput;
+	
+	@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+	private Optional<List<StackWithChance>> itemOutput = Optional.empty();
 	
 	private SizedFluidIngredient input;
 	
@@ -46,7 +49,7 @@ public class DistillationTowerRecipeBuilder extends IPMultiblockRecipeBuilder<Di
 		
 		validateTimeAndEnergy();
 		
-		return new DistillationTowerRecipe(this.fluidOutput.toArray(FluidStack[]::new), this.itemOutput, this.input, this.energy, this.time);
+		return new DistillationTowerRecipe(this.fluidOutput, this.itemOutput, this.input, this.energy, this.time);
 	}
 	
 	public DistillationTowerRecipeBuilder setInput(TagKey<Fluid> tag, int amount){
@@ -59,10 +62,10 @@ public class DistillationTowerRecipeBuilder extends IPMultiblockRecipeBuilder<Di
 	}
 	
 	public DistillationTowerRecipeBuilder addByproduct(@Nonnull ItemStack stack, float chance){
-		if(this.itemOutput == null)
-			this.itemOutput = new ArrayList<>();
+		if(this.itemOutput.isEmpty())
+			this.itemOutput = Optional.of(new ArrayList<>());
 		
-		this.itemOutput.add(new StackWithChance(stack, chance));
+		this.itemOutput.ifPresent(list -> list.add(new StackWithChance(stack, chance)));
 		return this;
 	}
 }

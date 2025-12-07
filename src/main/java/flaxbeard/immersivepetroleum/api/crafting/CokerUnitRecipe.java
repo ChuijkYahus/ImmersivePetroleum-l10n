@@ -80,11 +80,11 @@ public class CokerUnitRecipe extends IPMultiblockRecipe{
 		return false;
 	}
 	
-	public final ItemStack outputItem;
-	public final FluidStack outputFluid;
+	private final ItemStack outputItem;
+	private final FluidStack outputFluid;
 	
-	public final IngredientWithSize inputItem;
-	public final SizedFluidIngredient inputFluid;
+	private final IngredientWithSize inputItem;
+	private final SizedFluidIngredient inputFluid;
 	
 	public CokerUnitRecipe(ItemStack outputItem, FluidStack outputFluid, IngredientWithSize inputItem, SizedFluidIngredient inputFluid, int energy, int time){
 		super(IPRecipeTypes.COKER, time, energy);
@@ -94,6 +94,22 @@ public class CokerUnitRecipe extends IPMultiblockRecipe{
 		this.inputItem = inputItem;
 		
 		modifyTimeAndEnergy(IPServerConfig.REFINING.cokerUnit_timeModifier::get, IPServerConfig.REFINING.cokerUnit_energyModifier::get);
+	}
+	
+	public ItemStack getOutputItem(){
+		return this.outputItem.copy();
+	}
+	
+	public FluidStack getOutputFluid(){
+		return this.outputFluid.copy();
+	}
+	
+	public IngredientWithSize getInputItem(){
+		return this.inputItem;
+	}
+	
+	public SizedFluidIngredient getInputFluid(){
+		return this.inputFluid;
 	}
 	
 	@Override

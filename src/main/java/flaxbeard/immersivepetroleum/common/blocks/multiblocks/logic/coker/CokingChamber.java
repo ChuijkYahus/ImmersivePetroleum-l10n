@@ -115,9 +115,9 @@ public class CokingChamber{
 	
 	/** Always returns 0 if the recipe hasn't been set yet, otherwise it pretty much does what you'd expect it to */
 	public int addStack(@Nonnull ItemStack stack, boolean simulate){
-		if(this.rHolder != null && !stack.isEmpty() && this.rHolder.value().inputItem.test(stack)){
-			int capacity = getCapacity() * this.rHolder.value().inputItem.getCount();
-			int current = getTotalAmount() * this.rHolder.value().inputItem.getCount();
+		if(this.rHolder != null && !stack.isEmpty() && this.rHolder.value().getInputItem().test(stack)){
+			int capacity = getCapacity() * this.rHolder.value().getInputItem().getCount();
+			int current = getTotalAmount() * this.rHolder.value().getInputItem().getCount();
 			
 			if(simulate){
 				return Math.min(capacity - current, stack.getCount());
@@ -178,7 +178,7 @@ public class CokingChamber{
 		if(this.rHolder == null){
 			return ItemStack.EMPTY;
 		}
-		return this.rHolder.value().inputItem.getMatchingStacks()[0];
+		return this.rHolder.value().getInputItem().getMatchingStacks()[0];
 	}
 	
 	/** Expected output. */
@@ -187,7 +187,7 @@ public class CokingChamber{
 			return ItemStack.EMPTY;
 		}
 		
-		return this.rHolder.value().outputItem.copy();
+		return this.rHolder.value().getOutputItem();
 	}
 	
 	public FluidTank getTank(){
@@ -211,15 +211,15 @@ public class CokingChamber{
 			case PROCESSING -> {
 				final CokerUnitRecipe recipe = this.rHolder.value();
 				
-				if(this.inputAmount > 0 && !getInputItem().isEmpty() && (this.tank.getCapacity() - this.tank.getFluidAmount()) >= recipe.outputFluid.getAmount()){
+				if(this.inputAmount > 0 && !getInputItem().isEmpty() && (this.tank.getCapacity() - this.tank.getFluidAmount()) >= recipe.getOutputFluid().getAmount()){
 					if(logicState.energy.getEnergyStored() >= recipe.getTotalProcessEnergy() / recipe.getTotalProcessTime()){
 						logicState.energy.extractEnergy(recipe.getTotalProcessEnergy() / recipe.getTotalProcessTime(), false);
 						
 						this.timer++;
-						if(this.timer >= (recipe.getTotalProcessTime() * recipe.inputItem.getCount())){
+						if(this.timer >= (recipe.getTotalProcessTime() * recipe.getInputItem().getCount())){
 							this.timer = 0;
 							
-							this.tank.fill(Utils.copyFluidStackWithAmount(recipe.outputFluid, recipe.outputFluid.getAmount(), false), IFluidHandler.FluidAction.EXECUTE);
+							this.tank.fill(Utils.copyFluidStackWithAmount(recipe.getOutputFluid(), recipe.getOutputFluid().getAmount(), false), IFluidHandler.FluidAction.EXECUTE);
 							this.inputAmount--;
 							this.outputAmount++;
 							
@@ -257,11 +257,11 @@ public class CokingChamber{
 					
 					final CokerUnitRecipe recipe = this.rHolder.value();
 					
-					int max = getTotalAmount() * recipe.inputFluid.amount();
+					int max = getTotalAmount() * recipe.getInputFluid().amount();
 					if(this.tank.getFluidAmount() < max){
-						FluidStack accepted = logicState.bufferTanks.input().drain(recipe.inputFluid.amount(), IFluidHandler.FluidAction.SIMULATE);
-						if(accepted.getAmount() >= recipe.inputFluid.amount()){
-							logicState.bufferTanks.input().drain(recipe.inputFluid.amount(), IFluidHandler.FluidAction.EXECUTE);
+						FluidStack accepted = logicState.bufferTanks.input().drain(recipe.getInputFluid().amount(), IFluidHandler.FluidAction.SIMULATE);
+						if(accepted.getAmount() >= recipe.getInputFluid().amount()){
+							logicState.bufferTanks.input().drain(recipe.getInputFluid().amount(), IFluidHandler.FluidAction.EXECUTE);
 							this.tank.fill(accepted, IFluidHandler.FluidAction.EXECUTE);
 						}
 					}else if(this.tank.getFluidAmount() >= max){
@@ -280,7 +280,7 @@ public class CokingChamber{
 						IMultiblockLevel multiLevel = context.getLevel();
 						Level world = multiLevel.getRawLevel();
 						int amount = Math.min(this.outputAmount, 1);
-						ItemStack copy = this.rHolder.value().outputItem.copy();
+						ItemStack copy = this.rHolder.value().getOutputItem();
 						copy.setCount(amount);
 						
 						// Drop item(s) at the designated chamber output location

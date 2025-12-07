@@ -12,10 +12,12 @@ import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * @author TwistedGate
  */
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public class HighPressureRefineryRecipeBuilder extends IPMultiblockRecipeBuilder<HighPressureRefineryRecipeBuilder, HighPressureRefineryRecipe>{
 	
 	public static HighPressureRefineryRecipeBuilder builder(FluidStack fluidOutput){
@@ -23,10 +25,10 @@ public class HighPressureRefineryRecipeBuilder extends IPMultiblockRecipeBuilder
 	}
 	
 	private final FluidStack output;
-	private @Nullable StackWithChance outputItem;
+	private Optional<StackWithChance> outputItem = Optional.empty();
 	
 	private SizedFluidIngredient inputFluid;
-	private @Nullable SizedFluidIngredient inputFluidSecondary;
+	private Optional<SizedFluidIngredient> inputFluidSecondary = Optional.empty();
 	
 	private HighPressureRefineryRecipeBuilder(FluidStack fluidOutput){
 		this.output = fluidOutput;
@@ -48,7 +50,7 @@ public class HighPressureRefineryRecipeBuilder extends IPMultiblockRecipeBuilder
 	}
 	
 	public HighPressureRefineryRecipeBuilder addSecondaryInputFluid(TagKey<Fluid> tag, int amount){
-		this.inputFluidSecondary = fluidIngredient(tag, amount);
+		this.inputFluidSecondary = Optional.of(fluidIngredient(tag, amount));
 		return this;
 	}
 	
@@ -57,7 +59,7 @@ public class HighPressureRefineryRecipeBuilder extends IPMultiblockRecipeBuilder
 	}
 	
 	public HighPressureRefineryRecipeBuilder addItemWithChance(@Nonnull ItemStack stack, float chance){
-		this.outputItem = new StackWithChance(stack, chance);
+		this.outputItem = Optional.of(new StackWithChance(stack, chance));
 		return this;
 	}
 }

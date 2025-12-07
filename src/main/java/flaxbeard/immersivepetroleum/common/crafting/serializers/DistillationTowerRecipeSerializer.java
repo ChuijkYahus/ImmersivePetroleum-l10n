@@ -21,20 +21,12 @@ public class DistillationTowerRecipeSerializer extends IERecipeSerializer<Distil
 	
 	//@formatter:off
 	public static final DualMapCodec<RegistryFriendlyByteBuf, DistillationTowerRecipe> CODEC = DualCompositeMapCodecs.composite(
-		IEDualCodecs.FLUID_STACK.listOf().fieldOf("results"), r -> Arrays.asList(r.fluidOutput),
-		CHANCE_LIST_CODECS.optionalFieldOf("byproducts"), r -> {
-			if(r.itemOutput == null)
-				return Optional.empty();
-			return Optional.of(Arrays.asList(r.itemOutput));
-		},
-		IEDualCodecs.SIZED_FLUID_INGREDIENT.fieldOf("input"), r -> r.input,
+		IEDualCodecs.FLUID_STACK.listOf().fieldOf("results"), MultiblockRecipe::getFluidOutputs,
+		CHANCE_LIST_CODECS.optionalFieldOf("byproducts"), r -> Optional.of(r.getItemOutput()),
+		IEDualCodecs.SIZED_FLUID_INGREDIENT.fieldOf("input"), DistillationTowerRecipe::getInputFluid,
 		DualCodecs.INT.fieldOf("energy"), MultiblockRecipe::getBaseEnergy,
 		DualCodecs.INT.fieldOf("time"), MultiblockRecipe::getBaseTime,
-		(fluidOutput, itemOutput, input, energy, time) -> {
-			FluidStack[] fOut = fluidOutput.toArray(FluidStack[]::new);
-			List<StackWithChance> sOut = itemOutput.orElse(null);
-			return new DistillationTowerRecipe(fOut, sOut, input, energy, time);
-		}
+		DistillationTowerRecipe::new
 	);
 	//@formatter:on
 	

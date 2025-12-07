@@ -84,7 +84,7 @@ public class DistillationRecipeCategory extends IPRecipeCategory<DistillationTow
 			builder.addSlot(RecipeIngredientRole.INPUT, 11, 21)
 				.setFluidRenderer(outputTotal, false, 16, 47)
 				.setOverlay(this.tankOverlay, -2, -2)
-				.addIngredients(NeoForgeTypes.FLUID_STACK, Arrays.asList(recipe.input.getFluids()));
+				.addIngredients(NeoForgeTypes.FLUID_STACK, Arrays.asList(recipe.getInputFluid().getFluids()));
 		}
 		
 		IRecipeSlotBuilder itemOutput = builder.addSlot(RecipeIngredientRole.OUTPUT, 77, 37)
@@ -98,9 +98,9 @@ public class DistillationRecipeCategory extends IPRecipeCategory<DistillationTow
 		private final Map<ResourceLocation, Float> map = new HashMap<>();
 		
 		public TooltipHandler(DistillationTowerRecipe recipe){
-			StackWithChance[] list = recipe.itemOutput;
-			if(list != null){
-				for(StackWithChance stack: list){
+			List<StackWithChance> itemOutput = recipe.getItemOutput();
+			if(!itemOutput.isEmpty()){
+				for(StackWithChance stack: itemOutput){
 					this.map.put(RegistryUtils.getRegistryNameOf(stack.stack().get().getItem()), stack.chance());
 				}
 			}
