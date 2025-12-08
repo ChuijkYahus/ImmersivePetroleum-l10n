@@ -8,6 +8,8 @@ import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.Event;
 
+import javax.annotation.Nullable;
+
 /**
  * Based on the old events from Flaxbeard
  *
@@ -16,7 +18,7 @@ import net.neoforged.bus.api.Event;
 public class ProjectorEvent extends Event{
 	
 	public static class PlaceBlock extends ProjectorEvent{
-		public PlaceBlock(IMultiblock multiblock, Level templateWorld, BlockPos templatePos, Level world, BlockPos worldPos, BlockState state, Rotation rotation){
+		public PlaceBlock(IMultiblock multiblock, @Nullable Level templateWorld, BlockPos templatePos, Level world, BlockPos worldPos, BlockState state, Rotation rotation){
 			super(multiblock, templateWorld, templatePos, world, worldPos, state, rotation);
 		}
 		
@@ -30,13 +32,13 @@ public class ProjectorEvent extends Event{
 	}
 	
 	public static class PlaceBlockPost extends ProjectorEvent{
-		public PlaceBlockPost(IMultiblock multiblock, Level templateWorld, BlockPos templatePos, Level world, BlockPos worldPos, BlockState state, Rotation rotation){
+		public PlaceBlockPost(IMultiblock multiblock, @Nullable Level templateWorld, BlockPos templatePos, Level world, BlockPos worldPos, BlockState state, Rotation rotation){
 			super(multiblock, templateWorld, templatePos, world, worldPos, state, rotation);
 		}
 	}
 	
 	public static class RenderBlock extends ProjectorEvent{
-		public RenderBlock(IMultiblock multiblock, Level templateWorld, BlockPos templatePos, Level world, BlockPos worldPos, BlockState state, Rotation rotation){
+		public RenderBlock(IMultiblock multiblock, @Nullable Level templateWorld, BlockPos templatePos, Level world, BlockPos worldPos, BlockState state, Rotation rotation){
 			super(multiblock, templateWorld, templatePos, world, worldPos, state, rotation);
 		}
 		
@@ -51,13 +53,13 @@ public class ProjectorEvent extends Event{
 	
 	protected IMultiblock multiblock;
 	protected Level realWorld;
-	protected Level templateWorld;
+	protected @Nullable Level templateWorld;
 	protected Rotation rotation;
 	protected BlockPos worldPos;
 	protected BlockPos templatePos;
 	protected BlockState state;
 	
-	public ProjectorEvent(IMultiblock multiblock, Level templateWorld, BlockPos templatePos, Level world, BlockPos worldPos, BlockState state, Rotation rotation){
+	public ProjectorEvent(IMultiblock multiblock, @Nullable Level templateWorld, BlockPos templatePos, Level world, BlockPos worldPos, BlockState state, Rotation rotation){
 		super();
 		this.multiblock = multiblock;
 		this.realWorld = world;
@@ -76,6 +78,7 @@ public class ProjectorEvent extends Event{
 		return this.realWorld;
 	}
 	
+	@Nullable
 	public Level getTemplateWorld(){
 		return this.templateWorld;
 	}
@@ -96,8 +99,12 @@ public class ProjectorEvent extends Event{
 		return this.state;
 	}
 	
-	/** Always returns the BlockState found in the Template */
+	/** Returns the BlockState found in the Template, or null on server-side. */
+	@Nullable
 	public BlockState getTemplateState(){
+		if(this.templateWorld == null)
+			return null;
+		
 		return this.templateWorld.getBlockState(this.templatePos);
 	}
 }
