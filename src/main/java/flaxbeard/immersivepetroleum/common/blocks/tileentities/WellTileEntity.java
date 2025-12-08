@@ -277,8 +277,8 @@ public class WellTileEntity extends IPTileEntityBase implements IPCommonTickable
 		}
 		
 		this.selfDestruct = true;
-		this.selfDestructTimer = 100;
-		//this.selfDestructTimer = 6000; // 5 Minutes
+		//this.selfDestructTimer = 100;
+		this.selfDestructTimer = 6000; // 5 Minutes
 	}
 	
 	public void abortSelfDestructSequence(){

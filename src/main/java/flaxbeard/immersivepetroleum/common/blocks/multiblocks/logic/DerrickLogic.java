@@ -104,7 +104,7 @@ public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableCom
 	}
 	
 	//@formatter:off
-	private static final BlockState[] PARTICLESTATES = new BlockState[]{
+	private static final BlockState[] PARTICLE_STATES = new BlockState[]{
 			Blocks.STONE.defaultBlockState(),
 			Blocks.GRANITE.defaultBlockState(),
 			Blocks.GRAVEL.defaultBlockState(),
@@ -120,13 +120,6 @@ public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableCom
 		final State state = context.getState();
 		final IMultiblockLevel level = context.getLevel();
 		
-		/*
-		if(state.level == null)
-			state.level = level.getRawLevel();
-		if(state.originPos == null)
-			state.originPos = level.getAbsoluteOrigin();
-		*/
-		
 		if(state.drilling){
 			state.rotation += 10;
 			state.rotation %= 2160; // 360 * 6
@@ -134,13 +127,13 @@ public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableCom
 			double x = (level.toAbsolute(IPContent.Multiblock.DERRICK.masterPosInMB()).getX() + 0.5);
 			double y = (level.toAbsolute(IPContent.Multiblock.DERRICK.masterPosInMB()).getY() + 1.0);
 			double z = (level.toAbsolute(IPContent.Multiblock.DERRICK.masterPosInMB()).getZ() + 0.5);
-			int r = level.getRawLevel().random.nextInt(PARTICLESTATES.length);
+			int r = level.getRawLevel().random.nextInt(PARTICLE_STATES.length);
 			for(int i = 0;i < 5;i++){
 				float xa = (level.getRawLevel().random.nextFloat() - 0.5F) * 10.0F;
 				float ya = 5.0F;
 				float za = (level.getRawLevel().random.nextFloat() - 0.5F) * 10.0F;
 				
-				level.getRawLevel().addParticle(new BlockParticleOption(ParticleTypes.BLOCK, PARTICLESTATES[r]), x, y, z, xa, ya, za);
+				level.getRawLevel().addParticle(new BlockParticleOption(ParticleTypes.BLOCK, PARTICLE_STATES[r]), x, y, z, xa, ya, za);
 			}
 		}
 		
@@ -523,14 +516,29 @@ public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableCom
 		return LazyOptional.empty();
 	}
 	
+	public void onRemoved(IMultiblockContext<State> context){
+		if(context.getLevel().getRawLevel().isClientSide)
+			return;
+		
+		IMultiblockLevel mbLevel = context.getLevel();
+		Level rawLevel = mbLevel.getRawLevel();
+		
+		WellTileEntity well = context.getState().getWell(mbLevel, mbLevel.toRelative(IPContent.Multiblock.DERRICK.masterPosInMB()));
+		if(well != null && !well.drillingCompleted){
+			if(well.wellPipeLength > 0){
+				well.startSelfDestructSequence();
+			}else{
+				rawLevel.setBlockAndUpdate(well.getBlockPos(), Blocks.BEDROCK.defaultBlockState());
+			}
+		}
+	}
+	
 	@Override
 	public Function<BlockPos, VoxelShape> shapeGetter(ShapeType forType){
 		return DerrickShape.GETTER;
 	}
 	
-	// TODO
 	public static class State implements IMultiblockState{
-		
 		public final AveragingEnergyStorage energy = new AveragingEnergyStorage(16000);
 		public final RedstoneControl.RSState rsState = RedstoneControl.RSState.enabledByDefault();
 		

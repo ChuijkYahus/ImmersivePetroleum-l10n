@@ -2,10 +2,16 @@ package flaxbeard.immersivepetroleum.common.blocks.multiblocks;
 
 import blusunrize.immersiveengineering.api.ApiUtils;
 import blusunrize.immersiveengineering.api.multiblocks.ClientMultiblocks;
+import blusunrize.immersiveengineering.api.multiblocks.blocks.env.IMultiblockBEHelper;
+import blusunrize.immersiveengineering.api.multiblocks.blocks.env.IMultiblockBEHelperMaster;
+import blusunrize.immersiveengineering.api.multiblocks.blocks.env.IMultiblockContext;
+import blusunrize.immersiveengineering.api.multiblocks.blocks.logic.IMultiblockBE;
+import blusunrize.immersiveengineering.api.multiblocks.blocks.logic.IMultiblockLogic;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import flaxbeard.immersivepetroleum.client.utils.MCUtil;
 import flaxbeard.immersivepetroleum.common.IPContent;
+import flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.DerrickLogic;
 import flaxbeard.immersivepetroleum.common.util.ResourceUtils;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -13,7 +19,10 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.client.model.data.ModelData;
 
 import javax.annotation.Nonnull;
@@ -41,6 +50,21 @@ public class DerrickMultiblock extends IPTemplateMultiblock{
 	@Override
 	public void initializeClient(Consumer<ClientMultiblocks.MultiblockManualData> consumer){
 		consumer.accept(new DerrickMultiblockProperties());
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	protected void prepareBlockForDisassembly(@Nonnull Level world, @Nonnull BlockPos pos){
+		super.prepareBlockForDisassembly(world, pos);
+		
+		BlockEntity be = world.getBlockEntity(pos);
+		if(be instanceof IMultiblockBE<?> mbBE && mbBE.getHelper() instanceof IMultiblockBEHelperMaster<?> masterHelper){
+			if(masterHelper.getMultiblock().logic() instanceof DerrickLogic logic){
+				IMultiblockContext<DerrickLogic.State> ctx = (IMultiblockContext<DerrickLogic.State>) masterHelper.getContext();
+				
+				logic.onRemoved(ctx);
+			}
+		}
 	}
 	
 	public static class DerrickMultiblockProperties extends IPClientMultiblockProperties{
