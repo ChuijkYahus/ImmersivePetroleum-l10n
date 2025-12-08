@@ -1,7 +1,9 @@
-LOCALIZATION
-	- zh_CN: 3TUSK, DYColdWind
-	- de_DE: Vexatos, TwistedGate
-	- ru_RU: McModder, lBlitzl
-	- ja_JP: aiun
-	- es_es: Nekrodamus(FrannDzs)
-	- ko_KR: Taki_B(PixelQuest), PixelVoxel(PixelQuest)
+# Localization
+`cs_CZ`: RomanPlayer22  
+`de_DE`: Vexatos, TwistedGate  
+`en_GB`: Midnighttigger  
+`es_ES`: Nekrodamus(FrannDzs)  
+`ja_JP`: aiun, koh-gh  
+`ko_KR`: Taki_B(PixelQuest), PixelVoxel(PixelQuest)  
+`ru_RU`: McModder, lBlitzl, MagistrDjo  
+`zh_CN`: 3TUSK, DYColdWind, ChuijkYahus  
