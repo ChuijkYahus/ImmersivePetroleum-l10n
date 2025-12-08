@@ -318,16 +318,6 @@ public class ProjectorItem extends IPItemBase implements IUpgradeableTool{
 						return false; // Don't ever skip a step.
 					};
 					
-					/*
-						FIXME MultiblockProjection can NOT be called on Dedicated Servers anymore!!!
-						TemplateWorldCreator uses ClientLevel for some fucking reason.
-					*/
-					if(playerIn instanceof ServerPlayer serverPlayer && serverPlayer.server instanceof DedicatedServer){
-						String warning = "Due to issues Creative Placement on Dedicated Servers is Disabled!";
-						playerIn.displayClientMessage(Component.literal(warning).withStyle(ChatFormatting.RED), true);
-						return InteractionResult.SUCCESS;
-					}
-					
 					MultiblockProjection projection = new MultiblockProjection(world, settings.getMultiblock());
 					projection.setFlip(settings.isMirrored());
 					projection.setRotation(settings.getRotation());
