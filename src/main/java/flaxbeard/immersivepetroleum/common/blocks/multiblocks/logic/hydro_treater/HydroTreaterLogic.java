@@ -21,6 +21,7 @@ import flaxbeard.immersivepetroleum.api.crafting.HighPressureRefineryRecipe;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.IReadWriteNBT;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.shapes.HydroTreaterShape;
 import flaxbeard.immersivepetroleum.common.util.FluidHelper;
+import flaxbeard.immersivepetroleum.common.util.inventory.FluidTankFiltered;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -31,10 +32,10 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.fluids.FluidUtil;
 import net.neoforged.neoforge.fluids.IFluidTank;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
-import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 
 import java.util.function.Function;
 
@@ -169,11 +170,12 @@ public class HydroTreaterLogic implements IMultiblockLogic<State>, IServerTickab
 	}
 	
 	public static class State implements IMultiblockState, ProcessContext.ProcessContextInMachine<HighPressureRefineryRecipe>{
+		public static final int ENERGY_STORAGE_CAPACITY = 8000;
 		
-		public final AveragingEnergyStorage energy = new AveragingEnergyStorage(8000);
+		public final AveragingEnergyStorage energy = new AveragingEnergyStorage(ENERGY_STORAGE_CAPACITY);
 		public final RedstoneControl.RSState rsState = RedstoneControl.RSState.enabledByDefault();
 		
-		public final Tanks tanks = new Tanks();
+		public final Tanks tanks = Tanks.server();
 		
 		public final MultiblockProcessor.InMachineProcessor<HighPressureRefineryRecipe> processor;
 		
@@ -229,7 +231,7 @@ public class HydroTreaterLogic implements IMultiblockLogic<State>, IServerTickab
 		
 		@Override
 		public IFluidTank[] getInternalTanks(){
-			return this.tanks.asArray();
+			return this.tanks.array();
 		}
 		
 		@Override
@@ -248,34 +250,75 @@ public class HydroTreaterLogic implements IMultiblockLogic<State>, IServerTickab
 		}
 	}
 	
-	// TODO Rewrite this
-	public record Tanks(FluidTank primary, FluidTank secondary, FluidTank output) implements IReadWriteNBT{
-		public Tanks(){
-			this(
-				new FluidTank(12000, fluidStack -> HighPressureRefineryRecipe.hasRecipeWithInput(fluidStack, true)),
-				new FluidTank(12000, fluidStack -> HighPressureRefineryRecipe.hasRecipeWithSecondaryInput(fluidStack, true)),
-				new FluidTank(12000)
+	public static class Tanks implements IReadWriteNBT{
+		public static final int CAPACITY = 12 * FluidType.BUCKET_VOLUME;
+		
+		public static Tanks server(){
+			//@formatter:off
+			return new Tanks(
+				new FluidTankFiltered(CAPACITY, fluidStack -> HighPressureRefineryRecipe.hasRecipeWithInput(fluidStack, true)),
+				new FluidTankFiltered(CAPACITY, fluidStack -> HighPressureRefineryRecipe.hasRecipeWithSecondaryInput(fluidStack, true)),
+				new FluidTankFiltered(CAPACITY)
 			);
+			//@formatter:on
 		}
 		
-		public IFluidTank[] asArray(){
-			return new IFluidTank[]{primary(), secondary(), output()};
+		public static Tanks client(){
+			//@formatter:off
+			return new Tanks(
+				new FluidTankFiltered(Tanks.CAPACITY),
+				new FluidTankFiltered(Tanks.CAPACITY),
+				new FluidTankFiltered(Tanks.CAPACITY)
+			);
+			//@formatter:on
+		}
+		
+		private final FluidTankFiltered primary;
+		private final FluidTankFiltered secondary;
+		private final FluidTankFiltered output;
+		private final IFluidTank[] array;
+		
+		private Tanks(FluidTankFiltered primary, FluidTankFiltered secondary, FluidTankFiltered output){
+			this.primary = primary;
+			this.secondary = secondary;
+			this.output = output;
+			this.array = new IFluidTank[]{
+				primary,
+				secondary,
+				output
+			};
 		}
 		
 		@Override
 		public void readNBT(CompoundTag nbt, HolderLookup.Provider provider){
-			this.primary.readFromNBT(provider, nbt.getCompound("primary"));
-			this.secondary.readFromNBT(provider, nbt.getCompound("secondary"));
-			this.output.readFromNBT(provider, nbt.getCompound("output"));
+			this.primary.readFromNBT(nbt.getCompound("primary"), provider);
+			this.secondary.readFromNBT(nbt.getCompound("secondary"), provider);
+			this.output.readFromNBT(nbt.getCompound("output"), provider);
 		}
 		
 		@Override
 		public CompoundTag writeNBT(HolderLookup.Provider provider){
 			CompoundTag nbt = new CompoundTag();
-			nbt.put("primary", this.primary.writeToNBT(provider, new CompoundTag()));
-			nbt.put("secondary", this.secondary.writeToNBT(provider, new CompoundTag()));
-			nbt.put("output", this.output.writeToNBT(provider, new CompoundTag()));
+			nbt.put("primary", this.primary.writeToNBT(new CompoundTag(), provider));
+			nbt.put("secondary", this.secondary.writeToNBT(new CompoundTag(), provider));
+			nbt.put("output", this.output.writeToNBT(new CompoundTag(), provider));
 			return nbt;
+		}
+		
+		public FluidTankFiltered primary(){
+			return this.primary;
+		}
+		
+		public FluidTankFiltered secondary(){
+			return this.secondary;
+		}
+		
+		public FluidTankFiltered output(){
+			return this.output;
+		}
+		
+		public IFluidTank[] array(){
+			return this.array;
 		}
 	}
 }

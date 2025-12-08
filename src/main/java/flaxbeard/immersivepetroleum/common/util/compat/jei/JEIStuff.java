@@ -3,9 +3,9 @@ package flaxbeard.immersivepetroleum.common.util.compat.jei;
 import flaxbeard.immersivepetroleum.api.crafting.CokerUnitRecipe;
 import flaxbeard.immersivepetroleum.api.crafting.DistillationTowerRecipe;
 import flaxbeard.immersivepetroleum.api.crafting.HighPressureRefineryRecipe;
-import flaxbeard.immersivepetroleum.client.gui.CokerUnitScreen;
-import flaxbeard.immersivepetroleum.client.gui.DistillationTowerScreen;
-import flaxbeard.immersivepetroleum.client.gui.HydrotreaterScreen;
+import flaxbeard.immersivepetroleum.client.gui.machines.IPContainerScreen_CokerUnit;
+import flaxbeard.immersivepetroleum.client.gui.machines.IPContainerScreen_DistillationTower;
+import flaxbeard.immersivepetroleum.client.gui.machines.IPContainerScreen_Hydrotreater;
 import flaxbeard.immersivepetroleum.common.IPContent;
 import flaxbeard.immersivepetroleum.common.util.ResourceUtils;
 import mezz.jei.api.IModPlugin;
@@ -74,14 +74,14 @@ public class JEIStuff implements IModPlugin{
 	
 	@Override
 	public void registerGuiHandlers(IGuiHandlerRegistration registration){
-		registration.addRecipeClickArea(DistillationTowerScreen.class, 85, 19, 18, 51, this.distillation_type);
+		registration.addRecipeClickArea(IPContainerScreen_DistillationTower.class, 85, 19, 18, 51, this.distillation_type);
 		
 		//Have to use four of these so that they don't overlap
-		registration.addRecipeClickArea(CokerUnitScreen.class, 59, 21, 15, 67, this.coker_type);
-		registration.addRecipeClickArea(CokerUnitScreen.class, 64, 63, 73, 25, this.coker_type);
-		registration.addRecipeClickArea(CokerUnitScreen.class, 127, 21, 15, 67, this.coker_type);
-		registration.addRecipeClickArea(CokerUnitScreen.class, 81, 21, 39, 42, this.coker_type);
+		registration.addRecipeClickArea(IPContainerScreen_CokerUnit.class, 59, 21, 15, 67, this.coker_type);
+		registration.addRecipeClickArea(IPContainerScreen_CokerUnit.class, 64, 63, 73, 25, this.coker_type);
+		registration.addRecipeClickArea(IPContainerScreen_CokerUnit.class, 127, 21, 15, 67, this.coker_type);
+		registration.addRecipeClickArea(IPContainerScreen_CokerUnit.class, 81, 21, 39, 42, this.coker_type);
 		
-		registration.addRecipeClickArea(HydrotreaterScreen.class, 55, 9, 32, 51, this.recovery_type);
+		registration.addRecipeClickArea(IPContainerScreen_Hydrotreater.class, 55, 9, 32, 51, this.recovery_type);
 	}
 }

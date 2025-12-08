@@ -5,6 +5,7 @@ import blusunrize.immersiveengineering.api.multiblocks.blocks.env.IMultiblockLev
 import blusunrize.immersiveengineering.common.util.Utils;
 import flaxbeard.immersivepetroleum.ImmersivePetroleum;
 import flaxbeard.immersivepetroleum.api.crafting.CokerUnitRecipe;
+import flaxbeard.immersivepetroleum.common.util.inventory.FluidTankFiltered;
 import net.minecraft.ResourceLocationException;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -18,7 +19,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
-import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -47,26 +47,26 @@ public class CokingChamber{
 	}
 	
 	@Nullable
-	RecipeHolder<CokerUnitRecipe> rHolder = null;
-	State state = State.STANDBY;
-	FluidTank tank;
+	protected RecipeHolder<CokerUnitRecipe> rHolder = null;
+	protected State state = State.STANDBY;
+	protected FluidTankFiltered tank;
 	
 	/** Total capacity. inputAmount + outputAmount, should not go above this */
-	int capacity;
+	protected int capacity;
 	/** This has a ratio of X:1 to the input amount. (X amount of items always adds 1) */
-	int inputAmount = 0;
+	protected int inputAmount = 0;
 	/** This has a ratio of 1:1 to the output amount. */
-	int outputAmount = 0;
+	protected int outputAmount = 0;
 	
-	int timer = 0;
+	protected int timer = 0;
 	
 	public CokingChamber(int itemCapacity, int fluidCapacity){
 		this.capacity = itemCapacity;
-		this.tank = new FluidTank(fluidCapacity);
+		this.tank = new FluidTankFiltered(fluidCapacity);
 	}
 	
 	public CokingChamber readFromNBT(CompoundTag nbt, HolderLookup.Provider provider){
-		this.tank.readFromNBT(provider, nbt.getCompound("tank"));
+		this.tank.readFromNBT(nbt.getCompound("tank"), provider);
 		this.timer = nbt.getInt("timer");
 		this.inputAmount = nbt.getInt("input");
 		this.outputAmount = nbt.getInt("output");
@@ -90,7 +90,7 @@ public class CokingChamber{
 	}
 	
 	public CompoundTag writeToNBT(CompoundTag nbt, HolderLookup.Provider provider){
-		nbt.put("tank", this.tank.writeToNBT(provider, new CompoundTag()));
+		nbt.put("tank", this.tank.writeToNBT(new CompoundTag(), provider));
 		nbt.putInt("timer", this.timer);
 		nbt.putInt("input", this.inputAmount);
 		nbt.putInt("output", this.outputAmount);
@@ -153,7 +153,7 @@ public class CokingChamber{
 	
 	/** returns the combined I/O Amount */
 	public int getTotalAmount(){
-		return this.inputAmount + this.outputAmount;
+		return getInputAmount() + getOutputAmount();
 	}
 	
 	public int getTimer(){
@@ -190,7 +190,7 @@ public class CokingChamber{
 		return this.rHolder.value().getOutputItem();
 	}
 	
-	public FluidTank getTank(){
+	public FluidTankFiltered getTank(){
 		return this.tank;
 	}
 	
@@ -234,7 +234,7 @@ public class CokingChamber{
 			}
 			case DRAIN_RESIDUE -> {
 				if(this.tank.getFluidAmount() > 0){
-					FluidTank buffer = logicState.bufferTanks.output();
+					FluidTankFiltered buffer = logicState.bufferTanks.output();
 					FluidStack drained = this.tank.drain(25, IFluidHandler.FluidAction.SIMULATE);
 					
 					int accepted = buffer.fill(drained, IFluidHandler.FluidAction.SIMULATE);
@@ -302,7 +302,7 @@ public class CokingChamber{
 					update = true;
 				}
 				
-				if(this.outputAmount <= 0 && this.tank.isEmpty()){
+				if(this.outputAmount <= 0 && this.tank.getFluid().isEmpty()){
 					this.rHolder = null;
 					setStage(State.STANDBY);
 					

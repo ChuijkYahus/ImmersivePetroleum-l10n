@@ -139,6 +139,9 @@
 	"item.immersivepetroleum.shader.name.cube1": "Companion Cube",
 	
 	"_comment": "################## GUI ##################",
+
+	"gui.immersivepetroleum.tank.input": "Input Tank",
+	"gui.immersivepetroleum.tank.output": "Output Tank",
 	
 	"gui.immersivepetroleum.projector.search": "Search",
 	"gui.immersivepetroleum.projector.button.confirm": "Confirm",
@@ -146,16 +149,19 @@
 	"gui.immersivepetroleum.projector.button.mirror": "Mirror",
 	"gui.immersivepetroleum.projector.button.rcw": "Rotate Clockwise",
 	"gui.immersivepetroleum.projector.button.rccw": "Rotate Counter-Clockwise",
+
+	"gui.immersivepetroleum.hydrotreater.tank.primary": "Primary Tank",
+	"gui.immersivepetroleum.hydrotreater.tank.secondary": "Secondary Tank",
 	
 	"gui.immersivepetroleum.derrick.msg.disabled": "Disabled via Controller",
 	"gui.immersivepetroleum.derrick.msg.drilling": "Drilling... %1$s",
-	"gui.immersivepetroleum.derrick.msg.out_of_pipes": "Out Of Pipes",
+	"gui.immersivepetroleum.derrick.msg.out_of_pipes": "Out of Pipes",
 	"gui.immersivepetroleum.derrick.msg.not_enough_power": "Not enough Power",
 	"gui.immersivepetroleum.derrick.msg.missing": "Missing %1$s",
 	"gui.immersivepetroleum.derrick.msg.completed": "Drilling Completed!<br>Have a nice day :3",
 	"gui.immersivepetroleum.derrick.msg.safety_valve": "! WARNING !<br>SAFETY VALVE OPEN<br>PRESSURE TOO HIGH",
-	"gui.immersivepetroleum.derrick.msg.water_table": "! WARNING !<br>Below water table!<br>Flooded with water!",
-	"gui.immersivepetroleum.derrick.msg.set_in_stone": "Set In Stone",
+	"gui.immersivepetroleum.derrick.msg.water_table": "! WARNING !<br>Below water table<br>Flooded with water",
+	"gui.immersivepetroleum.derrick.msg.set_in_stone": "Set in Stone",
 	"gui.immersivepetroleum.derrick.msg.config": "Config",
 	
 	"gui.immersivepetroleum.derrick.settings.button.set": "Set",
@@ -174,6 +180,7 @@
 	"gui.immersivepetroleum.dirs.east": "East",
 	"gui.immersivepetroleum.dirs.south": "South",
 	"gui.immersivepetroleum.dirs.west": "West",
+	"gui.immersivepetroleum.empty": "Empty",
 	
 	"gui.immersivepetroleum.seismicsurvey.worldcoords": "World: x%1$d z%2$d",
 	"gui.immersivepetroleum.seismicsurvey.takenhere": "Sample was taken here.",
@@ -287,7 +294,7 @@
 	"_comment": "################## Subtitles ##################",
 	
 	"subtitle.immersivepetroleum.projector": "Projector whirring",
-	"subtitle.immersivepetroleum.flarestack_fire":"Flarestack fire wooshing",
+	"subtitle.immersivepetroleum.flarestack_fire": "Flarestack fire whooshing",
 	
 	"_comment": "##################### JEI #####################",
 	"desc.immersivepetroleum.compat.jei.distillation.byproduct": "Secondary Output"

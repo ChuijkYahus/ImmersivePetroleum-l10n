@@ -18,12 +18,14 @@ import java.util.function.Supplier;
 public class IPClientConfig{
 	public static final Miscellaneous MISCELLANEOUS;
 	public static final GridColors GRID_COLORS;
+	public static final DerrickConsole DERRICK_CONSOLE;
 	
 	public static final ModConfigSpec ALL;
 	
 	static{
 		ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
 		GRID_COLORS = new GridColors(builder);
+		DERRICK_CONSOLE = new DerrickConsole(builder);
 		MISCELLANEOUS = new Miscellaneous(builder);
 		ALL = builder.build();
 	}
@@ -65,6 +67,46 @@ public class IPClientConfig{
 		
 		public int getPipeColorPerforatedFixed(){
 			return this.pipe_perforated_fixed_color.get();
+		}
+	}
+	
+	public static class DerrickConsole{
+		private static final Logger log = LogManager.getLogger(ImmersivePetroleum.MODID + "/ClientConfig/DerrickConsole");
+		
+		final VarCache<Boolean> use_old_style;
+		final VarCache<Integer> text_color_error;
+		final VarCache<Integer> text_color_normal;
+		DerrickConsole(ModConfigSpec.Builder builder){
+			builder.push("DerrickConsole");
+			
+			ModConfigSpec.BooleanValue use_old_style = builder
+				.comment("Use the old text style.", "Default: false")
+				.define("old_school", false);
+			this.use_old_style = new VarCache<>(use_old_style::getAsBoolean);
+			
+			ConfigValue<String> text_color_normal = builder
+				.comment("Normal Text Color. (Hex RGB)", "Default: FF9900")
+				.define("text_color_normal", "FF9900", o -> hexValidator(log, o, "text_color_normal"));
+			this.text_color_normal = new VarCache<>(() -> Integer.parseInt(text_color_normal.get(), 16));
+			
+			ConfigValue<String> text_color_error = builder
+				.comment("Error Text Color. (Hex RGB)", "Default: EF0000")
+				.define("text_color_error", "EF0000", o -> hexValidator(log, o, "text_color_normal"));
+			this.text_color_error = new VarCache<>(() -> Integer.parseInt(text_color_error.get(), 16));
+			
+			builder.pop();
+		}
+		
+		public boolean useOldSchool(){
+			return use_old_style.get();
+		}
+		
+		public int getTextColorNormal(){
+			return text_color_normal.get();
+		}
+		
+		public int getTextColorError(){
+			return text_color_error.get();
 		}
 	}
 	

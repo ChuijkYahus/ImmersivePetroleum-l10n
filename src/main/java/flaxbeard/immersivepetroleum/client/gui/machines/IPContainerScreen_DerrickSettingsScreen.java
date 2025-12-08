@@ -1,10 +1,9 @@
-package flaxbeard.immersivepetroleum.client.gui;
+package flaxbeard.immersivepetroleum.client.gui.machines;
 
 import blusunrize.immersiveengineering.api.multiblocks.blocks.logic.IMultiblockBE;
 import flaxbeard.immersivepetroleum.client.gui.elements.PipeConfig;
 import flaxbeard.immersivepetroleum.common.IPContent;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.DerrickLogic;
-import flaxbeard.immersivepetroleum.common.gui.DerrickContainer;
 import flaxbeard.immersivepetroleum.common.network.MessageDerrick;
 import flaxbeard.immersivepetroleum.common.util.ResourceUtils;
 import flaxbeard.immersivepetroleum.common.util.Utils;
@@ -24,9 +23,8 @@ import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 
-public class DerrickSettingsScreen extends Screen{
+public class IPContainerScreen_DerrickSettingsScreen extends Screen{
 	static final ResourceLocation GUI_TEXTURE = ResourceUtils.ip("textures/gui/derrick_settings.png");
 	
 	private final int xSize = 158;
@@ -35,8 +33,8 @@ public class DerrickSettingsScreen extends Screen{
 	private int guiTop;
 	private PipeConfig pipeConfig;
 	
-	final DerrickScreen derrickScreen;
-	public DerrickSettingsScreen(DerrickScreen derrickScreen){
+	final IPContainerScreen_Derrick derrickScreen;
+	public IPContainerScreen_DerrickSettingsScreen(IPContainerScreen_Derrick derrickScreen){
 		super(Component.literal("DerrickSettings"));
 		this.derrickScreen = derrickScreen;
 	}
@@ -45,8 +43,7 @@ public class DerrickSettingsScreen extends Screen{
 	protected void init(){
 		this.guiLeft = (this.width - this.xSize) / 2;
 		this.guiTop = (this.height - this.ySize) / 2;
-		
-		BlockEntity tile = this.derrickScreen.getMenu().level.getBlockEntity(DerrickContainer.getPos(this.derrickScreen.getMenu().pos.get()));
+		BlockEntity tile = this.derrickScreen.getMenu().level.getBlockEntity(this.derrickScreen.getMenu().pos());
 		if(tile instanceof IMultiblockBE<?> be && be.getHelper().getState() instanceof DerrickLogic.State){
 			
 			this.pipeConfig = new PipeConfig(be.getHelper().asType(IPContent.Multiblock.DERRICK), this.guiLeft + 10, this.guiTop + 10, 138, 138, 69, 69, 2);
@@ -63,7 +60,7 @@ public class DerrickSettingsScreen extends Screen{
 			}, halfSize - 20, this.ySize - 25, 40, 20);
 			
 			addButton("close", b -> {
-				DerrickSettingsScreen.this.onClose();
+				IPContainerScreen_DerrickSettingsScreen.this.onClose();
 			}, halfSize + 25, this.ySize - 25, 40, 20);
 		}
 	}
@@ -124,7 +121,7 @@ public class DerrickSettingsScreen extends Screen{
 				tooltip.add(d.withStyle(ChatFormatting.UNDERLINE));
 			}
 			
-			BlockEntity tile = this.derrickScreen.getMenu().level.getBlockEntity(DerrickContainer.getPos(this.derrickScreen.getMenu().pos.get()));
+			BlockEntity tile = this.derrickScreen.getMenu().level.getBlockEntity(this.derrickScreen.getMenu().pos());
 			if(tile instanceof IMultiblockBE<?> be && be.getHelper().getState() instanceof DerrickLogic.State){
 				ColumnPos tilePos = Utils.toColumnPos(be.getHelper().getPositionInMB());
 				tooltip.add(Component.literal(String.format(Locale.ENGLISH, "X: %d §7(%d)", (tilePos.x() + px), px)));

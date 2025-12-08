@@ -1,10 +1,8 @@
 package flaxbeard.immersivepetroleum.common.gui;
 
 import flaxbeard.immersivepetroleum.api.crafting.CokerUnitRecipe;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.fluids.FluidUtil;
 import net.neoforged.neoforge.fluids.capability.IFluidHandlerItem;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.SlotItemHandler;
@@ -26,16 +24,16 @@ public class IPSlot extends SlotItemHandler{
 	}
 	
 	@Override
-	public boolean mayPlace(ItemStack pStack){
+	public boolean mayPlace(@Nonnull ItemStack stack){
 		if(this.consumer != null){
-			return this.consumer.test(pStack);
+			return this.consumer.test(stack);
 		}
-		return super.mayPlace(pStack);
+		return super.mayPlace(stack);
 	}
 	
 	public static class ItemOutput extends IPSlot{
-		public ItemOutput(IItemHandler inventoryIn, int index, int xPosition, int yPosition){
-			super(inventoryIn, index, xPosition, yPosition);
+		public ItemOutput(IItemHandler inventoryIn, int id, int x, int y){
+			super(inventoryIn, id, x, y);
 		}
 		
 		@Override
@@ -45,12 +43,12 @@ public class IPSlot extends SlotItemHandler{
 	}
 	
 	public static class CokerInput extends IPSlot{
-		public CokerInput(AbstractContainerMenu container, IItemHandler inv, int id, int x, int y){
+		public CokerInput(IItemHandler inv, int id, int x, int y){
 			super(inv, id, x, y);
 		}
 		
 		@Override
-		public boolean mayPlace(ItemStack stack){
+		public boolean mayPlace(@Nonnull ItemStack stack){
 			return !stack.isEmpty() && CokerUnitRecipe.hasRecipeWithInput(stack, true);
 		}
 	}
@@ -63,8 +61,8 @@ public class IPSlot extends SlotItemHandler{
 		}
 		
 		@Override
-		public boolean mayPlace(@Nonnull ItemStack itemStack){
-			IFluidHandlerItem capability = itemStack.getCapability(Capabilities.FluidHandler.ITEM);
+		public boolean mayPlace(@Nonnull ItemStack stack){
+			IFluidHandlerItem capability = stack.getCapability(Capabilities.FluidHandler.ITEM);
 			if(capability != null && capability.getTanks() > 0){
 				return switch(this.filter){
 					case FULL -> !capability.getFluidInTank(0).isEmpty();

@@ -8,13 +8,12 @@ import net.minecraft.world.inventory.Slot;
 /**
  * @author TwistedGate © 2021
  */
-@SuppressWarnings("deprecation")
 // TODO Replace IEBaseContainerOld as soon as possible
-public class MultiblockAwareGuiContainer extends IEContainerMenu{
+public abstract class MultiblockAwareGuiContainer extends IEContainerMenu{
 	//static final Vec3i ONE = new Vec3i(1, 1, 1);
 	
 	//protected BlockPos templateSize;
-	public MultiblockAwareGuiContainer(MenuContext ctx, IETemplateMultiblock template){
+	protected MultiblockAwareGuiContainer(MenuContext ctx, IETemplateMultiblock template){
 		super(ctx);
 		
 		//this.templateSize = new BlockPos(template.getSize(null));

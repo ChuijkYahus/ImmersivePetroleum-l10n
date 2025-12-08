@@ -19,12 +19,11 @@ import blusunrize.immersiveengineering.common.blocks.multiblocks.process.Multibl
 import blusunrize.immersiveengineering.common.blocks.multiblocks.process.MultiblockProcessor;
 import blusunrize.immersiveengineering.common.blocks.multiblocks.process.ProcessContext;
 import blusunrize.immersiveengineering.common.fluids.ArrayFluidHandler;
-import blusunrize.immersiveengineering.common.util.Utils;
-import blusunrize.immersiveengineering.common.util.inventory.MultiFluidTank;
 import flaxbeard.immersivepetroleum.api.crafting.DistillationTowerRecipe;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.IReadWriteNBT;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.shapes.DistillationTowerShape;
 import flaxbeard.immersivepetroleum.common.util.FluidHelper;
+import flaxbeard.immersivepetroleum.common.util.inventory.FluidTankFiltered;
 import flaxbeard.immersivepetroleum.common.util.inventory.MultiFluidTankFiltered;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -40,8 +39,9 @@ import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.fluids.FluidUtil;
+import net.neoforged.neoforge.fluids.IFluidTank;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,17 +57,24 @@ public class DistillationTowerLogic implements IMultiblockLogic<State>, IServerT
 	/** Output Tank ID */
 	public static final int TANK_OUTPUT = 1;
 	
-	/** Inventory Fluid Input (Filled Bucket) */
-	public static final int INV_0 = 0;
-	
-	/** Inventory Fluid Input (Empty Bucket) */
-	public static final int INV_1 = 1;
-	
-	/** Inventory Fluid Output (Empty Bucket) */
-	public static final int INV_2 = 2;
-	
-	/** Inventory Fluid Output (Filled Bucket) */
-	public static final int INV_3 = 3;
+	public enum Inventory{
+		/** Fluid Input (Filled Bucket) */
+		INPUT_FILLED,
+		/** Fluid Input (Empty Bucket) */
+		INPUT_EMPTY,
+		/** Fluid Output (Empty Bucket) */
+		OUTPUT_EMPTY,
+		/** Fluid Output (Filled Bucket) */
+		OUTPUT_FILLED;
+		
+		public int id(){
+			return ordinal();
+		}
+		
+		public static int size(){
+			return values().length;
+		}
+	}
 	
 	/** Template-Location of the Fluid Input Port. (3 0 3) */
 	public static final CapabilityPosition Fluid_IN = new CapabilityPosition(3, 0, 3, RelativeBlockFace.LEFT);
@@ -138,56 +145,53 @@ public class DistillationTowerLogic implements IMultiblockLogic<State>, IServerT
 			state.processor.tickServer(state, level, state.wasActive);
 		}
 		
-		if(state.inventory.get(INV_0) != ItemStack.EMPTY && state.tanks.input().getFluidAmount() < state.tanks.input().getCapacity()){
-			ItemStack emptyContainer = ItemStack.EMPTY;//Utils.drainFluidContainer(state.tanks.input(), state.inventory.get(INV_0), state.inventory.get(INV_1));
+		if(state.getInventory(Inventory.INPUT_FILLED) != ItemStack.EMPTY && state.tanks.input().getFluidAmount() < state.tanks.input().getCapacity()){
+			ItemStack emptyContainer = ItemStack.EMPTY;//Utils.drainFluidContainer(state.tanks.input(), state.getInventory(Inventory.INV_0), state.getInventory(Inventory.INV_1));
 			if(!emptyContainer.isEmpty()){
-				final ItemStack inv_1_stack = state.inventory.get(INV_1);
+				final ItemStack inv_1_stack = state.getInventory(Inventory.INPUT_EMPTY);
 				
 				if(!inv_1_stack.isEmpty() && inv_1_stack.isStackable() && inv_1_stack.getCount() < inv_1_stack.getMaxStackSize()){
 					inv_1_stack.grow(emptyContainer.getCount());
 				}else if(inv_1_stack.isEmpty()){
-					state.inventory.set(INV_1, emptyContainer.copy());
+					state.setInventory(Inventory.INPUT_EMPTY, emptyContainer.copy());
 				}
 				
-				state.inventory.get(INV_0).shrink(1);
-				if(state.inventory.get(INV_0).getCount() <= 0){
-					state.inventory.set(INV_0, ItemStack.EMPTY);
+				state.getInventory(Inventory.INPUT_FILLED).shrink(1);
+				if(state.getInventory(Inventory.INPUT_FILLED).getCount() <= 0){
+					state.setInventory(Inventory.INPUT_FILLED, ItemStack.EMPTY);
 				}
 				update = true;
 			}
 		}
 		
 		if(state.tanks.output().getFluidAmount() > 0){
-			if(state.inventory.get(INV_2) != ItemStack.EMPTY){
-				
-				if(state.tanks.output().getFluidTypes() > 0){
-					MultiFluidTank outTank = state.tanks.output();
+			final MultiFluidTankFiltered outTank = state.tanks.output();
+			
+			if(state.getInventory(Inventory.OUTPUT_EMPTY) != ItemStack.EMPTY && outTank.getTanks() > 0){
+				for(int i = outTank.getTanks() - 1;i >= 0;i--){
+					FluidStack fs = outTank.getFluidInTank(i);
 					
-					for(int i = outTank.getFluidTypes() - 1;i >= 0;i--){
-						FluidStack fs = outTank.getFluidInTank(i);
-						
-						if(fs.getAmount() > 0){
-							ItemStack filledContainer = FluidHelper.fillFluidContainer(outTank, fs, state.inventory.get(INV_2), state.inventory.get(INV_3));
-							if(!filledContainer.isEmpty()){
-								ItemStack inv_3_stack = state.inventory.get(INV_3);
-								if(inv_3_stack.getCount() == 1 && !FluidHelper.isFluidContainerFull(filledContainer)){
-									state.inventory.set(INV_3, filledContainer.copy());
-								}else{
-									if(!inv_3_stack.isEmpty() && inv_3_stack.isStackable() && inv_3_stack.getCount() < inv_3_stack.getMaxStackSize()){
-										inv_3_stack.grow(filledContainer.getCount());
-									}else if(inv_3_stack.isEmpty()){
-										state.inventory.set(INV_3, filledContainer.copy());
-									}
-									
-									state.inventory.get(INV_2).shrink(1);
-									if(state.inventory.get(INV_2).getCount() <= 0){
-										state.inventory.set(INV_2, ItemStack.EMPTY);
-									}
+					if(fs.getAmount() > 0){
+						ItemStack filledContainer = FluidHelper.fillFluidContainer(outTank, fs, state.getInventory(Inventory.OUTPUT_EMPTY), state.getInventory(Inventory.OUTPUT_FILLED));
+						if(!filledContainer.isEmpty()){
+							ItemStack inv_3_stack = state.getInventory(Inventory.OUTPUT_FILLED);
+							if(inv_3_stack.getCount() == 1 && !FluidHelper.isFluidContainerFull(filledContainer)){
+								state.setInventory(Inventory.OUTPUT_FILLED, filledContainer.copy());
+							}else{
+								if(!inv_3_stack.isEmpty() && inv_3_stack.isStackable() && inv_3_stack.getCount() < inv_3_stack.getMaxStackSize()){
+									inv_3_stack.grow(filledContainer.getCount());
+								}else if(inv_3_stack.isEmpty()){
+									state.setInventory(Inventory.OUTPUT_FILLED, filledContainer.copy());
 								}
 								
-								update = true;
-								break;
+								state.getInventory(Inventory.OUTPUT_EMPTY).shrink(1);
+								if(state.getInventory(Inventory.OUTPUT_EMPTY).getCount() <= 0){
+									state.setInventory(Inventory.OUTPUT_EMPTY, ItemStack.EMPTY);
+								}
 							}
+							
+							update = true;
+							break;
 						}
 					}
 				}
@@ -198,17 +202,19 @@ public class DistillationTowerLogic implements IMultiblockLogic<State>, IServerT
 			BlockPos outPos = level.toAbsolute(Fluid_OUT.posInMultiblock()).relative(orientation.front().getOpposite());
 			update |= FluidUtil.getFluidHandler(level.getRawLevel(), outPos, orientation.front()).map(output -> {
 				boolean ret = false;
-				if(!state.tanks.input().fluids.isEmpty()){
+				if(!state.tanks.input().getFluid().isEmpty()){
 					List<FluidStack> toDrain = new ArrayList<>();
 					boolean iePipe = level.getRawLevel().getBlockEntity(outPos) instanceof IFluidPipe;
 					
 					// Tries to Output the output-fluids in parallel
-					for(FluidStack target: state.tanks.output().fluids){
+					for(int i = 0;i < outTank.getTanks();i++){
+						FluidStack target = outTank.getFluidInTank(i);
+						
 						FluidStack outStack = FluidHelper.copyFluid(target, Math.min(target.getAmount(), 100), iePipe);
 						
-						int accepted = output.fill(outStack, IFluidHandler.FluidAction.SIMULATE);
+						int accepted = output.fill(outStack, FluidAction.SIMULATE);
 						if(accepted > 0){
-							int drained = output.fill(FluidHelper.copyFluid(outStack, Math.min(outStack.getAmount(), accepted), iePipe), IFluidHandler.FluidAction.EXECUTE);
+							int drained = output.fill(FluidHelper.copyFluid(outStack, Math.min(outStack.getAmount(), accepted), iePipe), FluidAction.EXECUTE);
 							
 							toDrain.add(new FluidStack(target.getFluid(), drained));
 							ret = true;
@@ -216,7 +222,7 @@ public class DistillationTowerLogic implements IMultiblockLogic<State>, IServerT
 					}
 					
 					// If this were to be done in the for-loop it would throw a concurrent exception
-					toDrain.forEach(fluid -> state.tanks.output().drain(fluid, IFluidHandler.FluidAction.EXECUTE));
+					toDrain.forEach(fluid -> outTank.drain(fluid, FluidAction.EXECUTE));
 				}
 				
 				return ret;
@@ -248,14 +254,15 @@ public class DistillationTowerLogic implements IMultiblockLogic<State>, IServerT
 	}
 	
 	public static class State implements IMultiblockState, ProcessContext.ProcessContextInMachine<DistillationTowerRecipe>{
+		public static final int ENERGY_STORAGE_CAPACITY = 16000;
 		
-		public final AveragingEnergyStorage energy = new AveragingEnergyStorage(16000);
+		public final AveragingEnergyStorage energy = new AveragingEnergyStorage(ENERGY_STORAGE_CAPACITY);
 		public final RedstoneControl.RSState rsState = RedstoneControl.RSState.enabledByDefault();
 		
 		public final MultiblockProcessor.InMachineProcessor<DistillationTowerRecipe> processor;
 		
 		public NonNullList<ItemStack> inventory = NonNullList.withSize(4, ItemStack.EMPTY);
-		public final Tanks tanks = new Tanks();
+		public final Tanks tanks = Tanks.server();
 		
 		/** Flickering avoidance for the "On" Texture overlay */
 		public int cooldownTicks = 0;
@@ -275,14 +282,22 @@ public class DistillationTowerLogic implements IMultiblockLogic<State>, IServerT
 			return DistillationTowerRecipe.recipes.get(id).value();
 		}
 		
+		public void setInventory(Inventory inv, ItemStack stack){
+			this.inventory.set(inv.id(), stack);
+		}
+		
+		public ItemStack getInventory(Inventory inv){
+			return this.inventory.get(inv.id());
+		}
+		
 		@Override
 		public AveragingEnergyStorage getEnergy(){
 			return this.energy;
 		}
 		
 		@Override
-		public MultiFluidTankFiltered[] getInternalTanks(){
-			return this.tanks.asArray();
+		public IFluidTank[] getInternalTanks(){
+			return this.tanks.array();
 		}
 		
 		@Override
@@ -354,15 +369,38 @@ public class DistillationTowerLogic implements IMultiblockLogic<State>, IServerT
 		}
 	}
 	
-	public record Tanks(MultiFluidTankFiltered input, MultiFluidTankFiltered output) implements IReadWriteNBT{
+	public static final class Tanks implements IReadWriteNBT{
 		public static final int CAPACITY = 24 * FluidType.BUCKET_VOLUME;
 		
-		public Tanks(){
-			this(new MultiFluidTankFiltered(CAPACITY, fs -> DistillationTowerRecipe.findRecipe(fs) != null), new MultiFluidTankFiltered(CAPACITY));
+		public static Tanks server(){
+			//@formatter:off
+			return new Tanks(
+				new FluidTankFiltered(CAPACITY, fs -> DistillationTowerRecipe.findRecipe(fs) != null),
+				new MultiFluidTankFiltered(CAPACITY)
+			);
+			//@formatter:on
 		}
 		
-		public MultiFluidTankFiltered[] asArray(){
-			return new MultiFluidTankFiltered[]{input, output};
+		public static Tanks client(){
+			//@formatter:off
+			return new Tanks(
+				new FluidTankFiltered(Tanks.CAPACITY),
+				new MultiFluidTankFiltered(Tanks.CAPACITY)
+			);
+			//@formatter:on
+		}
+		
+		private final FluidTankFiltered input;
+		private final MultiFluidTankFiltered output;
+		private final IFluidTank[] array;
+		
+		private Tanks(FluidTankFiltered input, MultiFluidTankFiltered output){
+			this.input = input;
+			this.output = output;
+			this.array = new IFluidTank[]{
+				input,
+				output
+			};
 		}
 		
 		@Override
@@ -377,6 +415,18 @@ public class DistillationTowerLogic implements IMultiblockLogic<State>, IServerT
 			nbt.put("input", this.input.writeToNBT(new CompoundTag(), provider));
 			nbt.put("output", this.output.writeToNBT(new CompoundTag(), provider));
 			return nbt;
+		}
+		
+		public FluidTankFiltered input(){
+			return this.input;
+		}
+		
+		public MultiFluidTankFiltered output(){
+			return this.output;
+		}
+		
+		public IFluidTank[] array(){
+			return this.array;
 		}
 	}
 }

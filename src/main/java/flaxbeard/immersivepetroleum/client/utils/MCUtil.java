@@ -5,6 +5,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiSpriteManager;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.ParticleEngine;
@@ -12,10 +13,13 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.ModelManager;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.phys.HitResult;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
@@ -61,9 +65,17 @@ public class MCUtil{
 		return mc.getBlockRenderer();
 	}
 	
-	public static BakedModel getModel(ModelResourceLocation modelLocation){
+	public static ModelManager getModelManager(){
 		Minecraft mc = Minecraft.getInstance();
-		return mc.getBlockRenderer().getBlockModelShaper().getModelManager().getModel(modelLocation);
+		return mc.getBlockRenderer().getBlockModelShaper().getModelManager();
+	}
+	
+	public static TextureAtlasSprite getBlockSprite(ResourceLocation resourceLocation){
+		return getModelManager().getAtlas(InventoryMenu.BLOCK_ATLAS).getSprite(resourceLocation);
+	}
+	
+	public static BakedModel getModel(ModelResourceLocation modelLocation){
+		return getModelManager().getModel(modelLocation);
 	}
 	
 	public static GameRenderer getGameRenderer(){
@@ -104,5 +116,10 @@ public class MCUtil{
 	public static ItemRenderer getItemRenderer(){
 		Minecraft mc = Minecraft.getInstance();
 		return mc.getItemRenderer();
+	}
+	
+	public static GuiSpriteManager getGuiSpriteManager(){
+		Minecraft mc = Minecraft.getInstance();
+		return mc.getGuiSprites();
 	}
 }

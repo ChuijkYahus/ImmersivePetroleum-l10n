@@ -29,6 +29,7 @@ import flaxbeard.immersivepetroleum.common.cfg.IPServerConfig;
 import flaxbeard.immersivepetroleum.common.util.FluidHelper;
 import flaxbeard.immersivepetroleum.common.util.RegistryUtils;
 import flaxbeard.immersivepetroleum.common.util.Utils;
+import flaxbeard.immersivepetroleum.common.util.inventory.FluidTankFiltered;
 import net.minecraft.ResourceLocationException;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -540,7 +541,7 @@ public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableCom
 		public boolean drilling;
 		public boolean spilling;
 		private Fluid fluidSpilled = Fluids.EMPTY;
-		public final FluidTank tank;
+		public final FluidTankFiltered tank;
 		public final NonNullList<ItemStack> inventory = NonNullList.withSize(1, ItemStack.EMPTY);
 		private WellTileEntity wellCache = null;
 		
@@ -560,7 +561,7 @@ public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableCom
 			this.level = context.levelSupplier();
 			
 			Runnable markDirtyRunnable = context.getMarkDirtyRunnable();
-			this.tank = new FluidTank(8000, fluidStack -> acceptsFluid(this.level, this, this.originPos, fluidStack));
+			this.tank = new FluidTankFiltered(8000, fluidStack -> acceptsFluid(this.level, this, this.originPos, fluidStack));
 			
 			this.fluidHandler = ArrayFluidHandler.fillOnly(this.tank, markDirtyRunnable);
 			this.emptyHandler = ArrayFluidHandler.drainOnly(DUMMY_TANK, markDirtyRunnable);
@@ -583,7 +584,7 @@ public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableCom
 				this.gridStorage = PipeConfig.Grid.fromCompound(nbt.getCompound("grid"));
 			}
 			
-			this.tank.readFromNBT(provider, nbt.getCompound("tank"));
+			this.tank.readFromNBT(nbt.getCompound("tank"), provider);
 			
 			this.rsState.readSaveNBT(nbt, provider);
 			
@@ -597,7 +598,7 @@ public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableCom
 			nbt.putInt("spillflow", getReservoirFlow());
 			nbt.putString("spillingfluid", RegistryUtils.getRegistryNameOf(this.fluidSpilled).toString());
 			
-			nbt.put("tank", this.tank.writeToNBT(provider, new CompoundTag()));
+			nbt.put("tank", this.tank.writeToNBT(new CompoundTag(), provider));
 			
 			if(this.gridStorage != null){
 				nbt.put("grid", this.gridStorage.toCompound());

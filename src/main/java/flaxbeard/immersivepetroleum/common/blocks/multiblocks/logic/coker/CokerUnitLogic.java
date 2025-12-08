@@ -15,11 +15,11 @@ import blusunrize.immersiveengineering.api.multiblocks.blocks.util.RelativeBlock
 import blusunrize.immersiveengineering.api.multiblocks.blocks.util.ShapeType;
 import blusunrize.immersiveengineering.common.blocks.multiblocks.blockimpl.InitialMultiblockContext;
 import blusunrize.immersiveengineering.common.fluids.ArrayFluidHandler;
-import blusunrize.immersiveengineering.common.util.Utils;
 import flaxbeard.immersivepetroleum.api.crafting.CokerUnitRecipe;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.IReadWriteNBT;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.shapes.CokerShape;
 import flaxbeard.immersivepetroleum.common.util.FluidHelper;
+import flaxbeard.immersivepetroleum.common.util.inventory.FluidTankFiltered;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
@@ -38,9 +38,7 @@ import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.fluids.FluidUtil;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
-import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 
@@ -66,18 +64,6 @@ public class CokerUnitLogic implements IMultiblockLogic<State>, IServerTickableC
 			return ordinal();
 		}
 	}
-	
-	/** Input Fluid Tank<br> */
-	public static final int TANK_INPUT = 0;
-	
-	/** Output Fluid Tank<br> */
-	public static final int TANK_OUTPUT = 1;
-	
-	/** Coker Chamber A<br> */
-	public static final int CHAMBER_A = 0;
-	
-	/** Coker Chamber B<br> */
-	public static final int CHAMBER_B = 1;
 	
 	/** Template-Location of the Chamber A Item Output */
 	public static final CapabilityPosition Chamber_A_OUT = new CapabilityPosition(2, 0, 2, RelativeBlockFace.BACK);
@@ -116,7 +102,7 @@ public class CokerUnitLogic implements IMultiblockLogic<State>, IServerTickableC
 			return;
 		}
 		
-		final CokingChamber[] chambers = state.chambers.get();
+		final CokingChamber[] chambers = state.chambers.array();
 		boolean debug = false;
 		for(int i = 0;i < chambers.length;i++){
 			if(debug || chambers[i].getState() == CokingChamber.State.DUMPING){
@@ -153,7 +139,7 @@ public class CokerUnitLogic implements IMultiblockLogic<State>, IServerTickableC
 					final CokerUnitRecipe recipe = holder.value();
 					
 					if(inputStack.getCount() >= recipe.getInputItem().getCount() && inputFluid.getAmount() >= recipe.getInputFluid().amount()){
-						for(CokingChamber chamber: state.chambers.get()){
+						for(CokingChamber chamber: state.chambers.array()){
 							boolean skipNext = false;
 							
 							switch(chamber.getState()){
@@ -189,7 +175,7 @@ public class CokerUnitLogic implements IMultiblockLogic<State>, IServerTickableC
 				
 			}
 			
-			final CokingChamber[] chambers = state.chambers.get();
+			final CokingChamber[] chambers = state.chambers.array();
 			for(int i = 0;i < chambers.length;i++){
 				update |= chambers[i].tick(context, i);
 			}
@@ -417,67 +403,77 @@ public class CokerUnitLogic implements IMultiblockLogic<State>, IServerTickableC
 	}
 	
 	public static class BufferTanks implements IReadWriteNBT{
-		private final FluidTank input;
-		private final FluidTank output;
+		public static final int CAPACITY = 16 * FluidType.BUCKET_VOLUME;
+		
+		private final FluidTankFiltered input;
+		private final FluidTankFiltered output;
 		
 		public BufferTanks(){
-			this.input = new FluidTank(16000);
-			this.output = new FluidTank(16000);
-		}
-		
-		public FluidTank input(){
-			return this.input;
-		}
-		
-		public FluidTank output(){
-			return this.output;
+			this.input = new FluidTankFiltered(CAPACITY);
+			this.output = new FluidTankFiltered(CAPACITY);
 		}
 		
 		@Override
 		public void readNBT(CompoundTag nbt, HolderLookup.Provider provider){
-			this.input.readFromNBT(provider, nbt.getCompound("input"));
-			this.output.readFromNBT(provider, nbt.getCompound("output"));
+			this.input.readFromNBT(nbt.getCompound("input"), provider);
+			this.output.readFromNBT(nbt.getCompound("output"), provider);
 		}
 		
 		@Override
 		public CompoundTag writeNBT(HolderLookup.Provider provider){
 			CompoundTag nbt = new CompoundTag();
-			nbt.put("input", this.input.writeToNBT(provider, new CompoundTag()));
-			nbt.put("output", this.output.writeToNBT(provider, new CompoundTag()));
+			nbt.put("input", this.input.writeToNBT(new CompoundTag(), provider));
+			nbt.put("output", this.output.writeToNBT(new CompoundTag(), provider));
 			return nbt;
+		}
+		
+		public FluidTankFiltered input(){
+			return this.input;
+		}
+		
+		public FluidTankFiltered output(){
+			return this.output;
 		}
 	}
 	
 	public static class Chambers implements IReadWriteNBT{
-		private final CokingChamber[] array;
+		final CokingChamber primary;
+		final CokingChamber secondary;
+		final CokingChamber[] array;
 		public Chambers(){
-			this.array = new CokingChamber[]{new CokingChamber(64, 8000), new CokingChamber(64, 8000)};
-		}
-		
-		public CokingChamber[] get(){
-			return this.array;
+			this.primary = new CokingChamber(64, 8000);
+			this.secondary = new CokingChamber(64, 8000);
+			this.array = new CokingChamber[]{
+				this.primary,
+				this.secondary
+			};
 		}
 		
 		public CokingChamber primary(){
-			return this.array[CHAMBER_A];
+			return this.primary;
 		}
 		
 		public CokingChamber secondary(){
-			return this.array[CHAMBER_B];
+			return this.secondary;
+		}
+		
+		public CokingChamber[] array(){
+			return this.array;
 		}
 		
 		@Override
 		public void readNBT(CompoundTag nbt, HolderLookup.Provider provider){
-			this.array[CHAMBER_A].readFromNBT(nbt.getCompound("primary"), provider);
-			this.array[CHAMBER_B].readFromNBT(nbt.getCompound("secondary"), provider);
+			this.primary.readFromNBT(nbt.getCompound("primary"), provider);
+			this.secondary.readFromNBT(nbt.getCompound("secondary"), provider);
 		}
 		
 		@Override
 		public CompoundTag writeNBT(HolderLookup.Provider provider){
 			CompoundTag nbt = new CompoundTag();
-			nbt.put("primary", this.array[CHAMBER_A].writeToNBT(new CompoundTag(), provider));
-			nbt.put("secondary", this.array[CHAMBER_B].writeToNBT(new CompoundTag(), provider));
+			nbt.put("primary", this.primary.writeToNBT(new CompoundTag(), provider));
+			nbt.put("secondary", this.secondary.writeToNBT(new CompoundTag(), provider));
 			return nbt;
 		}
 	}
+	
 }

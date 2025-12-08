@@ -11,7 +11,6 @@ import flaxbeard.immersivepetroleum.client.gui.elements.GuiReactiveList;
 import flaxbeard.immersivepetroleum.client.render.IPRenderTypes;
 import flaxbeard.immersivepetroleum.client.render.RenderUtils;
 import flaxbeard.immersivepetroleum.client.utils.MCUtil;
-import flaxbeard.immersivepetroleum.common.IPDataComponents;
 import flaxbeard.immersivepetroleum.common.items.ProjectorItem;
 import flaxbeard.immersivepetroleum.common.util.ResourceUtils;
 import flaxbeard.immersivepetroleum.common.util.projector.Settings;

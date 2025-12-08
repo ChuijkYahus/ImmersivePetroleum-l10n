@@ -3,59 +3,55 @@ package flaxbeard.immersivepetroleum.common.gui;
 import blusunrize.immersiveengineering.api.energy.AveragingEnergyStorage;
 import blusunrize.immersiveengineering.common.gui.sync.GenericContainerData;
 import blusunrize.immersiveengineering.common.gui.sync.GenericDataSerializers;
-import blusunrize.immersiveengineering.common.gui.sync.GetterAndSetter;
 import flaxbeard.immersivepetroleum.common.ExternalModContent;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.DerrickMultiblock;
-import flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.DerrickLogic;
+import flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.DerrickLogic.State;
+import flaxbeard.immersivepetroleum.common.util.inventory.FluidTankFiltered;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.BlockPos.MutableBlockPos;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.energy.IEnergyStorage;
-import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import net.neoforged.neoforge.items.SlotItemHandler;
 
 import javax.annotation.Nonnull;
-import java.util.List;
 
 public class DerrickContainer extends MultiblockAwareGuiContainer{
 	
-	public final IEnergyStorage energy;
-	public final FluidTank tank;
-	public final ItemStackHandler items;
-	public final Level level;
-	public final GetterAndSetter<List<String>> pos;
-	
-	public static DerrickContainer makeServer(MenuType<?> type, int id, Inventory player, MultiblockMenuContext<DerrickLogic.State> ctx){
-		DerrickLogic.State state = ctx.mbContext().getState();
+	public static DerrickContainer makeServer(MenuType<?> type, int id, Inventory player, MultiblockMenuContext<State> ctx){
+		State state = ctx.mbContext().getState();
 		BlockPos pos = ctx.mbContext().getLevel().getAbsoluteOrigin();
 		Level level = ctx.mbContext().getLevel().getRawLevel();
 		
-		return new DerrickContainer(
-				multiblockCtx(type, id, ctx), player,
-				new ItemStackHandler(state.inventory),
-				state.tank,
-				state.energy,
-				level,
-				new GetterAndSetter<>(() -> List.of(pos.toShortString()), b -> {
-					String s = b.get(0);
-					String[] coords = s.split(", ");
-					state.originPos = new BlockPos(Integer.parseInt(coords[0]), Integer.parseInt(coords[1]), Integer.parseInt(coords[2]));
-				}));
+		return new DerrickContainer(multiblockCtx(type, id, ctx),
+			player,
+			new ItemStackHandler(state.inventory),
+			state.tank,
+			state.energy,
+			level,
+			pos.mutable());
 	}
 	
 	public static DerrickContainer makeClient(MenuType<?> type, int id, Inventory player){
-		return new DerrickContainer(clientCtx(type, id), player,
-				new ItemStackHandler(1),
-				new FluidTank(8000),
-				new AveragingEnergyStorage(16000),
-				player.player.level(),
-				GetterAndSetter.standalone(List.of("0, 0, 0")));
+		return new DerrickContainer(clientCtx(type, id),
+			player,
+			new ItemStackHandler(1),
+			new FluidTankFiltered(8000),
+			new AveragingEnergyStorage(16000),
+			player.player.level(),
+			BlockPos.ZERO.mutable());
 	}
 	
-	private DerrickContainer(MenuContext ctx, Inventory playerInventory, ItemStackHandler items, FluidTank tank, AveragingEnergyStorage energy, Level level, GetterAndSetter<List<String>> pos){
+	public final IEnergyStorage energy;
+	public final FluidTankFiltered tank;
+	public final ItemStackHandler items;
+	public final Level level;
+	private final MutableBlockPos pos;
+	
+	private DerrickContainer(MenuContext ctx, Inventory playerInventory, ItemStackHandler items, FluidTankFiltered tank, AveragingEnergyStorage energy, Level level, MutableBlockPos pos){
 		super(ctx, DerrickMultiblock.INSTANCE);
 		this.items = items;
 		this.energy = energy;
@@ -63,7 +59,7 @@ public class DerrickContainer extends MultiblockAwareGuiContainer{
 		this.level = level;
 		this.pos = pos;
 		
-		this.addSlot(new SlotItemHandler(this.items, 0, 92, 55){
+		this.addSlot(new SlotItemHandler(this.items, 0, 37, 27){
 			@Override
 			public boolean mayPlace(@Nonnull ItemStack stack){
 				return ExternalModContent.IE.isPipe(stack);
@@ -72,17 +68,15 @@ public class DerrickContainer extends MultiblockAwareGuiContainer{
 		
 		this.ownSlotCount = 1;
 		
-		addPlayerInventorySlots(playerInventory, 20, 82);
-		addPlayerHotbarSlots(playerInventory, 20, 140);
+		addPlayerInventorySlots(playerInventory, 20, 90);
+		addPlayerHotbarSlots(playerInventory, 20, 148);
 		
-		addGenericData(new GenericContainerData<>(GenericDataSerializers.STRINGS, pos));
+		addGenericData(new GenericContainerData<>(GenericDataSerializers.BLOCK_POS, this.pos::immutable, this.pos::set));
 		addGenericData(GenericContainerData.energy(energy));
-		addGenericData(GenericContainerData.fluid(tank));
+		addGenericData(tank.getContainerData());
 	}
 	
-	public static BlockPos getPos(List<String> coords){
-		String s = coords.getFirst();
-		String[] split = s.split(", ");
-		return new BlockPos(Integer.parseInt(split[0]), Integer.parseInt(split[1]), Integer.parseInt(split[2]));
+	public BlockPos pos(){
+		return this.pos.immutable();
 	}
 }

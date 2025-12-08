@@ -6,7 +6,6 @@ import blusunrize.immersiveengineering.api.multiblocks.blocks.env.IMultiblockLev
 import blusunrize.immersiveengineering.api.multiblocks.blocks.logic.IMultiblockBE;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.logic.IMultiblockState;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.registry.MultiblockBlockEntityMaster;
-import blusunrize.immersiveengineering.common.util.inventory.MultiFluidTank;
 import com.google.common.collect.Multimap;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -36,6 +35,8 @@ import flaxbeard.immersivepetroleum.common.blocks.tileentities.WellPipeTileEntit
 import flaxbeard.immersivepetroleum.common.blocks.tileentities.WellTileEntity;
 import flaxbeard.immersivepetroleum.common.entity.MotorboatEntity;
 import flaxbeard.immersivepetroleum.common.items.DebugItem;
+import flaxbeard.immersivepetroleum.common.util.inventory.FluidTankFiltered;
+import flaxbeard.immersivepetroleum.common.util.inventory.MultiFluidTankFiltered;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -138,7 +139,7 @@ public class DebugRenderHandler{
 									
 								}else if(te instanceof IMultiblockBE<?> generic){
 									final IMultiblockBEHelper<?> masterHelper = masterOf(generic.getHelper());
-									final IMultiblockState masterState = masterHelper.getContext().getState();
+									final IMultiblockState masterState = masterHelper.getContext() != null ? masterHelper.getContext().getState() : null;
 									{
 										IMultiblockBEHelper<?> genericHelper = generic.getHelper();
 										
@@ -149,7 +150,7 @@ public class DebugRenderHandler{
 										MutableComponent name = toTranslation(block.getDescriptionId()).withStyle(ChatFormatting.GOLD);
 										
 										synchronized(LubricatedHandler.lubricatedTiles){
-											for(LubricatedTileInfo info:LubricatedHandler.lubricatedTiles){
+											for(LubricatedTileInfo info: LubricatedHandler.lubricatedTiles){
 												if(info.pos.equals(masterHelper.getPositionInMB())){
 													name.append(toText(" (Lubricated " + info.ticks + ")").withStyle(ChatFormatting.YELLOW));
 												}
@@ -234,7 +235,7 @@ public class DebugRenderHandler{
 								
 								NonNullList<ItemStack> upgrades = boat.getUpgrades();
 								int i = 0;
-								for(ItemStack upgrade:upgrades){
+								for(ItemStack upgrade: upgrades){
 									if(upgrade == null || upgrade == ItemStack.EMPTY){
 										debugOut.add(toText("Upgrade " + (++i) + ": Empty"));
 									}else{
@@ -265,14 +266,7 @@ public class DebugRenderHandler{
 								boolean b2 = storage.getRegionData(r2) != null;
 								boolean b3 = storage.getRegionData(r3) != null;
 								
-								List<Component> list = List.of(
-									Component.literal(String.format("PlayerXYZ: %d %d %d", playerPos.getX(), playerPos.getY(), playerPos.getZ())),
-									Component.literal(String.format("LocalXZ: %d %d", rLocal.x(), rLocal.z())).withStyle(bLocal ? ChatFormatting.GREEN : ChatFormatting.RED),
-									Component.literal(String.format("XZ: %d %d", r0.x(), r0.z())).withStyle(b0 ? ChatFormatting.GREEN : ChatFormatting.RED),
-									Component.literal(String.format("XZ: %d %d", r1.x(), r1.z())).withStyle(b1 ? ChatFormatting.GREEN : ChatFormatting.RED),
-									Component.literal(String.format("XZ: %d %d", r2.x(), r2.z())).withStyle(b2 ? ChatFormatting.GREEN : ChatFormatting.RED),
-									Component.literal(String.format("XZ: %d %d", r3.x(), r3.z())).withStyle(b3 ? ChatFormatting.GREEN : ChatFormatting.RED)
-								);
+								List<Component> list = List.of(Component.literal(String.format("PlayerXYZ: %d %d %d", playerPos.getX(), playerPos.getY(), playerPos.getZ())), Component.literal(String.format("LocalXZ: %d %d", rLocal.x(), rLocal.z())).withStyle(bLocal ? ChatFormatting.GREEN : ChatFormatting.RED), Component.literal(String.format("XZ: %d %d", r0.x(), r0.z())).withStyle(b0 ? ChatFormatting.GREEN : ChatFormatting.RED), Component.literal(String.format("XZ: %d %d", r1.x(), r1.z())).withStyle(b1 ? ChatFormatting.GREEN : ChatFormatting.RED), Component.literal(String.format("XZ: %d %d", r2.x(), r2.z())).withStyle(b2 ? ChatFormatting.GREEN : ChatFormatting.RED), Component.literal(String.format("XZ: %d %d", r3.x(), r3.z())).withStyle(b3 ? ChatFormatting.GREEN : ChatFormatting.RED));
 								renderOverlay(event.getGuiGraphics(), list);
 							}
 						}
@@ -406,8 +400,14 @@ public class DebugRenderHandler{
 						RegionData r2 = storage.getRegionData(p2);
 						RegionData r3 = storage.getRegionData(p3);
 						
-						RegionData[] array = {rLocal, r0, r1, r2, r3};
-						for(RegionData rd:array){
+						RegionData[] array = {
+							rLocal,
+							r0,
+							r1,
+							r2,
+							r3
+						};
+						for(RegionData rd: array){
 							if(rd != null){
 								Multimap<ResourceKey<Level>, ReservoirIsland> m = rd.getReservoirIslandList();
 								synchronized(m){
@@ -423,7 +423,7 @@ public class DebugRenderHandler{
 								float y = 128.0625F;
 								int radius = 256;
 								radius = radius * radius + radius * radius;
-								for(ReservoirIsland island:islands){
+								for(ReservoirIsland island: islands){
 									BlockPos center = island.getBoundingBox().getCenter();
 									
 									if(center.distSqr(playerPos) <= radius){
@@ -532,18 +532,23 @@ public class DebugRenderHandler{
 	private static void distillationtower(List<Component> text, IMultiblockBEHelper<DistillationTowerLogic.State> tower){
 		tower = masterOf(tower);
 		
-		for(int i = 0;i < tower.getState().tanks.asArray().length;i++){
-			text.add(toText("Tank " + (i + 1)).withStyle(ChatFormatting.UNDERLINE));
-			
-			MultiFluidTank tank = tower.getState().tanks.asArray()[i];
-			if(!tank.fluids.isEmpty()){
-				for(int j = 0;j < tank.fluids.size();j++){
-					FluidStack fs = tank.fluids.get(j);
-					text.add(toText("  " + fs.getHoverName().getString() + " (" + fs.getAmount() + "mB)"));
-				}
-			}else{
-				text.add(toText("  Empty"));
+		text.add(Component.literal("Input Tank").withStyle(ChatFormatting.UNDERLINE));
+		FluidStack inFluid = tower.getState().tanks.input().getFluid();
+		if(!inFluid.isEmpty()){
+			text.add(toText("  " + inFluid.getHoverName().getString() + " (" + inFluid.getAmount() + "mB)"));
+		}else{
+			text.add(toText("  Empty"));
+		}
+		
+		text.add(Component.literal("Output Tank").withStyle(ChatFormatting.UNDERLINE));
+		MultiFluidTankFiltered outTank = tower.getState().tanks.output();
+		if(outTank.getFluidAmount() > 0){
+			for(int i = 0;i < outTank.getTanks();i++){
+				FluidStack fs = outTank.getFluidInTank(i);
+				text.add(toText("  " + fs.getHoverName().getString() + " (" + fs.getAmount() + "mB)"));
 			}
+		}else{
+			text.add(toText("  Empty"));
 		}
 	}
 	
@@ -551,20 +556,20 @@ public class DebugRenderHandler{
 		coker = masterOf(coker);
 		
 		{
-			FluidTank tank = coker.getState().bufferTanks.input();
+			FluidTankFiltered tank = coker.getState().bufferTanks.input();
 			FluidStack fs = tank.getFluid();
 			text.add(toText("In Buffer: " + (fs.getAmount() + "/" + tank.getCapacity() + "mB " + (fs.isEmpty() ? "" : "(" + fs.getHoverName().getString() + ")"))));
 		}
 		
 		{
-			FluidTank tank = coker.getState().bufferTanks.output();
+			FluidTankFiltered tank = coker.getState().bufferTanks.output();
 			FluidStack fs = tank.getFluid();
 			text.add(toText("Out Buffer: " + (fs.getAmount() + "/" + tank.getCapacity() + "mB " + (fs.isEmpty() ? "" : "(" + fs.getHoverName().getString() + ")"))));
 		}
 		
-		for(int i = 0;i < coker.getState().chambers.get().length;i++){
-			CokingChamber chamber = coker.getState().chambers.get()[i];
-			FluidTank tank = chamber.getTank();
+		for(int i = 0;i < coker.getState().chambers.array().length;i++){
+			CokingChamber chamber = coker.getState().chambers.array()[i];
+			FluidTankFiltered tank = chamber.getTank();
 			FluidStack fs = tank.getFluid();
 			
 			float completed = chamber.getTotalAmount() > 0 ? 100 * (chamber.getOutputAmount() / (float) chamber.getTotalAmount()) : 0;
@@ -605,10 +610,7 @@ public class DebugRenderHandler{
 		if(port != null){
 			OilTankLogic.PortState portState = tank.getState().portConfig.get(port);
 			boolean isInput = portState == OilTankLogic.PortState.INPUT;
-			text.add(toText("Port: ")
-					.append(toText(port.getSerializedName()))
-					.append(toText(" " + portState.getSerializedName())
-						.withStyle(isInput ? ChatFormatting.AQUA : ChatFormatting.GOLD)));
+			text.add(toText("Port: ").append(toText(port.getSerializedName())).append(toText(" " + portState.getSerializedName()).withStyle(isInput ? ChatFormatting.AQUA : ChatFormatting.GOLD)));
 		}
 		
 		FluidStack fs = tank.getState().tank.getFluid();
@@ -624,7 +626,7 @@ public class DebugRenderHandler{
 	}
 	
 	private static <State extends IMultiblockState, H extends IMultiblockBEHelper<State>> H masterOf(H helper){
-		if(!(helper instanceof IMultiblockBEHelperMaster<?>)){
+		if(!(helper instanceof IMultiblockBEHelperMaster<?>) && helper.getContext() != null){
 			IMultiblockLevel mbLevel = helper.getContext().getLevel();
 			BlockPos masterPos = mbLevel.toAbsolute(helper.getMultiblock().masterPosInMB());
 			
