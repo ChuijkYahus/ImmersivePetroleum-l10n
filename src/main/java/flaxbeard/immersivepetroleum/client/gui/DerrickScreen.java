@@ -113,7 +113,7 @@ public class DerrickScreen extends AbstractContainerScreen<DerrickContainer>{
 					
 					if(state.drilling){
 						String str = String.format(Locale.ROOT, "(%d%%)", (int) (100 * well.wellPipeLength / (float) well.getMaxPipeLength()));
-						drawInfoText(guiGraphics, Component.translatable("gui.immersivepetroleum.derrick.msg.drilling", str), TEXT_COLOUR_NIXIETUBE);
+						drawInfoTextCentered(guiGraphics, Component.translatable("gui.immersivepetroleum.derrick.msg.drilling", str), 1);
 					}else if(well.pipes <= 0 && !this.menu.getSlot(0).hasItem()){
 						drawInfoTextCentered(guiGraphics, Component.translatable("gui.immersivepetroleum.derrick.msg.out_of_pipes"), 1, TEXT_COLOUR_ERROR);
 						return;
