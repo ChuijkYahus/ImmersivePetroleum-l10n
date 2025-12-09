@@ -18,6 +18,7 @@ import blusunrize.immersiveengineering.common.util.IESounds;
 import com.google.common.collect.ImmutableList;
 import flaxbeard.immersivepetroleum.api.energy.FuelHandler;
 import flaxbeard.immersivepetroleum.common.IPCapabilityRegistry;
+import flaxbeard.immersivepetroleum.common.IPDataComponents;
 import flaxbeard.immersivepetroleum.common.IPTileTypes;
 import flaxbeard.immersivepetroleum.common.blocks.interfaces.IBlockEntityDrop;
 import flaxbeard.immersivepetroleum.common.blocks.interfaces.IPlacementReader;
@@ -51,6 +52,7 @@ import net.neoforged.neoforge.capabilities.BlockCapability;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.FluidUtil;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
 import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 
@@ -119,18 +121,6 @@ public class GasGeneratorTileEntity extends ImmersiveConnectableBlockEntity impl
 		CompoundTag nbt = new CompoundTag();
 		saveAdditional(nbt, provider);
 		return nbt;
-	}
-	
-	@Override
-	public void readOnPlacement(LivingEntity placer, ItemStack stack){
-		/*
-		if(stack.hasTag()){
-			CompoundTag nbt = stack.getOrCreateTag();
-			
-			this.tank.readFromNBT(nbt.getCompound("tank"));
-			this.energyStorage.deserializeNBT(nbt.get("energy"));
-		}
-		*/
 	}
 	
 	@Override
@@ -219,26 +209,31 @@ public class GasGeneratorTileEntity extends ImmersiveConnectableBlockEntity impl
 		return InteractionResult.FAIL;
 	}
 	
+	@Override
+	public void readOnPlacement(LivingEntity placer, ItemStack stack){
+		IPDataComponents.TankData tankData = stack.get(IPDataComponents.TANK_DATA);
+		IPDataComponents.PowerData powerData = stack.get(IPDataComponents.POWER_DATA);
+		
+		if(tankData != null && !tankData.fs().isEmpty()){
+			this.tank.fill(tankData.fs(), IFluidHandler.FluidAction.EXECUTE);
+		}
+		
+		if(powerData != null){
+			this.energyStorage.setStoredEnergy(powerData.energy());
+		}
+	}
+	
 	@Nonnull
 	public List<ItemStack> getBlockEntityDrop(LootContext context){
 		ItemStack stack = new ItemStack(getBlockState().getBlock());
 		
-		CompoundTag nbt = new CompoundTag();
-		
 		if(this.tank.getFluidAmount() > 0){
-			CompoundTag tankNbt = this.tank.writeToNBT(context.getLevel().registryAccess(), new CompoundTag());
-			nbt.put("tank", tankNbt);
+			stack.set(IPDataComponents.TANK_DATA, new IPDataComponents.TankData(this.tank));
 		}
 		
 		if(this.energyStorage.getEnergyStored() > 0){
-			Tag energyNbt = this.energyStorage.serializeNBT(context.getLevel().registryAccess());
-			nbt.put("energy", energyNbt);
+			stack.set(IPDataComponents.POWER_DATA, new IPDataComponents.PowerData(this.energyStorage));
 		}
-		
-		/*
-		if(!nbt.isEmpty())
-			stack.setTag(nbt);
-		*/
 		
 		return ImmutableList.of(stack);
 	}

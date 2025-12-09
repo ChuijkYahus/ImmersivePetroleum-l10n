@@ -319,7 +319,7 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 						
 						FluidStack containedFluid = getContainedFluid();
 						if(!containedFluid.isEmpty())
-							stack.set(IPDataComponents.BOAT_TANK, containedFluid);
+							stack.set(IPDataComponents.TANK_DATA, new IPDataComponents.TankData(containedFluid));
 						
 						/* // FIXME Boat-Item NBT Storage
 						LazyOptional<IItemHandler> handler = stack.getCapability(ForgeCapabilities.ITEM_HANDLER, null);

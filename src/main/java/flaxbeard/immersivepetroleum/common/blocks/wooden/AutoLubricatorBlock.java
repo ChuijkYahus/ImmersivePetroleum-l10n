@@ -6,6 +6,7 @@ import flaxbeard.immersivepetroleum.common.blocks.IPBlockItemBase;
 import flaxbeard.immersivepetroleum.common.blocks.tileentities.AutoLubricatorTileEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
@@ -147,13 +148,13 @@ public class AutoLubricatorBlock extends IPBlockBase implements EntityBlock{
 		
 		@Override
 		protected boolean canPlace(@Nonnull BlockPlaceContext con, @Nonnull BlockState state){
-			if(super.canPlace(con, state)){
-				BlockPos otherPos = con.getClickedPos().relative(Direction.UP);
-				BlockState otherState = con.getLevel().getBlockState(otherPos);
-				
-				return otherState.isAir();
-			}
-			return false;
+			if(!super.canPlace(con, state))
+				return false;
+			
+			BlockPos otherPos = con.getClickedPos().relative(Direction.UP);
+			BlockState otherState = con.getLevel().getBlockState(otherPos);
+			
+			return otherState.isAir();
 		}
 	}
 }

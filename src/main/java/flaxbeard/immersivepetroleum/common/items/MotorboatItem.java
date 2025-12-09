@@ -36,6 +36,7 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.items.IItemHandler;
+import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -158,9 +159,9 @@ public class MotorboatItem extends IPItemBase implements IUpgradeableTool{
 	
 	@Override
 	public void appendHoverText(@Nonnull ItemStack stack, @Nonnull TooltipContext ctx, @Nonnull List<Component> tooltip, @Nonnull TooltipFlag flag){
-		FluidStack fluidStack;
-		if((fluidStack = stack.get(IPDataComponents.BOAT_TANK)) != null){
-			tooltip.add(((MutableComponent) fluidStack.getHoverName()).append(": " + fluidStack.getAmount() + "mB").withStyle(ChatFormatting.GRAY));
+		IPDataComponents.TankData tankData;
+		if((tankData = stack.get(IPDataComponents.TANK_DATA)) != null && !tankData.fs().isEmpty()){
+			tooltip.add(((MutableComponent) tankData.fs().getHoverName()).append(": " + tankData.fs().getAmount() + "mB").withStyle(ChatFormatting.GRAY));
 		}
 		
 		/*
@@ -235,7 +236,11 @@ public class MotorboatItem extends IPItemBase implements IUpgradeableTool{
 			{
 				entityboat.setYRot(playerIn.yRotO);
 				entityboat.setUpgrades(getContainedItems(itemstack));
-				entityboat.setContainedFluid(itemstack.get(IPDataComponents.BOAT_TANK));
+				
+				IPDataComponents.TankData tankData;
+				if((tankData = itemstack.get(IPDataComponents.TANK_DATA)) != null){
+					entityboat.setContainedFluid(tankData.fs());
+				}
 			}
 			
 			if(worldIn.getBlockCollisions(entityboat, entityboat.getBoundingBox().inflate(-0.1D)).iterator().hasNext()){

@@ -2,8 +2,8 @@ package flaxbeard.immersivepetroleum.common;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import flaxbeard.immersivepetroleum.common.blocks.tileentities.AutoLubricatorTileEntity;
 import flaxbeard.immersivepetroleum.common.items.DebugItem;
+import flaxbeard.immersivepetroleum.common.util.RegistryUtils;
 import flaxbeard.immersivepetroleum.common.util.projector.Settings;
 import flaxbeard.immersivepetroleum.common.util.survey.IslandInfo;
 import flaxbeard.immersivepetroleum.common.util.survey.SurveyScan;
@@ -12,11 +12,16 @@ import net.minecraft.core.component.DataComponentType;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.material.Fluid;
+import net.neoforged.neoforge.energy.IEnergyStorage;
 import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.IFluidTank;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
+import javax.annotation.Nonnull;
+
 public class IPDataComponents{
-	
 	public static final DeferredHolder<DataComponentType<?>, DataComponentType<DebugItem.Mode>> DEBUG_ITEM = IPRegisters.registerDataComponent("debug_item_modes", DebugItem.Mode.CODEC, DebugItem.Mode.CODEC_STREAM);
 	
 	public static final DeferredHolder<DataComponentType<?>, DataComponentType<Settings.SettingsRecord>> PROJECTOR_SETTINGS = IPRegisters.registerDataComponent("projector_settings", Settings.SettingsRecord.CODEC, Settings.SettingsRecord.CODEC_STREAM);
@@ -24,28 +29,66 @@ public class IPDataComponents{
 	public static final DeferredHolder<DataComponentType<?>, DataComponentType<SurveyScan>> SURVEY_SCAN = IPRegisters.registerDataComponent("survey_scan", SurveyScan.CODEC, SurveyScan.CODEC_STREAM);
 	public static final DeferredHolder<DataComponentType<?>, DataComponentType<IslandInfo>> ISLAND_INFO = IPRegisters.registerDataComponent("island_info", IslandInfo.CODEC, IslandInfo.CODEC_STREAM);
 	
-	public static final DeferredHolder<DataComponentType<?>, DataComponentType<FluidStack>> BOAT_TANK = IPRegisters.registerDataComponentF("boat_tank", FluidStack.CODEC, FluidStack.STREAM_CODEC);
+	public static final DeferredHolder<DataComponentType<?>, DataComponentType<TankData>> TANK_DATA = IPRegisters.registerDataComponent("tank_data", TankData.CODEC, TankData.CODEC_STREAM);
+	public static final DeferredHolder<DataComponentType<?>, DataComponentType<PowerData>> POWER_DATA = IPRegisters.registerDataComponent("power_data", PowerData.CODEC, PowerData.CODEC_STREAM);
 	
-	public record Test(int test){
-		public static final Codec<Test> CODEC = RecordCodecBuilder.create(inst -> inst.group(
-			Codec.INT.fieldOf("int").forGetter(r -> r.test)
-		).apply(inst, Test::new));
+	public record TankData(@Nonnull FluidStack fs){
+		//@formatter:off
+		public static final Codec<TankData> CODEC = RecordCodecBuilder.create(inst -> inst
+			.group(FluidStack.CODEC.fieldOf("tank").forGetter(TankData::fs)
+		).apply(inst, TankData::new));
+		//@formatter:on
 		
-		public static final StreamCodec<ByteBuf, Test> CODEC_STREAM = ByteBufCodecs.COMPOUND_TAG.map(Test::new, Test::toTag);
+		public static final StreamCodec<ByteBuf, TankData> CODEC_STREAM = ByteBufCodecs.COMPOUND_TAG.map(TankData::new, TankData::toTag);
 		
-		/** Used in {@link AutoLubricatorTileEntity#readOnPlacement} for testing */
-		public static final DeferredHolder<DataComponentType<?>, DataComponentType<Test>> DATA_TYPE = IPRegisters.registerDataComponent("test2", CODEC, CODEC_STREAM);
+		public TankData(IFluidTank tank){
+			this(tank.getFluid());
+		}
 		
-		public Test(CompoundTag tag){
-			this(tag.getInt("int"));
+		private TankData(CompoundTag tag){
+			this(fromTag(tag));
+		}
+		
+		private static FluidStack fromTag(CompoundTag tag){
+			Fluid fluid = RegistryUtils.getFluidFromRegistryName(ResourceLocation.parse(tag.getString("fluid")));
+			if(fluid == null)
+				return FluidStack.EMPTY;
+			
+			return new FluidStack(fluid, tag.getInt("amount"));
 		}
 		
 		private CompoundTag toTag(){
 			CompoundTag tag = new CompoundTag();
-			tag.putInt("int", this.test);
+			tag.putString("fluid", RegistryUtils.getRegistryNameOf(this.fs.getFluid()).toString());
+			tag.putInt("amount", this.fs.getAmount());
 			return tag;
 		}
 	}
 	
-	public static void forceClassLoad(){}
+	public record PowerData(int energy){
+		//@formatter:off
+		public static final Codec<PowerData> CODEC = RecordCodecBuilder.create(inst -> inst
+			.group(Codec.INT.fieldOf("energy").forGetter(PowerData::energy)
+		).apply(inst, PowerData::new));
+		//@formatter:on
+		
+		public static final StreamCodec<ByteBuf, PowerData> CODEC_STREAM = ByteBufCodecs.COMPOUND_TAG.map(PowerData::new, PowerData::toTag);
+		
+		public PowerData(IEnergyStorage storage){
+			this(storage.getEnergyStored());
+		}
+		
+		private PowerData(CompoundTag tag){
+			this(tag.getInt("energy"));
+		}
+		
+		private CompoundTag toTag(){
+			CompoundTag tag = new CompoundTag();
+			tag.putInt("energy", this.energy);
+			return tag;
+		}
+	}
+	
+	public static void forceClassLoad(){
+	}
 }

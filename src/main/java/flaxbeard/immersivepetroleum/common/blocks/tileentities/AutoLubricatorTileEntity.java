@@ -8,13 +8,13 @@ import flaxbeard.immersivepetroleum.api.crafting.LubricantHandler;
 import flaxbeard.immersivepetroleum.api.crafting.LubricatedHandler;
 import flaxbeard.immersivepetroleum.api.crafting.LubricatedHandler.ILubricationHandler;
 import flaxbeard.immersivepetroleum.common.IPCapabilityRegistry;
+import flaxbeard.immersivepetroleum.common.IPDataComponents;
 import flaxbeard.immersivepetroleum.common.IPTileTypes;
 import flaxbeard.immersivepetroleum.common.blocks.interfaces.IBlockEntityDrop;
 import flaxbeard.immersivepetroleum.common.blocks.interfaces.IPlacementReader;
 import flaxbeard.immersivepetroleum.common.blocks.interfaces.IPlayerInteraction;
 import flaxbeard.immersivepetroleum.common.blocks.ticking.IPCommonTickableTile;
 import flaxbeard.immersivepetroleum.common.blocks.wooden.AutoLubricatorBlock;
-import flaxbeard.immersivepetroleum.common.IPDataComponents;
 import flaxbeard.immersivepetroleum.common.util.Utils;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
@@ -37,6 +37,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.FluidUtil;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
@@ -82,31 +83,11 @@ public class AutoLubricatorTileEntity extends IPTileEntityBase implements IPComm
 		compound.put("tank", tank);
 	}
 	
-	public void readTank(CompoundTag nbt, HolderLookup.Provider provider){
-		this.tank.readFromNBT(provider, nbt.getCompound("tank"));
-	}
-	
-	public void writeTank(CompoundTag nbt, HolderLookup.Provider provider, boolean toItem){
-		boolean write = this.tank.getFluidAmount() > 0;
-		CompoundTag tankTag = this.tank.writeToNBT(provider, new CompoundTag());
-		if(!toItem || write)
-			nbt.put("tank", tankTag);
-	}
-	
 	@Override
 	public void readOnPlacement(LivingEntity placer, ItemStack stack){
-		/*// TODO
-		if(stack.hasTag())
-			readTank(stack.getTag());
-		*/
-		
-		if(stack.has(IPDataComponents.Test.DATA_TYPE)){
-			IPDataComponents.Test test = stack.get(IPDataComponents.Test.DATA_TYPE);
-			
-			if(test != null){
-				stack.update(IPDataComponents.Test.DATA_TYPE, test, test1 -> new IPDataComponents.Test(test1.test()));
-			}
-		}
+		IPDataComponents.TankData tankData = stack.get(IPDataComponents.TANK_DATA);
+		if(tankData != null && !tankData.fs().isEmpty())
+			this.tank.fill(tankData.fs(), IFluidHandler.FluidAction.EXECUTE);
 		
 		if(placer instanceof Player player && this.level != null){
 			BlockPos target = this.worldPosition.relative(this.facing);
@@ -128,16 +109,12 @@ public class AutoLubricatorTileEntity extends IPTileEntityBase implements IPComm
 		if(state == null || state.getValue(AutoLubricatorBlock.SLAVE))
 			return List.of(ItemStack.EMPTY);
 		
-		
 		ItemStack stack = new ItemStack(state.getBlock());
 		
 		BlockEntity te = context.getParamOrNull(LootContextParams.BLOCK_ENTITY);
-		if(te instanceof AutoLubricatorTileEntity autolube){
-			CompoundTag tag = new CompoundTag();
-			autolube.writeTank(tag, context.getLevel().registryAccess(), true);
-			if(!tag.isEmpty()){
-				//stack.setTag(tag); // TODO
-			}
+		if(te instanceof AutoLubricatorTileEntity autolube && !autolube.tank.getFluid().isEmpty()){
+			FluidStack fs = autolube.tank.getFluid();
+			stack.set(IPDataComponents.TANK_DATA, new IPDataComponents.TankData(fs));
 		}
 		
 		return List.of(stack);
