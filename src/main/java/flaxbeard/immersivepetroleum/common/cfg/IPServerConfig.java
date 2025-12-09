@@ -154,6 +154,11 @@ public class IPServerConfig{
 	}
 	
 	@SubscribeEvent
+	public static void onConfigReload(ModConfigEvent.Loading ev){
+		FuelHandler.onConfigReload(ev);
+	}
+	
+	@SubscribeEvent
 	public static void onConfigReload(ModConfigEvent.Reloading ev){
 		FuelHandler.onConfigReload(ev);
 	}
