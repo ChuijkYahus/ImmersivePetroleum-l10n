@@ -7,6 +7,7 @@ import blusunrize.immersiveengineering.common.blocks.IEBlockInterfaces;
 import flaxbeard.immersivepetroleum.api.crafting.LubricantHandler;
 import flaxbeard.immersivepetroleum.api.crafting.LubricatedHandler;
 import flaxbeard.immersivepetroleum.api.crafting.LubricatedHandler.ILubricationHandler;
+import flaxbeard.immersivepetroleum.common.IPCapabilityRegistry;
 import flaxbeard.immersivepetroleum.common.IPTileTypes;
 import flaxbeard.immersivepetroleum.common.blocks.interfaces.IBlockEntityDrop;
 import flaxbeard.immersivepetroleum.common.blocks.interfaces.IPlacementReader;
@@ -44,7 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.annotation.Nonnull;
 import java.util.List;
 
-public class AutoLubricatorTileEntity extends IPTileEntityBase implements IPCommonTickableTile, IPlacementReader, IPlayerInteraction, IBlockEntityDrop, IEBlockInterfaces.IBlockOverlayText{
+public class AutoLubricatorTileEntity extends IPTileEntityBase implements IPCommonTickableTile, IPCapabilityRegistry.IHasCapability, IPlacementReader, IPlayerInteraction, IBlockEntityDrop, IEBlockInterfaces.IBlockOverlayText{
 	public boolean isSlave;
 	public Direction facing = Direction.NORTH;
 	public FluidTank tank = new FluidTank(8000, fluid -> (fluid != null && LubricantHandler.isValidLube(fluid.getFluid())));
@@ -142,36 +143,18 @@ public class AutoLubricatorTileEntity extends IPTileEntityBase implements IPComm
 		return List.of(stack);
 	}
 	
-	/*
-	private LazyOptional<IFluidHandler> outputHandler;
-	@Nonnull
-	public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, Direction side){
-		if(cap == Capabilities.FLUID_HANDLER){
-			if(this.isSlave && (side == null || side == Direction.UP)){
-				AutoLubricatorTileEntity master = master();
-				if(master == null){
-					return LazyOptional.empty();
-				}
-				
-				if(this.outputHandler == null){
-					this.outputHandler = LazyOptional.of(() -> master.tank);
-				}
-				return this.outputHandler.cast();
-			}
+	@Override
+	public <T> T getCapability(Direction side){
+		if(this.isSlave && (side == null || side == Direction.UP)){
+			AutoLubricatorTileEntity master = master();
+			if(master == null)
+				return null;
+			
+			return (T) master.tank;
 		}
 		
-		return super.getCapability(cap, side);
+		return null;
 	}
-	*/
-	
-	/*
-	@Override
-	public void setRemoved(){
-		super.setRemoved();
-		if(this.outputHandler != null)
-			this.outputHandler.invalidate();
-	}
-	*/
 	
 	@Override
 	public void setChanged(){
@@ -181,15 +164,6 @@ public class AutoLubricatorTileEntity extends IPTileEntityBase implements IPComm
 		this.level.sendBlockUpdated(this.worldPosition, state, state, 3);
 		this.level.updateNeighborsAt(this.worldPosition, state.getBlock());
 	}
-	
-	/*
-	@Override
-	public void invalidateCaps(){
-		super.invalidateCaps();
-		if(this.outputHandler != null)
-			this.outputHandler.invalidate();
-	}
-	*/
 	
 	public Direction getFacing(){
 		return this.facing;

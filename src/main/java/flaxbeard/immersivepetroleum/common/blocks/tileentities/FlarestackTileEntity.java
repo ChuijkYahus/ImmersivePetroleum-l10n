@@ -4,12 +4,14 @@ import blusunrize.immersiveengineering.ImmersiveEngineering;
 import blusunrize.immersiveengineering.common.blocks.IEBlockInterfaces;
 import flaxbeard.immersivepetroleum.api.crafting.FlarestackHandler;
 import flaxbeard.immersivepetroleum.client.particle.IPParticleTypes;
+import flaxbeard.immersivepetroleum.common.IPCapabilityRegistry;
 import flaxbeard.immersivepetroleum.common.IPTileTypes;
 import flaxbeard.immersivepetroleum.common.blocks.ticking.IPCommonTickableTile;
 import flaxbeard.immersivepetroleum.common.util.Utils;
 import flaxbeard.immersivepetroleum.common.util.damageSources.IPDamageSources;
 import flaxbeard.immersivepetroleum.common.util.sounds.IPSounds;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -28,7 +30,7 @@ import java.util.List;
 
 import static net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
 
-public class FlarestackTileEntity extends IPTileEntityBase implements IPCommonTickableTile, IEBlockInterfaces.ISoundBE{
+public class FlarestackTileEntity extends IPTileEntityBase implements IPCommonTickableTile, IPCapabilityRegistry.IHasCapability, IEBlockInterfaces.ISoundBE{
 	
 	protected boolean isRedstoneInverted;
 	protected boolean isActive;
@@ -74,44 +76,14 @@ public class FlarestackTileEntity extends IPTileEntityBase implements IPCommonTi
 		nbt.put("tank", tank);
 	}
 	
-	/*
-	private LazyOptional<IFluidHandler> inputHandler;
-	
-	@Nonnull
-	public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, Direction side){
-		if(cap == ForgeCapabilities.FLUID_HANDLER){
-			if(side == null || side == Direction.DOWN){
-				BlockEntity te = this.level.getBlockEntity(getBlockPos());
-				if(te instanceof FlarestackTileEntity flare){
-					if(this.inputHandler == null){
-						this.inputHandler = LazyOptional.of(() -> flare.tank);
-					}
-				}else{
-					return LazyOptional.empty();
-				}
-				
-				return this.inputHandler.cast();
-			}
-		}
-		
-		return super.getCapability(cap, side);
-	}
-	
+	@SuppressWarnings("unchecked")
 	@Override
-	public void setRemoved(){
-		super.setRemoved();
-		if(this.inputHandler != null){
-			this.inputHandler.invalidate();
-		}
+	public <T> T getCapability(Direction side){
+		if(side == null || side == Direction.DOWN)
+			return (T) this.tank;
+		
+		return null;
 	}
-	
-	public void invalidateCaps(){
-		super.invalidateCaps();
-		if(this.inputHandler != null){
-			this.inputHandler.invalidate();
-		}
-	}
-	*/
 	
 	@Override
 	public void setChanged(){

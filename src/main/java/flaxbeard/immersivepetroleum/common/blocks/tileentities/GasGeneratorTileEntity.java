@@ -17,6 +17,7 @@ import blusunrize.immersiveengineering.common.config.IEServerConfig;
 import blusunrize.immersiveengineering.common.util.IESounds;
 import com.google.common.collect.ImmutableList;
 import flaxbeard.immersivepetroleum.api.energy.FuelHandler;
+import flaxbeard.immersivepetroleum.common.IPCapabilityRegistry;
 import flaxbeard.immersivepetroleum.common.IPTileTypes;
 import flaxbeard.immersivepetroleum.common.blocks.interfaces.IBlockEntityDrop;
 import flaxbeard.immersivepetroleum.common.blocks.interfaces.IPlacementReader;
@@ -46,6 +47,8 @@ import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.capabilities.BlockCapability;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.FluidUtil;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
@@ -56,7 +59,7 @@ import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.List;
 
-public class GasGeneratorTileEntity extends ImmersiveConnectableBlockEntity implements IPCommonTickableTile, IPlacementReader, IPlayerInteraction, IBlockEntityDrop, IEBlockInterfaces.IDirectionalBE, IEBlockInterfaces.IBlockOverlayText, IEBlockInterfaces.ISoundBE, EnergyTransferHandler.EnergyConnector{
+public class GasGeneratorTileEntity extends ImmersiveConnectableBlockEntity implements IPCommonTickableTile, IPCapabilityRegistry.IHasMultiCapability, IPlacementReader, IPlayerInteraction, IBlockEntityDrop, IEBlockInterfaces.IDirectionalBE, IEBlockInterfaces.IBlockOverlayText, IEBlockInterfaces.ISoundBE, EnergyTransferHandler.EnergyConnector{
 	public static final int FUEL_CAPACITY = 8000;
 	
 	protected WireType wireType;
@@ -164,26 +167,17 @@ public class GasGeneratorTileEntity extends ImmersiveConnectableBlockEntity impl
 		return this.isActive;
 	}
 	
-	/*
-	private final LazyOptional<IFluidHandler> fluidHandler = CapabilityUtils.constantOptional(this.tank);
-	private final LazyOptional<IEnergyStorage> energyHandler = CapabilityUtils.constantOptional(this.energyStorage);
 	@Override
-	public <T> @Nonnull LazyOptional<T> getCapability(@Nonnull Capability<T> cap, Direction side){
-		if(cap == ForgeCapabilities.FLUID_HANDLER && (side == null || side == Direction.UP)){
-			return this.fluidHandler.cast();
-		}else if(cap == ForgeCapabilities.ENERGY && (side == null || side == this.facing)){
-			return this.energyHandler.cast();
+	public <C, T> T getCapability(BlockCapability<T, C> cap, Direction side){
+		if(cap == Capabilities.FluidHandler.BLOCK && (side == null || side == Direction.UP)){
+			return (T) this.tank;
+			
+		}else if(cap == Capabilities.EnergyStorage.BLOCK && (side == null || side == this.facing)){
+			return (T) this.energyStorage;
 		}
-		return super.getCapability(cap, side);
+		
+		return null;
 	}
-	
-	@Override
-	public void invalidateCaps(){
-		super.invalidateCaps();
-		this.fluidHandler.invalidate();
-		this.energyHandler.invalidate();
-	}
-	*/
 	
 	@Nullable
 	@Override
