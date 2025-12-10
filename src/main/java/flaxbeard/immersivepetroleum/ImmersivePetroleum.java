@@ -77,6 +77,8 @@ public class ImmersivePetroleum{
 		
 		IPLootFunctions.modConstruction(eBus);
 		IPRecipeTypes.modConstruction(eBus);
+		
+		//IPToolShaders.modConstruction();
 	}
 	
 	private void setup(FMLCommonSetupEvent event){
@@ -87,7 +89,6 @@ public class ImmersivePetroleum{
 		proxy.preInit();
 		
 		IPContent.preInit();
-		IPToolShaders.preInit();
 		
 		proxy.preInitEnd();
 		

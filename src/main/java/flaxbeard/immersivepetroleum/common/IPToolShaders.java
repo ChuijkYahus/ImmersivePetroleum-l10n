@@ -17,7 +17,7 @@ import java.util.List;
 
 public class IPToolShaders{
 	
-	public static void preInit(){
+	public static void modConstruction(){
 		//@formatter:off
 		final String warnings = "Do not touch the operational end of the device.\n" +
 								"Do not look directly at the operational end of the device.";

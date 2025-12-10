@@ -35,8 +35,6 @@ import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.Vec3i;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.dedicated.DedicatedServer;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -764,12 +762,11 @@ public class ProjectorItem extends IPItemBase implements IUpgradeableTool{
 	
 	@Override
 	public UpgradeData getUpgrades(ItemStack stack){
-		return UpgradeData.EMPTY;//stack.hasTag() ? stack.getOrCreateTag().getCompound("upgrades") : new CompoundTag();
+		return UpgradeData.EMPTY;
 	}
 	
 	@Override
 	public void clearUpgrades(ItemStack stack){
-		//ItemUtils.removeTag(stack, "upgrades");
 	}
 	
 	@Override
@@ -799,24 +796,4 @@ public class ProjectorItem extends IPItemBase implements IUpgradeableTool{
 	public Slot[] getWorkbenchSlots(AbstractContainerMenu container, ItemStack stack, Level level, Supplier<Player> getPlayer, IItemHandler toolInventory){
 		return NONE;
 	}
-	
-	/*
-	public ICapabilityProvider initCapabilities(ItemStack stack, CompoundTag nbt){
-		if(stack.isEmpty())
-			return null;
-		
-		final ResourceLocation key = ForgeRegistries.ITEMS.getKey(this);
-		return new IPItemStackHandler(0){
-			private final LazyOptional<ShaderWrapper_Item> shaders = CapabilityUtils.constantOptional(new ShaderWrapper_Item(key, stack));
-			
-			@Override
-			public <T> LazyOptional<T> getCapability(Capability<T> capability, Direction facing){
-				if(capability == CapabilityShader.SHADER_CAPABILITY){
-					return shaders.cast();
-				}
-				return super.getCapability(capability, facing);
-			}
-		};
-	}
-	*/
 }
