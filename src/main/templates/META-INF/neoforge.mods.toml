@@ -18,7 +18,7 @@ license="All rights reserved"
 	modId="immersiveengineering"
 	type="required"
 	versionRange="[${ie_version},)"
-	ordering="BEFORE"
+	ordering="AFTER"
 	side="BOTH"
 
 [[dependencies.immersivepetroleum]]
