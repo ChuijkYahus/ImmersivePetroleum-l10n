@@ -4,6 +4,7 @@ import blusunrize.immersiveengineering.api.tool.upgrade.IUpgrade;
 import blusunrize.immersiveengineering.api.tool.upgrade.IUpgradeableTool;
 import blusunrize.immersiveengineering.api.tool.upgrade.UpgradeData;
 import blusunrize.immersiveengineering.common.gui.IESlot;
+import blusunrize.immersiveengineering.common.register.IEDataComponents;
 import flaxbeard.immersivepetroleum.ImmersivePetroleum;
 import flaxbeard.immersivepetroleum.common.IPDataComponents;
 import flaxbeard.immersivepetroleum.common.entity.MotorboatEntity;
@@ -12,7 +13,6 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.RegistryAccess;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.Mth;
@@ -33,40 +33,34 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.items.IItemHandler;
-import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.function.Supplier;
 
+import static net.neoforged.neoforge.capabilities.Capabilities.ItemHandler;
+
 public class MotorboatItem extends IPItemBase implements IUpgradeableTool{
+	public static final int UPGRADE_SLOT_COUNT = 3;
 	public static final String UPGRADE_TYPE = "MOTORBOAT";
 	
 	public MotorboatItem(){
 		super(new Item.Properties().stacksTo(1));
 	}
 	
-	/*
-	public ICapabilityProvider initCapabilities(ItemStack stack, CompoundTag nbt){
-		return new IPItemStackHandler(4);
-	}
-	*/
-	
 	@Override
 	public UpgradeData getUpgrades(ItemStack stack){
-		return UpgradeData.EMPTY;//stack.hasTag() ? stack.getOrCreateTag().getCompound("upgrades") : new CompoundTag();
+		return stack.getOrDefault(IEDataComponents.UPGRADE_DATA, UpgradeData.EMPTY);
 	}
 	
 	@Override
 	public void clearUpgrades(ItemStack stack){
-		//ItemUtils.removeTag(stack, "upgrades");
+		stack.remove(IEDataComponents.UPGRADE_DATA);
 	}
 	
 	protected NonNullList<ItemStack> getContainedItems(ItemStack stack){
-		IItemHandler handler = stack.getCapability(Capabilities.ItemHandler.ITEM);
+		IItemHandler handler = stack.getCapability(ItemHandler.ITEM);
 		
 		if(handler == null){
 			ImmersivePetroleum.log.debug("No valid inventory handler found for " + stack);
@@ -104,22 +98,20 @@ public class MotorboatItem extends IPItemBase implements IUpgradeableTool{
 		
 		clearUpgrades(stack);
 		
-		IItemHandler handler = stack.getCapability(Capabilities.ItemHandler.ITEM);
+		IItemHandler handler = stack.getCapability(ItemHandler.ITEM);
 		if(handler != null){
-			CompoundTag nbt = new CompoundTag();
+			UpgradeData upgrades = UpgradeData.EMPTY;
 			
 			for(int i = 0;i < handler.getSlots();i++){
 				ItemStack u = handler.getStackInSlot(i);
-				if(u.getItem() instanceof IUpgrade upg){
-					/* // TODO
-					if(upg.getUpgradeTypes(u).contains(UPGRADE_TYPE) && upg.canApplyUpgrades(stack, u)){
-						upg.applyUpgrades(stack, u, nbt);
+				if(!u.isEmpty() && u.getItem() instanceof IUpgrade upg){
+					if(upg.getUpgradeTypes(u).contains(UPGRADE_TYPE) && upg.canApplyUpgrades(upgrades, u)){
+						upgrades = upg.applyUpgrades(upgrades, u);
 					}
-					*/
 				}
 			}
 			
-			//stack.getOrCreateTag().put("upgrades", nbt);
+			stack.set(IEDataComponents.UPGRADE_DATA, upgrades);
 			finishUpgradeRecalculation(stack, w.registryAccess());
 		}
 	}
@@ -164,20 +156,7 @@ public class MotorboatItem extends IPItemBase implements IUpgradeableTool{
 			tooltip.add(((MutableComponent) tankData.fs().getHoverName()).append(": " + tankData.fs().getAmount() + "mB").withStyle(ChatFormatting.GRAY));
 		}
 		
-		/*
-		if(stack.hasTag()){
-			CompoundTag tag = stack.getTag();
-			
-			if(tag.contains("tank")){
-				FluidStack fs = FluidStack.loadFluidStackFromNBT(tag.getCompound("tank"));
-				if(fs != null){
-					tooltip.add(((MutableComponent) fs.getHoverName()).append(": " + fs.getAmount() + "mB").withStyle(ChatFormatting.GRAY));
-				}
-			}
-		}
-		*/
-		
-		IItemHandler handler = stack.getCapability(Capabilities.ItemHandler.ITEM);
+		IItemHandler handler = stack.getCapability(ItemHandler.ITEM);
 		if(handler != null){
 			for(int i = 0;i < handler.getSlots();i++){
 				if(handler.getStackInSlot(i).isEmpty())

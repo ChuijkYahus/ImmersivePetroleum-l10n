@@ -13,6 +13,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.level.material.Fluid;
 import net.neoforged.neoforge.energy.IEnergyStorage;
 import net.neoforged.neoforge.fluids.FluidStack;
@@ -31,6 +32,8 @@ public class IPDataComponents{
 	
 	public static final DeferredHolder<DataComponentType<?>, DataComponentType<TankData>> TANK_DATA = IPRegisters.registerDataComponent("tank_data", TankData.CODEC, TankData.CODEC_STREAM);
 	public static final DeferredHolder<DataComponentType<?>, DataComponentType<PowerData>> POWER_DATA = IPRegisters.registerDataComponent("power_data", PowerData.CODEC, PowerData.CODEC_STREAM);
+	
+	public static final DeferredHolder<DataComponentType<?>, DataComponentType<ItemContainerContents>> CONTAINER_ITEM = IPRegisters.registerDataComponentF("ip_container", ItemContainerContents.CODEC, ItemContainerContents.STREAM_CODEC);
 	
 	public record TankData(@Nonnull FluidStack fs){
 		//@formatter:off

@@ -47,22 +47,26 @@ public class MotorboatRenderer extends EntityRenderer<MotorboatEntity>{
 				if(!entity.isEmergency()){
 					if(entity.isForwardDown()){
 						entity.propellerXRotSpeed += entity.isBoosting ? 0.2F : 0.1F;
-					}
-					if(entity.isBackDown()){
-						entity.propellerXRotSpeed -= 0.2F;
+					}else if(entity.isBackDown()){
+						entity.propellerXRotSpeed -= 0.1F;
 					}
 					
+					// FIXME Make this FPS independent!
 					entity.propellerXRot += entity.propellerXRotSpeed;
 					entity.propellerXRot %= 360.0F;
 				}
 				
-				entity.propellerXRotSpeed *= 0.985F;
-				if(entity.propellerXRotSpeed != 0.0F && entity.propellerXRotSpeed >= -1.0E-3F && entity.propellerXRotSpeed <= 1.0E-3F){
-					entity.propellerXRotSpeed = 0.0F;
+				if(entity.propellerXRotSpeed != 0.0F){
+					entity.propellerXRotSpeed *= 0.985F;
+					
+					if(Math.abs(entity.propellerXRotSpeed) <= 1.0E-3F)
+						entity.propellerXRotSpeed = 0.0F;
 				}
 				
 				this.modelBoat.propeller.xRot = entity.propellerXRot * Mth.DEG_TO_RAD;
-				
+			}
+			
+			{
 				float pr = entity.isEmergency() ? 0F : entity.propellerYRotation;
 				if(entity.isLeftDown() && !entity.isRightDown() && pr > -1)
 					pr = pr - 0.1F * partialTicks;

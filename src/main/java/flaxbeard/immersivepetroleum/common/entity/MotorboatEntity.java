@@ -13,6 +13,7 @@ import flaxbeard.immersivepetroleum.common.items.GasolineBottleItem;
 import flaxbeard.immersivepetroleum.common.items.MotorboatItem;
 import flaxbeard.immersivepetroleum.common.network.IPPacketHandler;
 import flaxbeard.immersivepetroleum.common.network.MessageConsumeBoatFuel;
+import flaxbeard.immersivepetroleum.common.util.IPItemStackHandler;
 import flaxbeard.immersivepetroleum.common.util.RegistryUtils;
 import flaxbeard.immersivepetroleum.common.util.Utils;
 import net.minecraft.client.Minecraft;
@@ -57,15 +58,19 @@ import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.entity.IEntityWithComplexSpawn;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.FluidUtil;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
 import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
+import net.neoforged.neoforge.items.IItemHandler;
 import org.joml.Vector3f;
 
 import javax.annotation.Nonnull;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 	
@@ -79,10 +84,13 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 	static final EntityDataAccessor<String> TANK_FLUID = SynchedEntityData.defineId(MotorboatEntity.class, EntityDataSerializers.STRING);
 	static final EntityDataAccessor<Integer> TANK_AMOUNT = SynchedEntityData.defineId(MotorboatEntity.class, EntityDataSerializers.INT);
 	
-	static final EntityDataAccessor<ItemStack> UPGRADE_0 = SynchedEntityData.defineId(MotorboatEntity.class, EntityDataSerializers.ITEM_STACK);
-	static final EntityDataAccessor<ItemStack> UPGRADE_1 = SynchedEntityData.defineId(MotorboatEntity.class, EntityDataSerializers.ITEM_STACK);
-	static final EntityDataAccessor<ItemStack> UPGRADE_2 = SynchedEntityData.defineId(MotorboatEntity.class, EntityDataSerializers.ITEM_STACK);
-	static final EntityDataAccessor<ItemStack> UPGRADE_3 = SynchedEntityData.defineId(MotorboatEntity.class, EntityDataSerializers.ITEM_STACK);
+	static final EntityDataAccessor<ItemStack>[] UPGRADES;
+	static{
+		UPGRADES = new EntityDataAccessor[MotorboatItem.UPGRADE_SLOT_COUNT];
+		for(int i = 0;i < MotorboatItem.UPGRADE_SLOT_COUNT;i++){
+			UPGRADES[i] = SynchedEntityData.defineId(MotorboatEntity.class, EntityDataSerializers.ITEM_STACK);
+		}
+	}
 	
 	public boolean isFireproof = false;
 	public boolean hasIcebreaker = false;
@@ -114,14 +122,15 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 	}
 	
 	@Override
-	protected void defineSynchedData(@Nonnull SynchedEntityData.Builder p_326198_){
-		super.defineSynchedData(p_326198_);
-		this.entityData.set(TANK_FLUID, "");
-		this.entityData.set(TANK_AMOUNT, 0);
-		this.entityData.set(UPGRADE_0, ItemStack.EMPTY);
-		this.entityData.set(UPGRADE_1, ItemStack.EMPTY);
-		this.entityData.set(UPGRADE_2, ItemStack.EMPTY);
-		this.entityData.set(UPGRADE_3, ItemStack.EMPTY);
+	protected void defineSynchedData(@Nonnull SynchedEntityData.Builder builder){
+		super.defineSynchedData(builder);
+		
+		builder.define(TANK_FLUID, "");
+		builder.define(TANK_AMOUNT, 0);
+		
+		for(EntityDataAccessor<ItemStack> upgrade: UPGRADES){
+			builder.define(upgrade, ItemStack.EMPTY);
+		}
 	}
 	
 	@Override
@@ -130,10 +139,12 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 		
 		String fluid = "";
 		int amount = 0;
-		ItemStack stack0 = ItemStack.EMPTY;
-		ItemStack stack1 = ItemStack.EMPTY;
-		ItemStack stack2 = ItemStack.EMPTY;
-		ItemStack stack3 = ItemStack.EMPTY;
+		ItemStack[] array = new ItemStack[]{
+			ItemStack.EMPTY,
+			ItemStack.EMPTY,
+			ItemStack.EMPTY,
+			ItemStack.EMPTY,
+		};
 		
 		if(compound.contains("tank")){
 			CompoundTag tank = compound.getCompound("tank");
@@ -143,18 +154,16 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 		
 		if(compound.contains("upgrades")){
 			CompoundTag upgrades = compound.getCompound("upgrades");
-			stack0 = ItemStack.parse(this.registryAccess(), upgrades.getCompound("0")).orElse(ItemStack.EMPTY);
-			stack1 = ItemStack.parse(this.registryAccess(), upgrades.getCompound("1")).orElse(ItemStack.EMPTY);
-			stack2 = ItemStack.parse(this.registryAccess(), upgrades.getCompound("2")).orElse(ItemStack.EMPTY);
-			stack3 = ItemStack.parse(this.registryAccess(), upgrades.getCompound("3")).orElse(ItemStack.EMPTY);
+			for(int i = 0;i < array.length;i++){
+				Optional<ItemStack> parsed = ItemStack.parse(this.registryAccess(), upgrades.getCompound(Integer.toString(i)));
+				if(parsed.isPresent())
+					array[i] = parsed.get();
+			}
 		}
 		
 		this.entityData.set(TANK_FLUID, fluid);
 		this.entityData.set(TANK_AMOUNT, amount);
-		this.entityData.set(UPGRADE_0, stack0);
-		this.entityData.set(UPGRADE_1, stack1);
-		this.entityData.set(UPGRADE_2, stack2);
-		this.entityData.set(UPGRADE_3, stack3);
+		setUpgrades(array);
 	}
 	
 	@Override
@@ -163,10 +172,6 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 		
 		String fluid = this.entityData.get(TANK_FLUID);
 		int amount = this.entityData.get(TANK_AMOUNT);
-		ItemStack stack0 = this.entityData.get(UPGRADE_0);
-		ItemStack stack1 = this.entityData.get(UPGRADE_1);
-		ItemStack stack2 = this.entityData.get(UPGRADE_2);
-		ItemStack stack3 = this.entityData.get(UPGRADE_3);
 		
 		CompoundTag tank = new CompoundTag();
 		tank.putString("fluid", fluid);
@@ -174,23 +179,20 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 		compound.put("tank", tank);
 		
 		CompoundTag upgrades = new CompoundTag();
-		upgrades.put("0", stack0.save(this.registryAccess(), new CompoundTag()));
-		upgrades.put("1", stack1.save(this.registryAccess(), new CompoundTag()));
-		upgrades.put("2", stack2.save(this.registryAccess(), new CompoundTag()));
-		upgrades.put("3", stack3.save(this.registryAccess(), new CompoundTag()));
+		
+		ItemStack[] array = getUpgrades().toArray(ItemStack[]::new);
+		for(int i = 0;i < array.length;i++){
+			if(!array[i].isEmpty())
+				upgrades.put(Integer.toString(i), array[i].save(this.registryAccess(), new CompoundTag()));
+		}
+		
 		compound.put("upgrades", upgrades);
 	}
 	
 	public void setUpgrades(NonNullList<ItemStack> stacks){
 		if(stacks != null && !stacks.isEmpty()){
-			ItemStack o0 = stacks.get(0);
-			ItemStack o1 = stacks.get(1);
-			ItemStack o2 = stacks.get(2);
-			ItemStack o3 = stacks.get(3);
-			this.entityData.set(UPGRADE_0, o0);
-			this.entityData.set(UPGRADE_1, o1);
-			this.entityData.set(UPGRADE_2, o2);
-			this.entityData.set(UPGRADE_3, o3);
+			ItemStack[] array = stacks.toArray(ItemStack[]::new);
+			setUpgrades(array);
 		}
 	}
 	
@@ -213,21 +215,29 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 	@Override
 	public void onSyncedDataUpdated(@Nonnull EntityDataAccessor<?> key){
 		super.onSyncedDataUpdated(key);
-		if(key == UPGRADE_0 || key == UPGRADE_1 || key == UPGRADE_2 || key == UPGRADE_3){
-			NonNullList<ItemStack> upgrades = getUpgrades();
+		
+		boolean any = Arrays.stream(UPGRADES).anyMatch(upgrade -> key == upgrade);
+		if(any){
 			this.isFireproof = false;
 			this.hasIcebreaker = false;
-			for(ItemStack upgrade:upgrades){
+			
+			NonNullList<ItemStack> upgrades = getUpgrades();
+			for(ItemStack upgrade: upgrades){
 				if(upgrade != null && upgrade != ItemStack.EMPTY){
 					Item item = upgrade.getItem();
+					
 					if(item == BoatUpgrades.REINFORCED_HULL.get()){
 						this.isFireproof = true;
+						
 					}else if(item == BoatUpgrades.ICE_BREAKER.get()){
 						this.hasIcebreaker = true;
+						
 					}else if(item == BoatUpgrades.TANK.get()){
 						this.hasTank = true;
+						
 					}else if(item == BoatUpgrades.RUDDERS.get()){
 						this.hasRudders = true;
+						
 					}else if(item == BoatUpgrades.PADDLES.get()){
 						this.hasPaddles = true;
 					}
@@ -321,7 +331,17 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 						if(!containedFluid.isEmpty())
 							stack.set(IPDataComponents.TANK_DATA, new IPDataComponents.TankData(containedFluid));
 						
-						/* // FIXME Boat-Item NBT Storage
+						IItemHandler itemHandler = stack.getCapability(Capabilities.ItemHandler.ITEM);
+						if(itemHandler != null){
+							if(itemHandler instanceof IPItemStackHandler){
+								NonNullList<ItemStack> upgrades = getUpgrades();
+								for(int i = 0;i < itemHandler.getSlots();i++){
+									itemHandler.insertItem(i, upgrades.get(i), false);
+								}
+							}
+						}
+						
+						/* // FIXME Boat-Item Storage
 						LazyOptional<IItemHandler> handler = stack.getCapability(ForgeCapabilities.ITEM_HANDLER, null);
 						handler.ifPresent(itemHandler ->
 						{
@@ -395,7 +415,6 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 			return InteractionResult.SUCCESS;
 		}
 		
-		// FIXME Fix the Accesstransformer
 		if(!this.level().isClientSide && !player.isShiftKeyDown() && this.outOfControlTicks < 60.0F && !player.isPassengerOfSameVehicle(this)){
 			player.startRiding(this);
 			if(this.level().dimension().equals(Level.NETHER) && this.isFireproof){
@@ -551,7 +570,6 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 		if(this.isEmergency()){
 			for(int i = 0;i <= 1;++i){
 				if(this.getPaddleState(i)){
-					// FIXME Fix the Accesstransformer
 					if(!this.isSilent() && (double) (this.paddlePositions[i] % ((float) Math.PI * 2F)) <= (double) ((float) Math.PI / 4F) && (double) ((this.paddlePositions[i] + ((float) Math.PI / 8F)) % ((float) Math.PI * 2F)) >= (double) ((float) Math.PI / 4F)){
 						SoundEvent soundevent = this.getPaddleSound();
 						if(soundevent != null){
@@ -774,11 +792,11 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 	}
 	
 	public NonNullList<ItemStack> getUpgrades(){
-		NonNullList<ItemStack> stackList = NonNullList.withSize(4, ItemStack.EMPTY);
-		stackList.set(0, this.entityData.get(UPGRADE_0));
-		stackList.set(1, this.entityData.get(UPGRADE_1));
-		stackList.set(2, this.entityData.get(UPGRADE_2));
-		stackList.set(3, this.entityData.get(UPGRADE_3));
+		NonNullList<ItemStack> stackList = NonNullList.withSize(MotorboatItem.UPGRADE_SLOT_COUNT, ItemStack.EMPTY);
+		
+		for(int i = 0;i < MotorboatItem.UPGRADE_SLOT_COUNT;i++)
+			stackList.set(i, this.entityData.get(UPGRADES[i]));
+		
 		return stackList;
 	}
 	
@@ -789,7 +807,7 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 			if(stack != FluidStack.EMPTY){
 				s = stack.getHoverName().getString() + ": " + stack.getAmount() + "mB";
 			}else{
-				s = I18n.get(Lib.GUI + "empty");
+				s = I18n.get("gui.immersivepetroleum.empty");
 			}
 			return new String[]{s};
 			
@@ -910,33 +928,45 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 		String fluid = buffer.readUtf();
 		int amount = buffer.readInt();
 		
-		ItemStack stack0 = ItemStack.STREAM_CODEC.decode(buffer);
-		ItemStack stack1 = ItemStack.STREAM_CODEC.decode(buffer);
-		ItemStack stack2 = ItemStack.STREAM_CODEC.decode(buffer);
-		ItemStack stack3 = ItemStack.STREAM_CODEC.decode(buffer);
-		
 		this.entityData.set(TANK_FLUID, fluid);
 		this.entityData.set(TANK_AMOUNT, amount);
-		this.entityData.set(UPGRADE_0, stack0);
-		this.entityData.set(UPGRADE_1, stack1);
-		this.entityData.set(UPGRADE_2, stack2);
-		this.entityData.set(UPGRADE_3, stack3);
+		
+		ItemStack[] array = new ItemStack[MotorboatItem.UPGRADE_SLOT_COUNT];
+		for(int i = 0;i < array.length;i++){
+			int s = buffer.readByte();
+			
+			array[i] = s > 0 ? ItemStack.STREAM_CODEC.decode(buffer) : ItemStack.EMPTY;
+		}
+		
+		setUpgrades(array);
 	}
 	
 	@Override
 	public void writeSpawnData(RegistryFriendlyByteBuf buffer){
 		String fluid = this.entityData.get(TANK_FLUID);
 		int amount = this.entityData.get(TANK_AMOUNT);
-		ItemStack stack0 = this.entityData.get(UPGRADE_0);
-		ItemStack stack1 = this.entityData.get(UPGRADE_1);
-		ItemStack stack2 = this.entityData.get(UPGRADE_2);
-		ItemStack stack3 = this.entityData.get(UPGRADE_3);
 		
 		buffer.writeUtf(fluid);
 		buffer.writeInt(amount);
-		ItemStack.STREAM_CODEC.encode(buffer, stack0);
-		ItemStack.STREAM_CODEC.encode(buffer, stack1);
-		ItemStack.STREAM_CODEC.encode(buffer, stack2);
-		ItemStack.STREAM_CODEC.encode(buffer, stack3);
+		
+		for(ItemStack stack: getUpgrades()){
+			boolean notEmpty = !stack.isEmpty();
+			
+			buffer.writeByte(notEmpty ? 1 : 0);
+			if(notEmpty){
+				ItemStack.STREAM_CODEC.encode(buffer, stack);
+			}
+		}
+	}
+	
+	private void setUpgrades(ItemStack... array){
+		if(array.length != MotorboatItem.UPGRADE_SLOT_COUNT){
+			ItemStack[] nArray = new ItemStack[MotorboatItem.UPGRADE_SLOT_COUNT];
+			System.arraycopy(array, 0, nArray, 0, nArray.length);
+			array = nArray;
+		}
+		
+		for(int i = 0;i < MotorboatItem.UPGRADE_SLOT_COUNT;i++)
+			this.entityData.set(UPGRADES[i], array[i]);
 	}
 }

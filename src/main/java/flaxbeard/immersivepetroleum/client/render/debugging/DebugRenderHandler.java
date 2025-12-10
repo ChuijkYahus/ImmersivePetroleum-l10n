@@ -224,7 +224,7 @@ public class DebugRenderHandler{
 								
 								List<Component> debugOut = new ArrayList<>();
 								
-								debugOut.add(toText("").append(boat.getContainedFluid().getHoverName()).withStyle(ChatFormatting.GOLD));
+								debugOut.add(toTranslation("item.immersivepetroleum.speedboat").withStyle(ChatFormatting.GOLD));
 								
 								FluidStack fluid = boat.getContainedFluid();
 								if(fluid == FluidStack.EMPTY){
@@ -236,7 +236,7 @@ public class DebugRenderHandler{
 								NonNullList<ItemStack> upgrades = boat.getUpgrades();
 								int i = 0;
 								for(ItemStack upgrade: upgrades){
-									if(upgrade == null || upgrade == ItemStack.EMPTY){
+									if(upgrade == ItemStack.EMPTY){
 										debugOut.add(toText("Upgrade " + (++i) + ": Empty"));
 									}else{
 										debugOut.add(toText("Upgrade " + (++i) + ": ").append(upgrade.getHoverName()));
