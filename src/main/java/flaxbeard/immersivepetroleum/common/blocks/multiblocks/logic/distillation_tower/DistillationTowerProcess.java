@@ -15,7 +15,9 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BlockEntity;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.items.ItemHandlerHelper;
 
 import java.util.Collections;
 import java.util.List;
@@ -47,14 +49,9 @@ public class DistillationTowerProcess extends MultiblockProcessInMachine<Distill
 		Direction outDir = orientation.mirrored() ? orientation.front().getClockWise() : orientation.front().getCounterClockWise();
 		BlockPos outPos = mbLevel.toAbsolute(DistillationTowerLogic.Item_OUT).relative(outDir);
 		
-		BlockEntity te = rawLevel.getBlockEntity(outPos);
-		if(te != null){
-			// TODO Drop item in container
-			/*
-			LazyOptional<IItemHandler> handler = te.getCapability(ForgeCapabilities.ITEM_HANDLER, outDir.getOpposite());
-			ItemStack finalOutput = output;
-			output = handler.map(outputHandler -> ItemHandlerHelper.insertItem(outputHandler, finalOutput, false)).orElse(ItemStack.EMPTY);
-			*/
+		IItemHandler itemHandler = rawLevel.getCapability(Capabilities.ItemHandler.BLOCK, outPos, outDir.getOpposite());
+		if(itemHandler != null){
+			output = ItemHandlerHelper.insertItem(itemHandler, output, false);
 		}
 		
 		if(!output.isEmpty()){
