@@ -45,12 +45,12 @@ public class HighPressureRefineryRecipeCategory extends IPRecipeCategory<HighPre
 		int outputAmount = recipe.getOutputFluid().getAmount();
 		int guiTankSize = Math.min(Math.max(Math.max(primaryInputAmount, secondaryInputAmount), outputAmount), 1000);
 		
-		builder.addSlot(RecipeIngredientRole.INPUT, 25, 3)
+		builder.addSlot(RecipeIngredientRole.INPUT, 3, 3)
 			.setFluidRenderer(guiTankSize, false, 20, 51)
 			.setOverlay(this.tankOverlay, 0, 0)
 			.addIngredients(NeoForgeTypes.FLUID_STACK, Arrays.asList(recipe.getPrimaryInputFluid().getFluids()));
 		
-		IRecipeSlotBuilder secondary = builder.addSlot(RecipeIngredientRole.INPUT, 3, 3)
+		IRecipeSlotBuilder secondary = builder.addSlot(RecipeIngredientRole.INPUT, 25, 3)
 			.setFluidRenderer(guiTankSize, false, 20, 51)
 			.setOverlay(this.tankOverlay, 0, 0);
 		if(recipe.getSecondaryInputFluid() != null)
