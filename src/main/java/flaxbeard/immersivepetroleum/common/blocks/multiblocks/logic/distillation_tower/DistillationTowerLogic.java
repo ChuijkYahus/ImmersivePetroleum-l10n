@@ -31,7 +31,9 @@ import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -42,6 +44,7 @@ import net.neoforged.neoforge.fluids.FluidUtil;
 import net.neoforged.neoforge.fluids.IFluidTank;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
+import net.neoforged.neoforge.fluids.capability.IFluidHandlerItem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -146,21 +149,47 @@ public class DistillationTowerLogic implements IMultiblockLogic<State>, IServerT
 		}
 		
 		if(state.getInventory(Inventory.INPUT_FILLED) != ItemStack.EMPTY && state.tanks.input().getFluidAmount() < state.tanks.input().getCapacity()){
-			ItemStack emptyContainer = ItemStack.EMPTY;//Utils.drainFluidContainer(state.tanks.input(), state.getInventory(Inventory.INV_0), state.getInventory(Inventory.INV_1));
-			if(!emptyContainer.isEmpty()){
-				final ItemStack inv_1_stack = state.getInventory(Inventory.INPUT_EMPTY);
+			final ItemStack inputEmpty = state.getInventory(Inventory.INPUT_EMPTY);
+			
+			if(inputEmpty.getCount() < inputEmpty.getMaxStackSize()){
+				ItemStack emptyContainer = ItemStack.EMPTY;
 				
-				if(!inv_1_stack.isEmpty() && inv_1_stack.isStackable() && inv_1_stack.getCount() < inv_1_stack.getMaxStackSize()){
-					inv_1_stack.grow(emptyContainer.getCount());
-				}else if(inv_1_stack.isEmpty()){
-					state.setInventory(Inventory.INPUT_EMPTY, emptyContainer.copy());
+				ItemStack stack = state.getInventory(Inventory.INPUT_FILLED);
+				
+				
+				IFluidHandlerItem capability = stack.getCapability(Capabilities.FluidHandler.ITEM);
+				if(capability != null){
+					int amount = Math.min(state.tanks.input().getCapacity() - state.tanks.input().getFluidAmount(), FluidType.BUCKET_VOLUME);
+					
+					if(amount > 0){
+						FluidStack fs = capability.getFluidInTank(0);
+						amount = capability.drain(fs.copyWithAmount(Math.min(fs.getAmount(), amount)), FluidAction.SIMULATE).getAmount();
+						
+						if(amount > 0){
+							FluidStack fluidStack = fs.copyWithAmount(amount);
+							state.tanks.input().fill(fluidStack, FluidAction.EXECUTE);
+							capability.drain(fluidStack, FluidAction.EXECUTE);
+							
+							if(capability.getFluidInTank(0).isEmpty() && stack.getItem() instanceof BucketItem){
+								emptyContainer = new ItemStack(Items.BUCKET, 1);
+							}
+						}
+					}
 				}
 				
-				state.getInventory(Inventory.INPUT_FILLED).shrink(1);
-				if(state.getInventory(Inventory.INPUT_FILLED).getCount() <= 0){
-					state.setInventory(Inventory.INPUT_FILLED, ItemStack.EMPTY);
+				if(!emptyContainer.isEmpty()){
+					if(!inputEmpty.isEmpty() && inputEmpty.isStackable() && inputEmpty.getCount() < inputEmpty.getMaxStackSize()){
+						inputEmpty.grow(emptyContainer.getCount());
+					}else if(inputEmpty.isEmpty()){
+						state.setInventory(Inventory.INPUT_EMPTY, emptyContainer.copy());
+					}
+					
+					state.getInventory(Inventory.INPUT_FILLED).shrink(1);
+					if(state.getInventory(Inventory.INPUT_FILLED).getCount() <= 0){
+						state.setInventory(Inventory.INPUT_FILLED, ItemStack.EMPTY);
+					}
+					update = true;
 				}
-				update = true;
 			}
 		}
 		
