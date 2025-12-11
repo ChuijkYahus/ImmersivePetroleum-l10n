@@ -1,4 +1,4 @@
-// 1.21.1	2025-12-11T20:38:27.568888	Recipes
+// 1.21.1	2025-12-11T21:55:35.7798946	Recipes
 9c979fe626d50074ece3e890deeabfdef56b8df7 data/immersivepetroleum/advancement/recipes/misc/asphalt.json
 bb064dadbbc556639a21253f953819eb7fb9e45e data/immersivepetroleum/advancement/recipes/misc/asphalt2.json
 6ae880a775d846dd8c175b732b38b55ba28e3b1e data/immersivepetroleum/advancement/recipes/misc/asphalt_slab.json
@@ -69,9 +69,9 @@ b2b01af83cc600057ceb43b8432730f68278dbae data/immersivepetroleum/recipe/flaresta
 7d3e922b5054cad3fcb7c0187d88424b1814a544 data/immersivepetroleum/recipe/fuels/diesel_sulfur.json
 e7574aa7ebaa842587b314bd42ec5b0aaa1f2bbf data/immersivepetroleum/recipe/fuels/kerosene.json
 fcc85683db8c8d6be27f7d226bf7ff8a6f3fbc93 data/immersivepetroleum/recipe/gas_generator.json
-2ac37133b7f42c12fd37ab2452402ccc4356398a data/immersivepetroleum/recipe/hydrotreater/lubricant_cracking.json
-33d51d728346a61ac131f6290e108f48fedf7dfa data/immersivepetroleum/recipe/hydrotreater/naphtha_cracking.json
-97149d668508b0df036f82c3efbac1aafa1900b4 data/immersivepetroleum/recipe/hydrotreater/sulfur_recovery.json
+c6db67e73590fc12b0ad1c5c69af3ee965a72e05 data/immersivepetroleum/recipe/hydrotreater/lubricant_cracking.json
+b2ce230f57ade64970591ccab8e3cd87bc330734 data/immersivepetroleum/recipe/hydrotreater/naphtha_cracking.json
+1b3ba1df7ad6a892a0db6e646d817c4cfb54772a data/immersivepetroleum/recipe/hydrotreater/sulfur_recovery.json
 89dc85c8f89357f2f5e919feeca22702495a35e5 data/immersivepetroleum/recipe/mixer/napalm.json
 10aa3bb431bd645358966910247c0f9f6798b6d2 data/immersivepetroleum/recipe/molotov_fabric.json
 1a4c703fb399ae6f0e9a074b2717cb02aa7348cd data/immersivepetroleum/recipe/molotov_wool.json

@@ -66,16 +66,16 @@ public abstract class IPMultiblockRecipe extends MultiblockRecipe{
 		}
 		
 		private void modifyTimeAndEnergy(DoubleSupplier timeModifier, DoubleSupplier energyModifier){
-			this.processingTime = Lazy.of(() -> (int) Math.max(1.0D, this.baseTime * timeModifier.getAsDouble()));
-			this.processingEnergy = Lazy.of(() -> (int) Math.max(1.0D, this.baseEnergy * energyModifier.getAsDouble()));
+			this.processingTime = Lazy.of(() -> (int) (this.baseTime * timeModifier.getAsDouble()));
+			this.processingEnergy = Lazy.of(() -> (int) (this.baseEnergy * energyModifier.getAsDouble()));
 		}
 		
 		public int getTime(){
-			return this.processingTime.get();
+			return Math.max(1, this.processingTime.get());
 		}
 		
 		public int getEnergy(){
-			return this.processingEnergy.get();
+			return Math.max(1, this.processingEnergy.get());
 		}
 	}
 }
