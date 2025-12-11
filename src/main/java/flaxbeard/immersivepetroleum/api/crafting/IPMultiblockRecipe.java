@@ -46,7 +46,7 @@ public abstract class IPMultiblockRecipe extends MultiblockRecipe{
 	}
 	
 	protected static boolean test(SizedFluidIngredient a, FluidStack b, boolean ignoreAmount){
-		boolean equal = a.test(b);
+		boolean equal = a.ingredient().test(b);
 		return (!ignoreAmount && equal && a.amount() == b.getAmount()) || (ignoreAmount && equal);
 	}
 	
