@@ -274,7 +274,7 @@ public class IPBlockStates extends BlockStateProvider{
 		final ResourceLocation name = mb.getUniqueName();
 		if(TemplateMultiblock.SYNCED_CLIENT_TEMPLATES.containsKey(name))
 			return;
-		final String filePath = "structures/" + name.getPath() + ".nbt";
+		final String filePath = "structure/" + name.getPath() + ".nbt";
 		int slash = filePath.indexOf('/');
 		String prefix = filePath.substring(0, slash);
 		ResourceLocation shortLoc = ResourceLocation.fromNamespaceAndPath(name.getNamespace(), filePath.substring(slash + 1));
