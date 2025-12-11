@@ -35,9 +35,9 @@ public class MessageConsumeBoatFuel implements INetMessage{
 				Entity entity = context.player().getVehicle();
 				
 				if(entity instanceof MotorboatEntity boat){
-					FluidStack fluid = boat.getContainedFluid();
+					FluidStack fluid = boat.getTank().getFluid();
 					
-					if(fluid != null && fluid != FluidStack.EMPTY)
+					if(fluid != FluidStack.EMPTY)
 						fluid.setAmount(Math.max(0, fluid.getAmount() - amount));
 					
 					boat.setContainedFluid(fluid);

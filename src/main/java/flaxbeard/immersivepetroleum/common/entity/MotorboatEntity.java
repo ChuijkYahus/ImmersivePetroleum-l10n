@@ -1,6 +1,5 @@
 package flaxbeard.immersivepetroleum.common.entity;
 
-import blusunrize.immersiveengineering.api.Lib;
 import blusunrize.immersiveengineering.common.util.IESounds;
 import com.google.common.collect.Lists;
 import flaxbeard.immersivepetroleum.ImmersivePetroleum;
@@ -22,6 +21,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.game.ServerboundPaddleBoatPacket;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -62,6 +62,8 @@ import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.entity.IEntityWithComplexSpawn;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.FluidUtil;
+import net.neoforged.neoforge.fluids.IFluidTank;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
 import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 import net.neoforged.neoforge.items.IItemHandler;
@@ -73,14 +75,6 @@ import java.util.List;
 import java.util.Optional;
 
 public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
-	
-	public static EntityDataAccessor<Byte> getFlags(){
-		return DATA_SHARED_FLAGS_ID;
-	}
-	
-	/**
-	 * Storage for {@link ResourceLocation} using {@link ResourceLocation#toString()}
-	 */
 	static final EntityDataAccessor<String> TANK_FLUID = SynchedEntityData.defineId(MotorboatEntity.class, EntityDataSerializers.STRING);
 	static final EntityDataAccessor<Integer> TANK_AMOUNT = SynchedEntityData.defineId(MotorboatEntity.class, EntityDataSerializers.INT);
 	
@@ -104,6 +98,8 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 	public float propellerXRot = 0.0F;
 	public float propellerXRotSpeed = 0.0F;
 	
+	private BoatTank tank;
+	
 	public MotorboatEntity(Level world){
 		this(IPEntityTypes.MOTORBOAT.get(), world);
 	}
@@ -125,8 +121,7 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 	protected void defineSynchedData(@Nonnull SynchedEntityData.Builder builder){
 		super.defineSynchedData(builder);
 		
-		builder.define(TANK_FLUID, "");
-		builder.define(TANK_AMOUNT, 0);
+		this.tank = new BoatTank(this, builder);
 		
 		for(EntityDataAccessor<ItemStack> upgrade: UPGRADES){
 			builder.define(upgrade, ItemStack.EMPTY);
@@ -137,21 +132,14 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 	protected void readAdditionalSaveData(@Nonnull CompoundTag compound){
 		super.readAdditionalSaveData(compound);
 		
-		String fluid = "";
-		int amount = 0;
+		this.tank.readAdditional(compound);
+		
 		ItemStack[] array = new ItemStack[]{
 			ItemStack.EMPTY,
 			ItemStack.EMPTY,
 			ItemStack.EMPTY,
-			ItemStack.EMPTY,
+			ItemStack.EMPTY
 		};
-		
-		if(compound.contains("tank")){
-			CompoundTag tank = compound.getCompound("tank");
-			fluid = tank.getString("fluid");
-			amount = tank.getInt("amount");
-		}
-		
 		if(compound.contains("upgrades")){
 			CompoundTag upgrades = compound.getCompound("upgrades");
 			for(int i = 0;i < array.length;i++){
@@ -161,22 +149,14 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 			}
 		}
 		
-		this.entityData.set(TANK_FLUID, fluid);
-		this.entityData.set(TANK_AMOUNT, amount);
 		setUpgrades(array);
 	}
 	
 	@Override
-	protected void addAdditionalSaveData(@Nonnull CompoundTag compound){
-		super.addAdditionalSaveData(compound);
+	protected void addAdditionalSaveData(@Nonnull CompoundTag tag){
+		super.addAdditionalSaveData(tag);
 		
-		String fluid = this.entityData.get(TANK_FLUID);
-		int amount = this.entityData.get(TANK_AMOUNT);
-		
-		CompoundTag tank = new CompoundTag();
-		tank.putString("fluid", fluid);
-		tank.putInt("amount", amount);
-		compound.put("tank", tank);
+		this.tank.writeAdditional(tag);
 		
 		CompoundTag upgrades = new CompoundTag();
 		
@@ -186,7 +166,7 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 				upgrades.put(Integer.toString(i), array[i].save(this.registryAccess(), new CompoundTag()));
 		}
 		
-		compound.put("upgrades", upgrades);
+		tag.put("upgrades", upgrades);
 	}
 	
 	public void setUpgrades(NonNullList<ItemStack> stacks){
@@ -244,30 +224,16 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 				}
 			}
 		}
+		
+		this.tank.updateCapacity();
 	}
 	
 	public void setContainedFluid(FluidStack stack){
-		if(stack == null){
-			this.entityData.set(TANK_FLUID, "");
-			this.entityData.set(TANK_AMOUNT, 0);
-		}else{
-			this.entityData.set(TANK_FLUID, RegistryUtils.getRegistryNameOf(stack.getFluid()).toString());
-			this.entityData.set(TANK_AMOUNT, stack.getAmount());
-		}
+		this.tank.setData(stack);
 	}
 	
-	public FluidStack getContainedFluid(){
-		String fluidName = this.entityData.get(TANK_FLUID);
-		int amount = this.entityData.get(TANK_AMOUNT);
-		
-		if(fluidName == null || fluidName.isEmpty() || amount == 0)
-			return FluidStack.EMPTY;
-		
-		Fluid fluid = RegistryUtils.getFluidFromRegistryName(ResourceLocation.parse(fluidName));
-		if(fluid == null)
-			return FluidStack.EMPTY;
-		
-		return new FluidStack(fluid, amount);
+	public IFluidTank getTank(){
+		return this.tank.getInternalTank();
 	}
 	
 	@Override
@@ -327,9 +293,9 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 						MotorboatItem item = (MotorboatItem) getDropItem();
 						ItemStack stack = new ItemStack(item, 1);
 						
-						FluidStack containedFluid = getContainedFluid();
-						if(!containedFluid.isEmpty())
-							stack.set(IPDataComponents.TANK_DATA, new IPDataComponents.TankData(containedFluid));
+						FluidStack fs = this.getTank().getFluid();
+						if(!fs.isEmpty())
+							stack.set(IPDataComponents.TANK_DATA, new IPDataComponents.TankData(fs));
 						
 						IItemHandler itemHandler = stack.getCapability(Capabilities.ItemHandler.ITEM);
 						if(itemHandler != null){
@@ -340,19 +306,6 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 								}
 							}
 						}
-						
-						/* // FIXME Boat-Item Storage
-						LazyOptional<IItemHandler> handler = stack.getCapability(ForgeCapabilities.ITEM_HANDLER, null);
-						handler.ifPresent(itemHandler ->
-						{
-							if(itemHandler instanceof IPItemStackHandler){
-								NonNullList<ItemStack> upgrades = getUpgrades();
-								for(int i = 0;i < itemHandler.getSlots();i++){
-									itemHandler.insertItem(i, upgrades.get(i), false);
-								}
-							}
-						});
-						*/
 						
 						if(isPlayer){
 							Player player = (Player) source.getDirectEntity();
@@ -388,19 +341,19 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 		
 		if(Utils.isFluidRelatedItemStack(stack)){
 			FluidStack fstack = FluidUtil.getFluidContained(stack).orElse(null);
-			if(fstack != null){
-				FluidTank tank = getInternalTank();
+			
+			if(fstack != null && FluidUtil.interactWithFluidHandler(player, hand, this.tank.getHandler())){
+				IFluidTank tank = getInternalTank();
 				
-				if(FluidUtil.interactWithFluidHandler(player, hand, tank)){
-					setContainedFluid(tank.getFluid());
-					advancement(tank, fstack, player);
-				}
+				setContainedFluid(tank.getFluid());
+				advancement(tank, fstack, player);
 			}
+			
 			return InteractionResult.SUCCESS;
 		}
 		
 		if(stack.getItem() instanceof GasolineBottleItem gasbottle){
-			FluidTank tank = getInternalTank();
+			IFluidTank tank = getInternalTank();
 			FluidStack fstack = new FluidStack(IPContent.Fluids.GASOLINE.get(), GasolineBottleItem.FILLED_AMOUNT);
 			
 			if(tank.fill(fstack, FluidAction.SIMULATE) >= GasolineBottleItem.FILLED_AMOUNT){
@@ -426,14 +379,11 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 		return InteractionResult.FAIL;
 	}
 	
-	private FluidTank getInternalTank(){
-		FluidTank tank = new FluidTank(getMaxFuel(), e -> FuelHandler.isValidBoatFuel(e.getFluid()));
-		FluidStack fs = getContainedFluid();
-		tank.setFluid(fs);
-		return tank;
+	private IFluidTank getInternalTank(){
+		return this.tank.getInternalTank();
 	}
 	
-	private void advancement(FluidTank tank, FluidStack fstack, Player player){
+	private void advancement(IFluidTank tank, FluidStack fstack, Player player){
 		if(tank.isFluidValid(fstack)){
 			Utils.unlockIPAdvancement(player, "main/motorboat");
 			if(this.hasTank && tank.getFluidAmount() == tank.getCapacity()){
@@ -472,7 +422,7 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 			}
 			// Fuel
 			{
-				int current = this.entityData.get(TANK_AMOUNT);
+				int current = this.getTank().getFluidAmount();
 				int diff = current - this.oFuelAmount;
 				if(diff != 0 && current == 0){
 					if(this.getFirstPassenger() instanceof Player player && this.hasPaddles){
@@ -540,7 +490,8 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 					this.lastMoving = moving;
 					ImmersivePetroleum.proxy.handleEntitySound(IESounds.dieselGenerator.value(), this, false, .5f, 0.5F);
 				}
-				ImmersivePetroleum.proxy.handleEntitySound(IESounds.dieselGenerator.value(), this, this.isVehicle() && this.getContainedFluid() != FluidStack.EMPTY && this.getContainedFluid().getAmount() > 0, this.inputUp || this.inputDown ? .5f : .3f, moving);
+				FluidStack fs = this.getTank().getFluid();
+				ImmersivePetroleum.proxy.handleEntitySound(IESounds.dieselGenerator.value(), this, this.isVehicle() && fs != FluidStack.EMPTY && fs.getAmount() > 0, this.inputUp || this.inputDown ? .5f : .3f, moving);
 				
 				if(this.inputUp && this.level().random.nextInt(2) == 0){
 					if(isInLava()){
@@ -699,7 +650,7 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 				this.setDeltaMovement(motion);
 				this.setPaddleState(this.inputRight && !this.inputLeft || this.inputUp, this.inputLeft && !this.inputRight || this.inputUp);
 			}else{
-				FluidStack fluid = getContainedFluid();
+				FluidStack fluid = getTank().getFluid();
 				int consumeAmount = 0;
 				if(fluid != FluidStack.EMPTY){
 					consumeAmount = FuelHandler.getBoatFuelUse(fluid.getFluid());
@@ -782,7 +733,7 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 	}
 	
 	public boolean isEmergency(){
-		FluidStack fluid = getContainedFluid();
+		FluidStack fluid = getTank().getFluid();
 		if(fluid != FluidStack.EMPTY){
 			int consumeAmount = FuelHandler.getBoatFuelUse(fluid.getFluid());
 			return fluid.getAmount() < consumeAmount && this.hasPaddles;
@@ -803,7 +754,7 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 	public String[] getOverlayText(Player player, HitResult hit){
 		if(Utils.isFluidRelatedItemStack(player.getItemInHand(InteractionHand.MAIN_HAND))){
 			String s;
-			FluidStack stack = getContainedFluid();
+			FluidStack stack = getTank().getFluid();
 			if(stack != FluidStack.EMPTY){
 				s = stack.getHoverName().getString() + ": " + stack.getAmount() + "mB";
 			}else{
@@ -816,101 +767,12 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 	}
 	
 	@Override
-	public float getWaterLevelAbove(){
-		AABB aabb = this.getBoundingBox();
-		int i = Mth.floor(aabb.minX);
-		int j = Mth.ceil(aabb.maxX);
-		int k = Mth.floor(aabb.maxY);
-		int l = Mth.ceil(aabb.maxY - this.lastYd);
-		int i1 = Mth.floor(aabb.minZ);
-		int j1 = Mth.ceil(aabb.maxZ);
-		BlockPos.MutableBlockPos blockpos = new BlockPos.MutableBlockPos();
-		
-		label39: for(int k1 = k;k1 < l;++k1){
-			float f = 0.0F;
-			
-			for(int l1 = i;l1 < j;++l1){
-				for(int i2 = i1;i2 < j1;++i2){
-					blockpos.set(l1, k1, i2);
-					FluidState fluidstate = this.level().getFluidState(blockpos);
-					if(fluidstate.is(FluidTags.WATER) || (this.isFireproof && fluidstate.is(FluidTags.LAVA))){
-						f = Math.max(f, fluidstate.getHeight(this.level(), blockpos));
-					}
-					
-					if(f >= 1.0F){
-						continue label39;
-					}
-				}
-			}
-			
-			if(f < 1.0F){
-				return (float) blockpos.getY() + f;
-			}
-		}
-		
-		return (float) (l + 1);
+	public boolean canBoatInFluid(@Nonnull FluidState state){
+		return super.canBoatInFluid(state) || isLavaProof(state);
 	}
 	
-	@Override
-	protected boolean checkInWater(){
-		AABB aabb = this.getBoundingBox();
-		int i = Mth.floor(aabb.minX);
-		int j = Mth.ceil(aabb.maxX);
-		int k = Mth.floor(aabb.minY);
-		int l = Mth.ceil(aabb.minY + 0.001D);
-		int i1 = Mth.floor(aabb.minZ);
-		int j1 = Mth.ceil(aabb.maxZ);
-		boolean flag = false;
-		this.waterLevel = -Double.MAX_VALUE;
-		BlockPos.MutableBlockPos blockpos = new BlockPos.MutableBlockPos();
-		
-		for(int k1 = i;k1 < j;++k1){
-			for(int l1 = k;l1 < l;++l1){
-				for(int i2 = i1;i2 < j1;++i2){
-					blockpos.set(k1, l1, i2);
-					FluidState fluidstate = this.level().getFluidState(blockpos);
-					if(fluidstate.is(FluidTags.WATER) || (this.isFireproof && fluidstate.is(FluidTags.LAVA))){
-						float f = (float) l1 + fluidstate.getHeight(this.level(), blockpos);
-						this.waterLevel = Math.max(f, this.waterLevel);
-						flag |= aabb.minY < (double) f;
-					}
-				}
-			}
-		}
-		
-		return flag;
-	}
-	
-	@Override
-	protected Status isUnderwater(){
-		AABB aabb = this.getBoundingBox();
-		double d0 = aabb.maxY + 0.001D;
-		int i = Mth.floor(aabb.minX);
-		int j = Mth.ceil(aabb.maxX);
-		int k = Mth.floor(aabb.maxY);
-		int l = Mth.ceil(d0);
-		int i1 = Mth.floor(aabb.minZ);
-		int j1 = Mth.ceil(aabb.maxZ);
-		boolean flag = false;
-		BlockPos.MutableBlockPos blockpos = new BlockPos.MutableBlockPos();
-		
-		for(int k1 = i;k1 < j;++k1){
-			for(int l1 = k;l1 < l;++l1){
-				for(int i2 = i1;i2 < j1;++i2){
-					blockpos.set(k1, l1, i2);
-					FluidState fluidstate = this.level().getFluidState(blockpos);
-					if((fluidstate.is(FluidTags.WATER) || ((this.isFireproof && fluidstate.is(FluidTags.LAVA)))) && d0 < (double) ((float) blockpos.getY() + fluidstate.getHeight(this.level(), blockpos))){
-						if(!fluidstate.isSource()){
-							return Boat.Status.UNDER_FLOWING_WATER;
-						}
-						
-						flag = true;
-					}
-				}
-			}
-		}
-		
-		return flag ? Boat.Status.UNDER_WATER : null;
+	private boolean isLavaProof(FluidState fState){
+		return this.isFireproof && fState.is(FluidTags.LAVA);
 	}
 	
 	@Override
@@ -924,12 +786,8 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 	}
 	
 	@Override
-	public void readSpawnData(RegistryFriendlyByteBuf buffer){
-		String fluid = buffer.readUtf();
-		int amount = buffer.readInt();
-		
-		this.entityData.set(TANK_FLUID, fluid);
-		this.entityData.set(TANK_AMOUNT, amount);
+	public void readSpawnData(@Nonnull RegistryFriendlyByteBuf buffer){
+		this.tank.readSpawnData(buffer);
 		
 		ItemStack[] array = new ItemStack[MotorboatItem.UPGRADE_SLOT_COUNT];
 		for(int i = 0;i < array.length;i++){
@@ -942,12 +800,8 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 	}
 	
 	@Override
-	public void writeSpawnData(RegistryFriendlyByteBuf buffer){
-		String fluid = this.entityData.get(TANK_FLUID);
-		int amount = this.entityData.get(TANK_AMOUNT);
-		
-		buffer.writeUtf(fluid);
-		buffer.writeInt(amount);
+	public void writeSpawnData(@Nonnull RegistryFriendlyByteBuf buffer){
+		this.tank.writeSpawnData(buffer);
 		
 		for(ItemStack stack: getUpgrades()){
 			boolean notEmpty = !stack.isEmpty();
@@ -968,5 +822,97 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 		
 		for(int i = 0;i < MotorboatItem.UPGRADE_SLOT_COUNT;i++)
 			this.entityData.set(UPGRADES[i], array[i]);
+	}
+	
+	public static class BoatTank{
+		private final FluidTank tank;
+		private final MotorboatEntity boat;
+		public BoatTank(MotorboatEntity boat, @Nonnull SynchedEntityData.Builder builder){
+			this.boat = boat;
+			this.tank = new FluidTank(boat.getMaxFuel(), e -> FuelHandler.isValidBoatFuel(e.getFluid())){
+				@Override
+				protected void onContentsChanged(){
+					setData(getFluid());
+				}
+			};
+			
+			builder.define(TANK_FLUID, "");
+			builder.define(TANK_AMOUNT, 0);
+		}
+		
+		private void readAdditional(@Nonnull final CompoundTag tag){
+			FluidStack stack = FluidStack.parseOptional(this.boat.registryAccess(), tag.getCompound("fluid"));
+			setData(stack);
+			this.tank.setFluid(stack);
+		}
+		
+		private void writeAdditional(@Nonnull final CompoundTag ret){
+			Tag fluidTag = this.tank.getFluid().saveOptional(this.boat.registryAccess());
+			ret.put("fluid", fluidTag);
+		}
+		
+		private void readSpawnData(@Nonnull RegistryFriendlyByteBuf buffer){
+			String fluid = buffer.readUtf();
+			int amount = buffer.readInt();
+			
+			setData(fluid, amount);
+			syncTankFromEntityData();
+		}
+		
+		private void writeSpawnData(@Nonnull RegistryFriendlyByteBuf buffer){
+			String fluid = this.boat.entityData.get(TANK_FLUID);
+			int amount = this.boat.entityData.get(TANK_AMOUNT);
+			
+			buffer.writeUtf(fluid);
+			buffer.writeInt(amount);
+		}
+		
+		public void updateCapacity(){
+			this.tank.setCapacity(this.boat.getMaxFuel());
+		}
+		
+		public IFluidTank getInternalTank(){
+			return this.tank;
+		}
+		
+		public IFluidHandler getHandler(){
+			return this.tank;
+		}
+		
+		private void syncTankFromEntityData(){
+			this.tank.setFluid(getData());
+		}
+		
+		private void setData(@Nonnull FluidStack stack){
+			if(stack.isEmpty()){
+				setData("", 0);
+				return;
+			}
+			
+			String fluidStr = RegistryUtils.getRegistryNameOf(stack.getFluid()).toString();
+			int amount = stack.getAmount();
+			setData(fluidStr, amount);
+			syncTankFromEntityData();
+		}
+		
+		private void setData(String fluidStr, int amount){
+			this.boat.entityData.set(TANK_FLUID, fluidStr);
+			this.boat.entityData.set(TANK_AMOUNT, amount);
+		}
+		
+		private FluidStack getData(){
+			String fluidStr = this.boat.entityData.get(TANK_FLUID);
+			int amount = this.boat.entityData.get(TANK_AMOUNT);
+			
+			FluidStack stack = FluidStack.EMPTY;
+			if(amount > 0 && !fluidStr.isEmpty()){
+				Fluid fluid = RegistryUtils.getFluidFromRegistryName(ResourceLocation.parse(fluidStr));
+				if(fluid != null){
+					stack = new FluidStack(fluid, amount);
+				}
+			}
+			
+			return stack;
+		}
 	}
 }

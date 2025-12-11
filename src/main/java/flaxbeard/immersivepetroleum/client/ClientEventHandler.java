@@ -1,7 +1,6 @@
 package flaxbeard.immersivepetroleum.client;
 
 import blusunrize.immersiveengineering.client.ClientUtils;
-import blusunrize.immersiveengineering.client.utils.GuiHelper;
 import blusunrize.immersiveengineering.common.items.BuzzsawItem;
 import blusunrize.immersiveengineering.common.items.ChemthrowerItem;
 import blusunrize.immersiveengineering.common.items.DrillItem;
@@ -11,7 +10,6 @@ import blusunrize.immersiveengineering.common.items.RevolverItem;
 import blusunrize.immersiveengineering.common.items.SpeedloaderItem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
 import flaxbeard.immersivepetroleum.api.reservoir.ReservoirHandler;
 import flaxbeard.immersivepetroleum.client.render.RenderUtils;
 import flaxbeard.immersivepetroleum.client.utils.MCUtil;
@@ -19,11 +17,14 @@ import flaxbeard.immersivepetroleum.common.CommonEventHandler;
 import flaxbeard.immersivepetroleum.common.IPContent;
 import flaxbeard.immersivepetroleum.common.entity.MotorboatEntity;
 import flaxbeard.immersivepetroleum.common.items.DebugItem;
+import flaxbeard.immersivepetroleum.common.util.ResourceUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
@@ -41,10 +42,13 @@ import net.neoforged.neoforge.client.event.RenderLevelStageEvent.Stage;
 import net.neoforged.neoforge.client.event.RenderPlayerEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.IFluidTank;
+import org.joml.Quaternionf;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.BiConsumer;
 
 public class ClientEventHandler{
 	
@@ -156,77 +160,86 @@ public class ClientEventHandler{
 					}
 				}
 				
-				// FIXME
-				boolean enable = false;
-				if(enable){
+				matrix.pushPose();
+				{
+					int scaledWidth = guiGraphics.guiWidth();
+					int scaledHeight = guiGraphics.guiHeight();
+					
+					MultiBufferSource.BufferSource buffer = event.getGuiGraphics().bufferSource();
+					VertexConsumer builder = buffer.getBuffer(RenderType.guiOverlay());
+					//ItemOverlayUtils.getHudElementsBuilder(buffer);
+					
+					final IFluidTank tank = motorboat.getTank();
+					
+					int rightOffset = 0;
+					if(MCUtil.getOptions().showSubtitles().get())
+						rightOffset += 100;
+					float dx = scaledWidth - rightOffset - 16;
+					float dy = scaledHeight + offset;
 					matrix.pushPose();
 					{
-						int scaledWidth = guiGraphics.guiWidth();
-						int scaledHeight = guiGraphics.guiWidth();
-						
-						MultiBufferSource.BufferSource buffer = event.getGuiGraphics().bufferSource();
-						//MultiBufferSource.BufferSource buffer = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
-						VertexConsumer builder = null;//ItemOverlayUtils.getHudElementsBuilder(buffer);
-						
-						int rightOffset = 0;
-						if(MCUtil.getOptions().showSubtitles().get())
-							rightOffset += 100;
-						float dx = scaledWidth - rightOffset - 16;
-						float dy = scaledHeight + offset;
+						renderFluidTankOverlay(event.getGuiGraphics(), dx, dy, tank, (guiGraphics1, fluidHandler) -> {
+							
+						});
+					}
+					matrix.popPose();
+					
+					buffer.endBatch();
+					
+					if(holdingDebugItem && MCUtil.getFont() != null){
 						matrix.pushPose();
 						{
-							matrix.translate(dx, dy, 0);
-							GuiHelper.drawTexturedRect(builder, matrix, -24, -68, 31, 62, 256f, 179, 210, 9, 71);
+							Font font = MCUtil.getFont();
 							
-							matrix.translate(-23, -37, 0);
-							float capacity = motorboat.getMaxFuel();
-							if(capacity > 0){
-								FluidStack fuel = motorboat.getContainedFluid();
-								int amount = fuel.getAmount();
-								float angle = 83 - (166 * amount / capacity);
-								matrix.pushPose();
-								matrix.mulPose(Axis.ZP.rotationDegrees(angle));
-								GuiHelper.drawTexturedRect(builder, matrix, 6, -2, 24, 4, 256f, 91, 123, 80, 87);
-								matrix.popPose();
-								matrix.translate(23, 37, 0);
-								
-								GuiHelper.drawTexturedRect(builder, matrix, -41, -73, 53, 72, 256f, 8, 61, 4, 76);
+							FluidStack fs = tank.getFluid();
+							
+							Vec3 vec = motorboat.getDeltaMovement();
+							float speed = (float) Math.sqrt(vec.x * vec.x + vec.z * vec.z);
+							
+							String[] array = {
+								String.format(Locale.US, "Fuel: %05d/%d mB (%s)", fs.getAmount(), tank.getCapacity(), fs.getHoverName().getString()),
+								String.format(Locale.US, "Speed: %.3f", speed),
+								String.format(Locale.US, "PropXRot: %07.3f° (%.3frad)", motorboat.propellerXRot, motorboat.propellerXRot * Mth.DEG_TO_RAD),
+								String.format(Locale.US, "PropSpeed: %06.3f°", motorboat.propellerXRotSpeed)
+							};
+							int w = 3, h = 3;
+							for(int i = 0;i < array.length;i++){
+								guiGraphics.drawString(font, array[i], w, h + (9 * i), -1);
 							}
 						}
 						matrix.popPose();
-						
-						buffer.endBatch();
-						
-						if(holdingDebugItem && MCUtil.getFont() != null){
-							matrix.pushPose();
-							{
-								Font font = MCUtil.getFont();
-								
-								int capacity = motorboat.getMaxFuel();
-								FluidStack fs = motorboat.getContainedFluid();
-								int amount = (fs == FluidStack.EMPTY || fs.getFluid() == null) ? 0 : fs.getAmount();
-								
-								Vec3 vec = motorboat.getDeltaMovement();
-								float speed = (float) Math.sqrt(vec.x * vec.x + vec.z * vec.z);
-								
-								String[] array = {
-									String.format(Locale.US, "Fuel: %05d/%d mB (%s)", amount, capacity, fs.getHoverName().getString()),
-									String.format(Locale.US, "Speed: %.3f", speed),
-									String.format(Locale.US, "PropXRot: %07.3f° (%.3frad)", motorboat.propellerXRot, motorboat.propellerXRot * Mth.DEG_TO_RAD),
-									String.format(Locale.US, "PropSpeed: %06.3f°", motorboat.propellerXRotSpeed),
-									};
-								int w = 3, h = 3;
-								for(int i = 0;i < array.length;i++){
-									guiGraphics.drawString(font, array[i], w, h + (9 * i), -1);
-								}
-							}
-							matrix.popPose();
-						}
 					}
-					matrix.popPose();
 				}
+				matrix.popPose();
 			}
 		}
+	}
+	
+	static ResourceLocation GAUGE_FULL_EMPTY = ResourceUtils.ie("hud/gauge_full_empty");
+	static ResourceLocation GAUGE_POINTER = ResourceUtils.ie("hud/gauge_pointer");
+	static ResourceLocation GAUGE_OVERLAY = ResourceUtils.ie("hud/gauge_no_item");
+	/** Modified copy of {@link blusunrize.immersiveengineering.client.ItemOverlayUtils#renderFluidTankOverlay(GuiGraphics, int, int, Player, InteractionHand, ItemStack, boolean, BiConsumer)} */
+	public static void renderFluidTankOverlay(GuiGraphics graphics, float dx, float dy, IFluidTank tank, BiConsumer<GuiGraphics, IFluidTank> additionalRender){
+		var transform = graphics.pose();
+		transform.pushPose();
+		transform.translate((int) dx, (int) dy, 0);
+		graphics.blitSprite(GAUGE_FULL_EMPTY, -24, -68, 31, 62);
+		
+		transform.translate(-23, -37, 0);
+		int capacity = tank.getCapacity();
+		if(capacity > 0){
+			FluidStack fs = tank.getFluid();
+			float angle = 83 - (166 * fs.getAmount() / (float) capacity);
+			transform.pushPose();
+			transform.mulPose(new Quaternionf().rotateZ(angle * Mth.DEG_TO_RAD));
+			graphics.blitSprite(GAUGE_POINTER, 6, -2, 24, 4);
+			transform.popPose();
+			transform.translate(23, 37, 0);
+			
+			additionalRender.accept(graphics, tank);
+		}
+		graphics.blitSprite(GAUGE_OVERLAY, -41, -73, 53, 72);
+		transform.popPose();
 	}
 	
 	@SubscribeEvent

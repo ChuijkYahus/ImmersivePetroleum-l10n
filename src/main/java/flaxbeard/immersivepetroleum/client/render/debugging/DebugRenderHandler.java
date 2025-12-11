@@ -226,7 +226,7 @@ public class DebugRenderHandler{
 								
 								debugOut.add(toTranslation("item.immersivepetroleum.speedboat").withStyle(ChatFormatting.GOLD));
 								
-								FluidStack fluid = boat.getContainedFluid();
+								FluidStack fluid = boat.getTank().getFluid();
 								if(fluid == FluidStack.EMPTY){
 									debugOut.add(toText("Tank: Empty"));
 								}else{

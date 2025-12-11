@@ -86,7 +86,7 @@ public class CommonEventHandler{
 			LivingEntity entity = event.getEntity();
 			if(entity.getVehicle() instanceof MotorboatEntity boat){
 				if(boat.isFireproof){
-					event.setNewDamage(0.0F);//event.setCanceled(true); // TODO Check that this works as expected
+					event.setNewDamage(0.0F);
 					return;
 				}
 			}
@@ -94,7 +94,7 @@ public class CommonEventHandler{
 			if(entity.getRemainingFireTicks() > 0 && entity.getEffect(IPEffects.ANTI_DISMOUNT_FIRE) != null){
 				entity.clearFire();
 				entity.removeEffect(IPEffects.ANTI_DISMOUNT_FIRE);
-				event.setNewDamage(0.0F);//event.setCanceled(true); // TODO Check that this works as expected
+				event.setNewDamage(0.0F);
 			}
 		}
 	}
@@ -105,7 +105,7 @@ public class CommonEventHandler{
 		if(entity.isOnFire() && entity.getVehicle() instanceof MotorboatEntity boat){
 			if(boat.isFireproof){
 				entity.clearFire();
-				boat.setSharedFlag(0, false);
+				boat.setSharedFlag(0, false); // Fire Flag
 			}
 		}
 	}

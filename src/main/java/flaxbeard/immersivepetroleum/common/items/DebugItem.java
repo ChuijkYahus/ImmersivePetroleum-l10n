@@ -277,7 +277,7 @@ public class DebugItem extends IPItemBase{
 		
 		MutableComponent textOut = Component.literal("-- Speedboat --\n");
 		
-		FluidStack fluid = speedboatEntity.getContainedFluid();
+		FluidStack fluid = speedboatEntity.getTank().getFluid();
 		if(fluid == FluidStack.EMPTY){
 			textOut.append("Tank: Empty");
 		}else{
@@ -291,7 +291,7 @@ public class DebugItem extends IPItemBase{
 			if(upgrade == null || upgrade == ItemStack.EMPTY){
 				upgradesText.append("Upgrade " + (++i) + ": Empty\n");
 			}else{
-				upgradesText.append("Upgrade " + (i++) + ": ").append(upgrade.getHoverName()).append("\n");
+				upgradesText.append("Upgrade " + (++i) + ": ").append(upgrade.getHoverName()).append("\n");
 			}
 		}
 		textOut.append(upgradesText);
