@@ -1,6 +1,6 @@
 {
   "type": "immersivepetroleum:hydrotreater",
-  "energy": 400,
+  "energy": 256000,
   "input": {
     "amount": 2000,
     "tag": "neoforge:lubricant"
@@ -19,5 +19,5 @@
       "id": "immersivepetroleum:paraffin_wax"
     }
   },
-  "time": 256000
+  "time": 400
 }

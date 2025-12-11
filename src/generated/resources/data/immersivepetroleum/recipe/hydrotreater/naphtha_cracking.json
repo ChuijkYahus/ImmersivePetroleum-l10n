@@ -1,6 +1,6 @@
 {
   "type": "immersivepetroleum:hydrotreater",
-  "energy": 300,
+  "energy": 192000,
   "input": {
     "amount": 1500,
     "tag": "neoforge:naphtha"
@@ -13,5 +13,5 @@
     "amount": 500,
     "tag": "minecraft:water"
   },
-  "time": 192000
+  "time": 300
 }

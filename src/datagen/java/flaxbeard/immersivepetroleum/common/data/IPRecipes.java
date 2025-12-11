@@ -192,20 +192,20 @@ public class IPRecipes extends RecipeProvider{
 			.addInputFluid(IPTags.Fluids.diesel_sulfur, 1000)
 			.addSecondaryInputFluid(FluidTags.WATER, 500)
 			.addItemWithChance(new ItemStack(IEItems.Ingredients.DUST_SULFUR, 5), 1.0)
-			.setTimeAndEnergy(8000, 100)
+			.setTimeAndEnergy(100, 8000)
 			.build(this.out, rl("hydrotreater/sulfur_recovery"));
 
 		HighPressureRefineryRecipeBuilder.builder(new FluidStack(IPContent.Fluids.PETROLEUM_GAS.get(), 2000))
 			.addInputFluid(IPTags.Fluids.naphtha, 1500)
 			.addSecondaryInputFluid(FluidTags.WATER, 500)
-			.setTimeAndEnergy(192000, 300)
+			.setTimeAndEnergy(300, 192000)
 			.build(this.out, rl("hydrotreater/naphtha_cracking"));
 
 		HighPressureRefineryRecipeBuilder.builder(new FluidStack(IPContent.Fluids.DIESEL_SULFUR.get(), 2000))
 			.addInputFluid(IPTags.Fluids.lubricant, 2000)
 			.addSecondaryInputFluid(FluidTags.WATER, 500)
 			.addItemWithChance(new ItemStack(IPContent.Items.PARAFFIN_WAX.get(), 2), 1.0)
-			.setTimeAndEnergy(256000, 400)
+			.setTimeAndEnergy(400, 256000)
 			.build(this.out, rl("hydrotreater/lubricant_cracking"));
 
 		// PNC Compat
