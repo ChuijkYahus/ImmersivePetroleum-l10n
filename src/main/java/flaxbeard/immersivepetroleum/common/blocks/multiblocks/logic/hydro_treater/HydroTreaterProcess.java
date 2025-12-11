@@ -21,9 +21,12 @@ import net.neoforged.neoforge.items.ItemHandlerHelper;
 import java.util.function.BiFunction;
 
 public class HydroTreaterProcess extends MultiblockProcessInMachine<HighPressureRefineryRecipe>{
+	static final int[] SLOTS_NONE = new int[0];
 	
-	public HydroTreaterProcess(RecipeHolder<HighPressureRefineryRecipe> recipe, int... inputSlots){
-		super(recipe, inputSlots);
+	public HydroTreaterProcess(RecipeHolder<HighPressureRefineryRecipe> recipe, int[] inputTanks, int[] inputAmounts){
+		super(recipe, SLOTS_NONE);
+		setInputTanks(inputTanks);
+		setInputAmounts(inputAmounts);
 	}
 	
 	public HydroTreaterProcess(BiFunction<Level, ResourceLocation, HighPressureRefineryRecipe> recipe, CompoundTag data, HolderLookup.Provider provider){

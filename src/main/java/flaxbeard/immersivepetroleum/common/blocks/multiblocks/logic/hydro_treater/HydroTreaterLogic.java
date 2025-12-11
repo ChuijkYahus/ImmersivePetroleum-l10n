@@ -96,17 +96,17 @@ public class HydroTreaterLogic implements IMultiblockLogic<State>, IServerTickab
 						
 						if(state.energy.getEnergyStored() >= recipe.getTotalProcessEnergy() / recipe.getTotalProcessTime()){
 							if(state.tanks.primary().getFluidAmount() >= recipe.getPrimaryInputFluid().amount() && (recipe.getSecondaryInputFluid() == null || (state.tanks.secondary().getFluidAmount() >= recipe.getSecondaryInputFluid().amount()))){
-								int[] inputs, inputAmounts;
+								int[] inputTanks, inputAmounts;
 								
 								if(recipe.getSecondaryInputFluid() != null){
-									inputs = new int[]{TANK_INPUT_A, TANK_INPUT_B};
+									inputTanks = new int[]{TANK_INPUT_A, TANK_INPUT_B};
 									inputAmounts = new int[]{recipe.getPrimaryInputFluid().amount(), recipe.getSecondaryInputFluid().amount()};
 								}else{
-									inputs = new int[]{TANK_INPUT_A};
+									inputTanks = new int[]{TANK_INPUT_A};
 									inputAmounts = new int[]{recipe.getPrimaryInputFluid().amount()};
 								}
 								
-								MultiblockProcessInMachine<HighPressureRefineryRecipe> process = new HydroTreaterProcess(holder, inputs).setInputAmounts(inputAmounts);
+								HydroTreaterProcess process = new HydroTreaterProcess(holder, inputTanks, inputAmounts);
 								if(state.processor.addProcessToQueue(process, level, true)){
 									state.processor.addProcessToQueue(process, level, false);
 									update = true;
