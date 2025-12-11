@@ -10,8 +10,8 @@
     "id": "immersivepetroleum:diesel"
   },
   "secondary_input": {
-    "amount": 1000,
-    "tag": "neoforge:diesel_sulfur"
+    "amount": 500,
+    "tag": "minecraft:water"
   },
   "secondary_result": {
     "output": {

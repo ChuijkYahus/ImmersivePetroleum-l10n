@@ -10,8 +10,8 @@
     "id": "immersivepetroleum:petroleum_gas"
   },
   "secondary_input": {
-    "amount": 1500,
-    "tag": "neoforge:naphtha"
+    "amount": 500,
+    "tag": "minecraft:water"
   },
   "time": 192000
 }
