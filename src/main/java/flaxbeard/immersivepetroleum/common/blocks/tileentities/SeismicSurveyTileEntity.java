@@ -49,7 +49,7 @@ public class SeismicSurveyTileEntity extends IPTileEntityBase implements IPCommo
 	protected void writeCustom(CompoundTag tag, HolderLookup.Provider provider){
 		tag.putBoolean("slave", this.isSlave);
 		tag.putInt("timer", this.timer);
-		tag.put("stack", this.stack.save(provider, new CompoundTag()));
+		tag.put("stack", this.stack.saveOptional(provider));
 	}
 	
 	@Override
