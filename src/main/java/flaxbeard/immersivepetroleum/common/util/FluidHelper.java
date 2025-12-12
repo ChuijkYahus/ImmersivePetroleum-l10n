@@ -4,13 +4,18 @@ import blusunrize.immersiveengineering.api.IEApiDataComponents;
 import blusunrize.immersiveengineering.api.fluid.IFluidPipe;
 import com.mojang.datafixers.util.Unit;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.material.Fluid;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.fluids.FluidActionResult;
 import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.fluids.FluidUtil;
 import net.neoforged.neoforge.fluids.IFluidTank;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.fluids.capability.IFluidHandlerItem;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 
 import javax.annotation.Nonnull;
@@ -142,6 +147,32 @@ public class FluidHelper{
 			
 			return FluidActionResult.FAILURE;
 		}).orElse(FluidActionResult.FAILURE);
+	}
+	
+	public static ItemStack tryDrainContainer(@Nonnull ItemStack stack, @Nonnull IFluidTank source){
+		ItemStack emptyContainer = ItemStack.EMPTY;
+		
+		IFluidHandlerItem capability = stack.getCapability(Capabilities.FluidHandler.ITEM);
+		if(capability != null){
+			int amount = Math.min(source.getCapacity() - source.getFluidAmount(), FluidType.BUCKET_VOLUME);
+			
+			if(amount > 0){
+				FluidStack fs = capability.getFluidInTank(0);
+				amount = capability.drain(fs.copyWithAmount(Math.min(fs.getAmount(), amount)), FluidAction.SIMULATE).getAmount();
+				
+				if(amount > 0){
+					FluidStack fluidStack = fs.copyWithAmount(amount);
+					source.fill(fluidStack, FluidAction.EXECUTE);
+					capability.drain(fluidStack, FluidAction.EXECUTE);
+					
+					if(capability.getFluidInTank(0).isEmpty() && stack.getItem() instanceof BucketItem){
+						emptyContainer = new ItemStack(Items.BUCKET, 1);
+					}
+				}
+			}
+		}
+		
+		return emptyContainer;
 	}
 	
 	private FluidHelper(){

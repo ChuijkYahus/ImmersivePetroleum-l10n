@@ -31,7 +31,7 @@ public class DistillationTowerContainer extends MultiblockAwareGuiContainer{
 		Tanks tanks = state.tanks;
 		AveragingEnergyStorage energy = state.getEnergy();
 		
-		return new DistillationTowerContainer(multiblockCtx(type, id, ctx), player, new ItemStackHandler(state.inventory), tanks, energy);
+		return new DistillationTowerContainer(multiblockCtx(type, id, ctx), player, new ItemStackHandler(state.inventory.getInternal()), tanks, energy);
 	}
 	
 	public static DistillationTowerContainer makeClient(MenuType<?> type, int id, Inventory player){

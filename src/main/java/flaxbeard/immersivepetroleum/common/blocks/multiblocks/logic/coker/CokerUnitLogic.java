@@ -16,10 +16,12 @@ import blusunrize.immersiveengineering.api.multiblocks.blocks.util.ShapeType;
 import blusunrize.immersiveengineering.common.blocks.multiblocks.blockimpl.InitialMultiblockContext;
 import blusunrize.immersiveengineering.common.fluids.ArrayFluidHandler;
 import flaxbeard.immersivepetroleum.api.crafting.CokerUnitRecipe;
+import flaxbeard.immersivepetroleum.common.IPContent;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.IReadWriteNBT;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.shapes.CokerShape;
 import flaxbeard.immersivepetroleum.common.util.FluidHelper;
 import flaxbeard.immersivepetroleum.common.util.inventory.FluidTankFiltered;
+import flaxbeard.immersivepetroleum.common.util.inventory.EnumInventory;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
@@ -33,7 +35,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.fluids.FluidActionResult;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.fluids.FluidUtil;
@@ -42,6 +43,7 @@ import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
 import java.util.function.Function;
 
 import static flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.coker.CokerUnitLogic.State;
@@ -129,7 +131,7 @@ public class CokerUnitLogic implements IMultiblockLogic<State>, IServerTickableC
 		boolean update = false;
 		
 		if(rsEnabled){
-			ItemStack inputStack = state.getInventory(Inventory.INPUT);
+			ItemStack inputStack = state.inventory.get(Inventory.INPUT);
 			FluidStack inputFluid = state.bufferTanks.input().getFluid();
 			
 			if(!inputStack.isEmpty() && inputFluid.getAmount() > 0 && CokerUnitRecipe.hasRecipeWithInput(inputStack, inputFluid)){
@@ -181,27 +183,21 @@ public class CokerUnitLogic implements IMultiblockLogic<State>, IServerTickableC
 			}
 		}
 		
-		if(!state.getInventory(Inventory.INPUT_FILLED).isEmpty() && state.bufferTanks.input().getFluidAmount() < state.bufferTanks.input().getCapacity()){
-			final ItemStack inv_input_filled = state.getInventory(Inventory.INPUT_FILLED);
-			final ItemStack inv_input_empty = state.getInventory(Inventory.INPUT_EMPTY);
+		if(!state.inventory.get(Inventory.INPUT_FILLED).isEmpty() && state.bufferTanks.input().getFluidAmount() < state.bufferTanks.input().getCapacity()){
+			final ItemStack inv_input_filled = state.inventory.get(Inventory.INPUT_FILLED);
+			final ItemStack inv_input_empty = state.inventory.get(Inventory.INPUT_EMPTY);
 			
-			FluidActionResult result = FluidUtil.tryEmptyContainerAndStow(inv_input_filled, state.bufferTanks.input(), null, FluidType.BUCKET_VOLUME, null, false);
-			if(result.isSuccess()){
-				// TODO FluidUtil.tryEmptyContainerAndStow could work here?
-				ItemStack container = result.getResult();
-			}
-			
-			ItemStack container = ItemStack.EMPTY;//Utils.drainFluidContainer(state.bufferTanks.input(), inv_input_filled, inv_input_empty);
+			ItemStack container = FluidHelper.tryDrainContainer(inv_input_filled, state.bufferTanks.input());
 			if(!container.isEmpty()){
 				if(!inv_input_empty.isEmpty() && inv_input_empty.isStackable() && inv_input_empty.getCount() < inv_input_empty.getMaxStackSize()){
 					inv_input_empty.grow(container.getCount());
 				}else if(inv_input_empty.isEmpty()){
-					state.setInventory(Inventory.INPUT_EMPTY, container.copy());
+					state.inventory.set(Inventory.INPUT_EMPTY, container.copy());
 				}
 				
 				inv_input_filled.shrink(1);
 				if(inv_input_filled.getCount() <= 0){
-					state.setInventory(Inventory.INPUT_FILLED, ItemStack.EMPTY);
+					state.inventory.set(Inventory.INPUT_FILLED, ItemStack.EMPTY);
 				}
 				
 				update = true;
@@ -209,26 +205,26 @@ public class CokerUnitLogic implements IMultiblockLogic<State>, IServerTickableC
 		}
 		
 		if(state.bufferTanks.output().getFluidAmount() > 0){
-			final ItemStack inv_output_empty = state.getInventory(Inventory.OUTPUT_EMPTY);
-			final ItemStack inv_output_filled = state.getInventory(Inventory.OUTPUT_FILLED);
+			final ItemStack inv_output_empty = state.inventory.get(Inventory.OUTPUT_EMPTY);
+			final ItemStack inv_output_filled = state.inventory.get(Inventory.OUTPUT_FILLED);
 			
 			if(!inv_output_empty.isEmpty()){
 				ItemStack container = FluidHelper.fillFluidContainer(state.bufferTanks.output(), inv_output_empty, inv_output_filled, null);
 				
 				if(!container.isEmpty()){
 					if(inv_output_filled.getCount() == 1 && !FluidHelper.isFluidContainerFull(container)){
-						state.setInventory(Inventory.OUTPUT_FILLED, container.copy());
+						state.inventory.set(Inventory.OUTPUT_FILLED, container.copy());
 						
 					}else{
 						if(!inv_output_filled.isEmpty() && inv_output_filled.isStackable() && inv_output_filled.getCount() < inv_output_filled.getMaxStackSize()){
 							inv_output_filled.grow(container.getCount());
 						}else if(inv_output_filled.isEmpty()){
-							state.setInventory(Inventory.OUTPUT_FILLED, container.copy());
+							state.inventory.set(Inventory.OUTPUT_FILLED, container.copy());
 						}
 						
 						inv_output_empty.shrink(1);
 						if(inv_output_empty.getCount() <= 0){
-							state.setInventory(Inventory.OUTPUT_EMPTY, ItemStack.EMPTY);
+							state.inventory.set(Inventory.OUTPUT_EMPTY, ItemStack.EMPTY);
 						}
 					}
 					
@@ -265,7 +261,7 @@ public class CokerUnitLogic implements IMultiblockLogic<State>, IServerTickableC
 		boolean update = false;
 		State state = context.getState();
 		
-		ItemStack stack = state.getInventory(Inventory.INPUT);
+		ItemStack stack = state.inventory.get(Inventory.INPUT);
 		if(!stack.isEmpty()){
 			int compared = Mth.clamp(Mth.floor(stack.getCount() / (float) Math.min(64, stack.getMaxStackSize()) * 15), 0, 15);
 			if(compared != state.lastCompared){
@@ -309,11 +305,11 @@ public class CokerUnitLogic implements IMultiblockLogic<State>, IServerTickableC
 		
 		int lastCompared = 0;
 		
-		public final NonNullList<ItemStack> inventory = NonNullList.withSize(Inventory.values().length, ItemStack.EMPTY);
+		public final EnumInventory<Inventory> inventory = new EnumInventory<>(Inventory.class);
 		public final BufferTanks bufferTanks = new BufferTanks();
 		public final Chambers chambers = new Chambers();
 		
-		private final IItemHandler itemInput = new FilteredItemStackhandler(this.inventory);
+		private final IItemHandler itemInput = new FilteredItemStackhandler(this.inventory.getInternal());
 		private final ArrayFluidHandler fluidInput;
 		private final ArrayFluidHandler fluidOutput;
 		public BlockPos masterPos;
@@ -330,7 +326,7 @@ public class CokerUnitLogic implements IMultiblockLogic<State>, IServerTickableC
 			nbt.put("buffertanks", this.bufferTanks.writeNBT(provider));
 			nbt.put("chambers", this.chambers.writeNBT(provider));
 			nbt.put("energy", this.energy.serializeNBT(provider));
-			nbt.put("inventory", writeInventory(this.inventory, provider));
+			this.inventory.save(nbt, provider);
 			this.rsState.writeSaveNBT(nbt, provider);
 		}
 		
@@ -338,7 +334,7 @@ public class CokerUnitLogic implements IMultiblockLogic<State>, IServerTickableC
 		public void readSaveNBT(CompoundTag nbt, HolderLookup.Provider provider){
 			this.bufferTanks.readNBT(nbt.getCompound("buffertanks"), provider);
 			this.chambers.readNBT(nbt.getCompound("chambers"), provider);
-			readInventory(nbt.getCompound("inventory"), provider);
+			this.inventory.load(nbt, provider);
 			this.energy.deserializeNBT(provider, nbt.getCompound("energy"));
 			this.rsState.readSaveNBT(nbt, provider);
 		}
@@ -351,32 +347,6 @@ public class CokerUnitLogic implements IMultiblockLogic<State>, IServerTickableC
 		@Override
 		public void readSyncNBT(CompoundTag nbt, HolderLookup.Provider provider){
 			readSaveNBT(nbt, provider);
-		}
-		
-		protected void readInventory(CompoundTag nbt, HolderLookup.Provider provider){
-			NonNullList<ItemStack> list = NonNullList.create();
-			ContainerHelper.loadAllItems(nbt, list, provider);
-			
-			for(int i = 0;i < this.inventory.size();i++){
-				ItemStack stack = ItemStack.EMPTY;
-				if(i < list.size()){
-					stack = list.get(i);
-				}
-				
-				this.inventory.set(i, stack);
-			}
-		}
-		
-		protected CompoundTag writeInventory(NonNullList<ItemStack> list, HolderLookup.Provider provider){
-			return ContainerHelper.saveAllItems(new CompoundTag(), list, provider);
-		}
-		
-		public ItemStack getInventory(Inventory inv){
-			return this.inventory.get(inv.id());
-		}
-		
-		public ItemStack setInventory(Inventory inv, ItemStack stack){
-			return this.inventory.set(inv.id(), stack);
 		}
 		
 		public ItemStack copyStack(ItemStack stack, int amount){

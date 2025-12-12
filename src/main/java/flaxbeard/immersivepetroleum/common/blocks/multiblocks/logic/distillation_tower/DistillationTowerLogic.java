@@ -23,17 +23,14 @@ import flaxbeard.immersivepetroleum.api.crafting.DistillationTowerRecipe;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.IReadWriteNBT;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.shapes.DistillationTowerShape;
 import flaxbeard.immersivepetroleum.common.util.FluidHelper;
+import flaxbeard.immersivepetroleum.common.util.inventory.EnumInventory;
 import flaxbeard.immersivepetroleum.common.util.inventory.FluidTankFiltered;
 import flaxbeard.immersivepetroleum.common.util.inventory.MultiFluidTankFiltered;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.ContainerHelper;
-import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -44,7 +41,6 @@ import net.neoforged.neoforge.fluids.FluidUtil;
 import net.neoforged.neoforge.fluids.IFluidTank;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
-import net.neoforged.neoforge.fluids.capability.IFluidHandlerItem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -148,45 +144,22 @@ public class DistillationTowerLogic implements IMultiblockLogic<State>, IServerT
 			state.processor.tickServer(state, level, state.wasActive);
 		}
 		
-		if(state.getInventory(Inventory.INPUT_FILLED) != ItemStack.EMPTY && state.tanks.input().getFluidAmount() < state.tanks.input().getCapacity()){
-			final ItemStack inputEmpty = state.getInventory(Inventory.INPUT_EMPTY);
+		if(!state.inventory.get(Inventory.INPUT_FILLED).isEmpty() && state.tanks.input().getFluidAmount() < state.tanks.input().getCapacity()){
+			final ItemStack inputEmpty = state.inventory.get(Inventory.INPUT_EMPTY);
 			
 			if(inputEmpty.getCount() < inputEmpty.getMaxStackSize()){
-				ItemStack emptyContainer = ItemStack.EMPTY;
-				
-				ItemStack stack = state.getInventory(Inventory.INPUT_FILLED);
-				
-				
-				IFluidHandlerItem capability = stack.getCapability(Capabilities.FluidHandler.ITEM);
-				if(capability != null){
-					int amount = Math.min(state.tanks.input().getCapacity() - state.tanks.input().getFluidAmount(), FluidType.BUCKET_VOLUME);
-					
-					if(amount > 0){
-						FluidStack fs = capability.getFluidInTank(0);
-						amount = capability.drain(fs.copyWithAmount(Math.min(fs.getAmount(), amount)), FluidAction.SIMULATE).getAmount();
-						
-						if(amount > 0){
-							FluidStack fluidStack = fs.copyWithAmount(amount);
-							state.tanks.input().fill(fluidStack, FluidAction.EXECUTE);
-							capability.drain(fluidStack, FluidAction.EXECUTE);
-							
-							if(capability.getFluidInTank(0).isEmpty() && stack.getItem() instanceof BucketItem){
-								emptyContainer = new ItemStack(Items.BUCKET, 1);
-							}
-						}
-					}
-				}
+				ItemStack emptyContainer = FluidHelper.tryDrainContainer(state.inventory.get(Inventory.INPUT_FILLED), state.tanks.input());
 				
 				if(!emptyContainer.isEmpty()){
 					if(!inputEmpty.isEmpty() && inputEmpty.isStackable() && inputEmpty.getCount() < inputEmpty.getMaxStackSize()){
 						inputEmpty.grow(emptyContainer.getCount());
 					}else if(inputEmpty.isEmpty()){
-						state.setInventory(Inventory.INPUT_EMPTY, emptyContainer.copy());
+						state.inventory.set(Inventory.INPUT_EMPTY, emptyContainer.copy());
 					}
 					
-					state.getInventory(Inventory.INPUT_FILLED).shrink(1);
-					if(state.getInventory(Inventory.INPUT_FILLED).getCount() <= 0){
-						state.setInventory(Inventory.INPUT_FILLED, ItemStack.EMPTY);
+					state.inventory.get(Inventory.INPUT_FILLED).shrink(1);
+					if(state.inventory.get(Inventory.INPUT_FILLED).getCount() <= 0){
+						state.inventory.set(Inventory.INPUT_FILLED, ItemStack.EMPTY);
 					}
 					update = true;
 				}
@@ -196,26 +169,26 @@ public class DistillationTowerLogic implements IMultiblockLogic<State>, IServerT
 		if(state.tanks.output().getFluidAmount() > 0){
 			final MultiFluidTankFiltered outTank = state.tanks.output();
 			
-			if(state.getInventory(Inventory.OUTPUT_EMPTY) != ItemStack.EMPTY && outTank.getTanks() > 0){
+			if(state.inventory.get(Inventory.OUTPUT_EMPTY) != ItemStack.EMPTY && outTank.getTanks() > 0){
 				for(int i = outTank.getTanks() - 1;i >= 0;i--){
 					FluidStack fs = outTank.getFluidInTank(i);
 					
 					if(fs.getAmount() > 0){
-						ItemStack filledContainer = FluidHelper.fillFluidContainer(outTank, fs, state.getInventory(Inventory.OUTPUT_EMPTY), state.getInventory(Inventory.OUTPUT_FILLED));
+						ItemStack filledContainer = FluidHelper.fillFluidContainer(outTank, fs, state.inventory.get(Inventory.OUTPUT_EMPTY), state.inventory.get(Inventory.OUTPUT_FILLED));
 						if(!filledContainer.isEmpty()){
-							ItemStack inv_3_stack = state.getInventory(Inventory.OUTPUT_FILLED);
+							ItemStack inv_3_stack = state.inventory.get(Inventory.OUTPUT_FILLED);
 							if(inv_3_stack.getCount() == 1 && !FluidHelper.isFluidContainerFull(filledContainer)){
-								state.setInventory(Inventory.OUTPUT_FILLED, filledContainer.copy());
+								state.inventory.set(Inventory.OUTPUT_FILLED, filledContainer.copy());
 							}else{
 								if(!inv_3_stack.isEmpty() && inv_3_stack.isStackable() && inv_3_stack.getCount() < inv_3_stack.getMaxStackSize()){
 									inv_3_stack.grow(filledContainer.getCount());
 								}else if(inv_3_stack.isEmpty()){
-									state.setInventory(Inventory.OUTPUT_FILLED, filledContainer.copy());
+									state.inventory.set(Inventory.OUTPUT_FILLED, filledContainer.copy());
 								}
 								
-								state.getInventory(Inventory.OUTPUT_EMPTY).shrink(1);
-								if(state.getInventory(Inventory.OUTPUT_EMPTY).getCount() <= 0){
-									state.setInventory(Inventory.OUTPUT_EMPTY, ItemStack.EMPTY);
+								state.inventory.get(Inventory.OUTPUT_EMPTY).shrink(1);
+								if(state.inventory.get(Inventory.OUTPUT_EMPTY).getCount() <= 0){
+									state.inventory.set(Inventory.OUTPUT_EMPTY, ItemStack.EMPTY);
 								}
 							}
 							
@@ -290,7 +263,7 @@ public class DistillationTowerLogic implements IMultiblockLogic<State>, IServerT
 		
 		public final MultiblockProcessor.InMachineProcessor<DistillationTowerRecipe> processor;
 		
-		public NonNullList<ItemStack> inventory = NonNullList.withSize(4, ItemStack.EMPTY);
+		public final EnumInventory<Inventory> inventory = new EnumInventory<>(Inventory.class);
 		public final Tanks tanks = Tanks.server();
 		
 		/** Flickering avoidance for the "On" Texture overlay */
@@ -309,14 +282,6 @@ public class DistillationTowerLogic implements IMultiblockLogic<State>, IServerT
 		
 		private static DistillationTowerRecipe recipeFromId(Level level, ResourceLocation id){
 			return DistillationTowerRecipe.recipes.get(id).value();
-		}
-		
-		public void setInventory(Inventory inv, ItemStack stack){
-			this.inventory.set(inv.id(), stack);
-		}
-		
-		public ItemStack getInventory(Inventory inv){
-			return this.inventory.get(inv.id());
 		}
 		
 		@Override
@@ -351,7 +316,7 @@ public class DistillationTowerLogic implements IMultiblockLogic<State>, IServerT
 			this.cooldownTicks = nbt.getInt("cooldownTicks");
 			this.processor.fromNBT(nbt.getCompound("recipeworker"), DistillationTowerProcess::new, provider);
 			
-			this.inventory = readInventory(nbt.getCompound("inventory"), provider);
+			this.inventory.load(nbt, provider);
 			this.rsState.readSaveNBT(nbt, provider);
 			
 			this.wasActive = nbt.getBoolean("wasActive");
@@ -364,7 +329,7 @@ public class DistillationTowerLogic implements IMultiblockLogic<State>, IServerT
 			nbt.putInt("cooldownTicks", this.cooldownTicks);
 			nbt.put("recipeworker", this.processor.toNBT(provider));
 			
-			nbt.put("inventory", writeInventory(this.inventory, provider));
+			this.inventory.save(nbt, provider);
 			this.rsState.writeSaveNBT(nbt, provider);
 			
 			nbt.putBoolean("wasActive", this.wasActive);
@@ -378,23 +343,6 @@ public class DistillationTowerLogic implements IMultiblockLogic<State>, IServerT
 		@Override
 		public void writeSyncNBT(CompoundTag nbt, HolderLookup.Provider provider){
 			writeSaveNBT(nbt, provider);
-		}
-		
-		protected NonNullList<ItemStack> readInventory(CompoundTag nbt, HolderLookup.Provider provider){
-			NonNullList<ItemStack> list = NonNullList.create();
-			ContainerHelper.loadAllItems(nbt, list, provider);
-			
-			if(list.isEmpty()){ // In case it loaded none
-				list = this.inventory.size() == 4 ? this.inventory : NonNullList.withSize(4, ItemStack.EMPTY);
-			}else if(list.size() < 4){ // Padding in case it loaded less than 4
-				while(list.size() < 4)
-					list.add(ItemStack.EMPTY);
-			}
-			return list;
-		}
-		
-		protected CompoundTag writeInventory(NonNullList<ItemStack> list, HolderLookup.Provider provider){
-			return ContainerHelper.saveAllItems(new CompoundTag(), list, provider);
 		}
 	}
 	

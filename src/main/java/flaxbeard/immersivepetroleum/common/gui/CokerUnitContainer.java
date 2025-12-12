@@ -39,7 +39,7 @@ public class CokerUnitContainer extends MultiblockAwareGuiContainer{
 		return new CokerUnitContainer(
 			multiblockCtx(type, id, ctx),
 			player,
-			new ItemStackHandler(state.inventory),
+			new ItemStackHandler(state.inventory.getInternal()),
 			state.bufferTanks,
 			state.chambers,
 			state.energy,
