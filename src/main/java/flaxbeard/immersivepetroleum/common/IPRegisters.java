@@ -99,12 +99,13 @@ public class IPRegisters{
 	public static <S extends IMultiblockState> MultiblockRegistration<S> registerMetalMultiblock(String name, IMultiblockLogic<S> logic, Supplier<TemplateMultiblock> structure, @Nullable Consumer<MultiblockBuilder<S>> extras){
 		// @formatter:off
 		BlockBehaviour.Properties prop = BlockBehaviour.Properties.of().mapColor(MapColor.METAL).sound(SoundType.METAL)
-				.strength(3, 15)
-				.requiresCorrectToolForDrops()
-				.isViewBlocking((state, blockReader, pos) -> false)
-				.noOcclusion()
-				.dynamicShape()
-				.pushReaction(PushReaction.BLOCK);
+			.strength(3, 15)
+			.forceSolidOn()
+			.requiresCorrectToolForDrops()
+			.isViewBlocking((state, blockReader, pos) -> false)
+			.noOcclusion()
+			.dynamicShape()
+			.pushReaction(PushReaction.BLOCK);
 		// @formatter:on
 		
 		return registerMultiblock(name, logic, structure, extras, prop);
