@@ -2,6 +2,7 @@ package flaxbeard.immersivepetroleum.common;
 
 import blusunrize.immersiveengineering.api.shader.CapabilityShader;
 import flaxbeard.immersivepetroleum.ImmersivePetroleum;
+import flaxbeard.immersivepetroleum.api.crafting.LubricantHandler;
 import flaxbeard.immersivepetroleum.common.blocks.tileentities.AutoLubricatorTileEntity;
 import flaxbeard.immersivepetroleum.common.blocks.tileentities.FlarestackTileEntity;
 import flaxbeard.immersivepetroleum.common.fluids.IPFluid;
@@ -18,7 +19,6 @@ import net.neoforged.fml.common.EventBusSubscriber.Bus;
 import net.neoforged.neoforge.capabilities.BlockCapability;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.fluids.capability.wrappers.FluidBucketWrapper;
-import net.neoforged.neoforge.items.ComponentItemHandler;
 
 import static net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage;
 import static net.neoforged.neoforge.capabilities.Capabilities.FluidHandler;
@@ -43,7 +43,8 @@ public class IPCapabilityRegistry{
 		
 		event.registerItem(CapabilityShader.ITEM, (stack, _void) -> new CapabilityShader.ShaderWrapper_Item(ShaderCaseProjector.TYPE, stack), IPContent.Items.PROJECTOR.get());
 		
-		event.registerItem(ItemHandler.ITEM, (stack, _void) -> new IPItemStackHandler(stack, MotorboatItem.UPGRADE_SLOT_COUNT), IPContent.Items.SPEEDBOAT.get());
+		event.registerItem(FluidHandler.ITEM, (stack, _void) -> new IPItemStackFluidHandler(stack, 8000, LubricantHandler::isValidLube), IPContent.Items.OIL_CAN.get());
+		
 		event.registerItem(ItemHandler.ITEM, (stack, _void) -> new IPItemStackContainerHandler(stack, 1), IPContent.Items.PROJECTOR.get());
 		event.registerItem(ItemHandler.ITEM, (stack, _void) -> new IPItemStackContainerHandler(stack, MotorboatItem.UPGRADE_SLOT_COUNT), IPContent.Items.SPEEDBOAT.get());
 	}

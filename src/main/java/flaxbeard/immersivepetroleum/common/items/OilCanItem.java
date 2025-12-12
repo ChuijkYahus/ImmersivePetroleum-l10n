@@ -1,11 +1,9 @@
 package flaxbeard.immersivepetroleum.common.items;
 
-import blusunrize.immersiveengineering.api.Lib;
 import flaxbeard.immersivepetroleum.api.crafting.LubricantHandler;
 import flaxbeard.immersivepetroleum.api.crafting.LubricatedHandler;
 import flaxbeard.immersivepetroleum.common.util.Utils;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -22,7 +20,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.FluidUtil;
@@ -40,16 +37,6 @@ public class OilCanItem extends IPItemBase{
 		super(new Item.Properties().stacksTo(1));
 	}
 	
-	/*
-	public ICapabilityProvider initCapabilities(ItemStack stack, CompoundTag nbt){
-		if(!stack.isEmpty()){
-			return new FluidHandlerItemStack(stack, 8000);
-		}
-		
-		return null;
-	}
-	*/
-	
 	@Override
 	public void appendHoverText(@Nonnull ItemStack stack, @Nonnull TooltipContext ctx, @Nonnull List<Component> tooltip, @Nonnull TooltipFlag flag){
 		FluidUtil.getFluidContained(stack).ifPresent(fluid -> {
@@ -58,7 +45,7 @@ public class OilCanItem extends IPItemBase{
 						.append(Component.literal(": " + fluid.getAmount() + "/8000mB")).withStyle(ChatFormatting.GRAY);
 				tooltip.add(out);
 			}else{
-				tooltip.add(Component.literal(I18n.get(Lib.DESC_FLAVOUR + "drill.empty")));
+				tooltip.add(Component.translatable("gui.immersivepetroleum.empty"));
 			}
 		});
 	}
@@ -144,28 +131,4 @@ public class OilCanItem extends IPItemBase{
 		}else
 			return InteractionResult.FAIL;
 	}
-	
-	/* // TODO Where'd container item stuff go?!
-	//@Override
-	public boolean hasContainerItem(ItemStack stack){
-		return ItemNBTHelper.hasKey(stack, "jerrycanDrain") || FluidUtil.getFluidContained(stack).isPresent();
-	}
-	
-	//@Override
-	public ItemStack getContainerItem(ItemStack stack){
-		if(ItemNBTHelper.hasKey(stack, "jerrycanDrain")){
-			ItemStack ret = stack.copy();
-			FluidUtil.getFluidHandler(ret).ifPresent(handler -> {
-				handler.drain(ItemNBTHelper.getInt(ret, "jerrycanDrain"), FluidAction.EXECUTE);
-				ItemNBTHelper.remove(ret, "jerrycanDrain");
-			});
-			return ret;
-		}else if(FluidUtil.getFluidContained(stack).isPresent()){
-			ItemStack ret = stack.copy();
-			FluidUtil.getFluidHandler(ret).ifPresent(handler -> handler.drain(1000, FluidAction.EXECUTE));
-			return ret;
-		}
-		return stack;
-	}
-	*/
 }

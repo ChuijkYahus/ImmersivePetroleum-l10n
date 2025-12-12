@@ -18,6 +18,7 @@ import net.minecraft.world.level.material.Fluid;
 import net.neoforged.neoforge.energy.IEnergyStorage;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.IFluidTank;
+import net.neoforged.neoforge.fluids.SimpleFluidContent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
 import javax.annotation.Nonnull;
@@ -34,6 +35,7 @@ public class IPDataComponents{
 	public static final DeferredHolder<DataComponentType<?>, DataComponentType<PowerData>> POWER_DATA = IPRegisters.registerDataComponent("power_data", PowerData.CODEC, PowerData.CODEC_STREAM);
 	
 	public static final DeferredHolder<DataComponentType<?>, DataComponentType<ItemContainerContents>> CONTAINER_ITEM = IPRegisters.registerDataComponentF("ip_container", ItemContainerContents.CODEC, ItemContainerContents.STREAM_CODEC);
+	public static final DeferredHolder<DataComponentType<?>, DataComponentType<SimpleFluidContent>> FLUID_ITEM = IPRegisters.registerDataComponentF("ip_fluid_item", SimpleFluidContent.CODEC, SimpleFluidContent.STREAM_CODEC);
 	
 	public record TankData(@Nonnull FluidStack fs){
 		//@formatter:off
