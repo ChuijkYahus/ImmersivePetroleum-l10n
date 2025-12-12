@@ -12,7 +12,7 @@ import flaxbeard.immersivepetroleum.common.items.GasolineBottleItem;
 import flaxbeard.immersivepetroleum.common.items.MotorboatItem;
 import flaxbeard.immersivepetroleum.common.network.IPPacketHandler;
 import flaxbeard.immersivepetroleum.common.network.MessageConsumeBoatFuel;
-import flaxbeard.immersivepetroleum.common.util.IPItemStackHandler;
+import flaxbeard.immersivepetroleum.common.util.IPItemStackContainerHandler;
 import flaxbeard.immersivepetroleum.common.util.RegistryUtils;
 import flaxbeard.immersivepetroleum.common.util.Utils;
 import net.minecraft.client.Minecraft;
@@ -299,7 +299,7 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 						
 						IItemHandler itemHandler = stack.getCapability(Capabilities.ItemHandler.ITEM);
 						if(itemHandler != null){
-							if(itemHandler instanceof IPItemStackHandler){
+							if(itemHandler instanceof IPItemStackContainerHandler){
 								NonNullList<ItemStack> upgrades = getUpgrades();
 								for(int i = 0;i < itemHandler.getSlots();i++){
 									itemHandler.insertItem(i, upgrades.get(i), false);

@@ -7,7 +7,8 @@ import flaxbeard.immersivepetroleum.common.blocks.tileentities.FlarestackTileEnt
 import flaxbeard.immersivepetroleum.common.fluids.IPFluid;
 import flaxbeard.immersivepetroleum.common.items.MotorboatItem;
 import flaxbeard.immersivepetroleum.common.shaderscases.ShaderCaseProjector;
-import flaxbeard.immersivepetroleum.common.util.IPItemStackHandler;
+import flaxbeard.immersivepetroleum.common.util.IPItemStackContainerHandler;
+import flaxbeard.immersivepetroleum.common.util.IPItemStackFluidHandler;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -41,9 +42,10 @@ public class IPCapabilityRegistry{
 		});
 		
 		event.registerItem(CapabilityShader.ITEM, (stack, _void) -> new CapabilityShader.ShaderWrapper_Item(ShaderCaseProjector.TYPE, stack), IPContent.Items.PROJECTOR.get());
-		event.registerItem(ItemHandler.ITEM, (stack, _void) -> new IPItemStackHandler(stack, 1), IPContent.Items.PROJECTOR.get());
 		
 		event.registerItem(ItemHandler.ITEM, (stack, _void) -> new IPItemStackHandler(stack, MotorboatItem.UPGRADE_SLOT_COUNT), IPContent.Items.SPEEDBOAT.get());
+		event.registerItem(ItemHandler.ITEM, (stack, _void) -> new IPItemStackContainerHandler(stack, 1), IPContent.Items.PROJECTOR.get());
+		event.registerItem(ItemHandler.ITEM, (stack, _void) -> new IPItemStackContainerHandler(stack, MotorboatItem.UPGRADE_SLOT_COUNT), IPContent.Items.SPEEDBOAT.get());
 	}
 	
 	private static <C, BE extends BlockEntity & IHasMultiCapability> void reg(RegisterCapabilitiesEvent event, BlockEntityType<BE> type, BlockCapability<C, Direction>[] caps){

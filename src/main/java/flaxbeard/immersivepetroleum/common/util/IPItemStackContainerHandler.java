@@ -7,8 +7,8 @@ import net.minecraft.world.item.component.ItemContainerContents;
 import net.neoforged.neoforge.common.MutableDataComponentHolder;
 import net.neoforged.neoforge.items.ComponentItemHandler;
 
-public class IPItemStackHandler extends ComponentItemHandler{
-	public IPItemStackHandler(MutableDataComponentHolder parent, int size){
+public class IPItemStackContainerHandler extends ComponentItemHandler{
+	public IPItemStackContainerHandler(MutableDataComponentHolder parent, int size){
 		super(parent, IPDataComponents.CONTAINER_ITEM.get(), size);
 	}
 	

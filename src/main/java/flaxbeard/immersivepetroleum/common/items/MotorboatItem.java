@@ -8,7 +8,7 @@ import blusunrize.immersiveengineering.common.register.IEDataComponents;
 import flaxbeard.immersivepetroleum.ImmersivePetroleum;
 import flaxbeard.immersivepetroleum.common.IPDataComponents;
 import flaxbeard.immersivepetroleum.common.entity.MotorboatEntity;
-import flaxbeard.immersivepetroleum.common.util.IPItemStackHandler;
+import flaxbeard.immersivepetroleum.common.util.IPItemStackContainerHandler;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
@@ -67,7 +67,7 @@ public class MotorboatItem extends IPItemBase implements IUpgradeableTool{
 			return NonNullList.create();
 		}
 		
-		if(handler instanceof IPItemStackHandler ipStackHandler){
+		if(handler instanceof IPItemStackContainerHandler ipStackHandler){
 			return ipStackHandler.getContainedItems();
 		}
 		
