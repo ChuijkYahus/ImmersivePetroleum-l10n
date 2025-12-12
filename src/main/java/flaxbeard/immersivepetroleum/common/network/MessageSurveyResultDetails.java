@@ -10,6 +10,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ColumnPos;
 import net.minecraft.server.level.ServerLevel;
@@ -49,9 +50,9 @@ public class MessageSurveyResultDetails{
 		private final int x, z;
 		private final UUID scanId;
 		public ClientToServer(SurveyScan scan){
-			this.x = scan.getX();
-			this.z = scan.getZ();
-			this.scanId = scan.getUuid();
+			this.x = scan.x();
+			this.z = scan.z();
+			this.scanId = scan.uuid();
 		}
 		
 		private ClientToServer(CompoundTag tag){
@@ -76,6 +77,9 @@ public class MessageSurveyResultDetails{
 		
 		@Override
 		public void process(IPayloadContext context){
+			if(context.connection().getDirection().getReceptionSide() == LogicalSide.CLIENT)
+				return;
+			
 			context.enqueueWork(() -> {
 				final ServerPlayer sPlayer = (ServerPlayer) Objects.requireNonNull(context.player());
 				final ServerLevel sLevel = sPlayer.serverLevel();
@@ -152,11 +156,11 @@ public class MessageSurveyResultDetails{
 		
 		@Override
 		public void process(IPayloadContext context){
+			if(context.connection().getDirection().getReceptionSide() == LogicalSide.SERVER)
+				return;
+			
 			context.enqueueWork(() -> {
-				if(context.connection().getDirection().getReceptionSide() == LogicalSide.SERVER)
-					return;
-				
-				if(MCUtil.getScreen() instanceof SeismicSurveyScreen surveyScreen && this.scanId.equals(surveyScreen.scan.getUuid())){
+				if(MCUtil.getScreen() instanceof SeismicSurveyScreen surveyScreen && this.scanId.equals(surveyScreen.scan.uuid())){
 					surveyScreen.setBitSet(this.replyBitSet);
 				}
 			});

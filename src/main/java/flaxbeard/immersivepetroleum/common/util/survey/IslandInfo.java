@@ -18,11 +18,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.Fluid;
 import net.neoforged.neoforge.fluids.FluidStack;
 
-import javax.annotation.Nonnull;
-
-public class IslandInfo implements ISurveyInfo{
-	public static final String TAG_KEY = "islandscan";
+public record IslandInfo(int x, int z, byte status, long amount, FluidStack fluidStack, int expected) implements ISurveyInfo{
 	
+	//@formatter:off
 	public static final Codec<IslandInfo> CODEC = RecordCodecBuilder.create(inst -> inst.group(
 		Codec.INT.fieldOf("x").forGetter(s -> s.x),
 		Codec.INT.fieldOf("z").forGetter(s -> s.z),
@@ -31,54 +29,45 @@ public class IslandInfo implements ISurveyInfo{
 		FluidStack.CODEC.fieldOf("fluidstack").forGetter(s -> s.fluidStack),
 		Codec.INT.fieldOf("expected").forGetter(s -> s.expected)
 	).apply(inst, IslandInfo::new));
+	//@formatter:on
 	
-	public static final StreamCodec<ByteBuf,IslandInfo> CODEC_STREAM = ByteBufCodecs.COMPOUND_TAG.map(IslandInfo::new, ISurveyInfo::writeToTag);
+	public static final StreamCodec<ByteBuf, IslandInfo> CODEC_STREAM = ByteBufCodecs.COMPOUND_TAG.map(IslandInfo::fromNBT, ISurveyInfo::writeToTag);
 	
-	private final int x, z;
-	private final byte status;
-	private final long amount;
-	private FluidStack fluidStack = FluidStack.EMPTY;
-	private final int expected;
-	
-	public IslandInfo(Level world, BlockPos pos, ReservoirIsland island){
-		this.x = pos.getX();
-		this.z = pos.getZ();
+	private static IslandInfo fromNBT(CompoundTag nbt){
+		int x = nbt.getInt("x");
+		int z = nbt.getInt("z");
+		byte status = nbt.getByte("status");
+		long amount = nbt.getLong("amount");
+		int expected = nbt.getInt("expected");
 		
-		this.status = (byte) (island.getAmount() / (float) island.getCapacity() * 100);
-		this.amount = island.getAmount();
-		this.fluidStack = new FluidStack(island.getFluid(), 1);
-		this.expected = ReservoirIsland.getFlow(island.getPressure(world, pos.getX(), pos.getZ()));
-	}
-	
-	private IslandInfo(CompoundTag tag){
-		this.x = tag.getInt("x");
-		this.z = tag.getInt("z");
-		this.status = tag.getByte("status");
-		this.amount = tag.getLong("amount");
-		this.expected = tag.getInt("expected");
-		
-		if(tag.contains("fluid")){
+		FluidStack fluidStack = FluidStack.EMPTY;
+		if(nbt.contains("fluid")){
 			try{
-				ResourceLocation fluidRL = ResourceLocation.parse(tag.getString("fluid"));
+				ResourceLocation fluidRL = ResourceLocation.parse(nbt.getString("fluid"));
 				
 				Fluid fluid = RegistryUtils.getFluidFromRegistryName(fluidRL);
 				if(fluid != null){
-					this.fluidStack = new FluidStack(fluid, 1);
+					fluidStack = new FluidStack(fluid, 1);
 				}
 			}catch(ResourceLocationException e){
 				// Technically don't care, but made it log this just in case.
 				ImmersivePetroleum.log.debug("IslandInfo invalid ResourceLocation. Ignoring.");
 			}
 		}
+		
+		return new IslandInfo(x, z, status, amount, fluidStack, expected);
 	}
 	
-	private IslandInfo(int x, int z, byte status, long amount, FluidStack fs, int expected){
-		this.x = x;
-		this.z = z;
-		this.status = status;
-		this.amount = amount;
-		this.fluidStack = fs;
-		this.expected = expected;
+	public static IslandInfo create(Level world, BlockPos pos, ReservoirIsland island){
+		int x = pos.getX();
+		int z = pos.getZ();
+		
+		byte status = (byte) (island.getAmount() / (float) island.getCapacity() * 100);
+		long amount = island.getAmount();
+		FluidStack fluidStack = new FluidStack(island.getFluid(), 1);
+		int expected = ReservoirIsland.getFlow(island.getPressure(world, pos.getX(), pos.getZ()));
+		
+		return new IslandInfo(x, z, status, amount, fluidStack, expected);
 	}
 	
 	@Override
@@ -89,23 +78,6 @@ public class IslandInfo implements ISurveyInfo{
 	@Override
 	public int getZ(){
 		return this.z;
-	}
-	
-	public byte getStatus(){
-		return this.status;
-	}
-	
-	public int getExpected(){
-		return this.expected;
-	}
-	
-	public long getAmount(){
-		return this.amount;
-	}
-	
-	@Nonnull
-	public FluidStack getFluidStack(){
-		return this.fluidStack;
 	}
 	
 	public Fluid getFluid(){

@@ -31,17 +31,17 @@ public class DynamicTextureWrapper{
 	/** May return null if it was unable to find or create the wrapper */
 	@Nullable
 	public static DynamicTextureWrapper getOrCreate(int width, int height, @Nonnull SurveyScan scan){
-		if(scan == null || scan.getUuid() == null){
+		if(scan.uuid() == null){
 			return null;
 		}
 		
-		DynamicTextureWrapper tex = DYN_TEXTURE_CACHE.getIfPresent(scan.getUuid());
+		DynamicTextureWrapper tex = DYN_TEXTURE_CACHE.getIfPresent(scan.uuid());
 		if(tex == null || tex.texture.getPixels() == null){
-			tex = new DynamicTextureWrapper(width, height, scan.getUuid());
-			DYN_TEXTURE_CACHE.invalidate(scan.getUuid());
-			DYN_TEXTURE_CACHE.put(scan.getUuid(), tex);
+			tex = new DynamicTextureWrapper(width, height, scan.uuid());
+			DYN_TEXTURE_CACHE.invalidate(scan.uuid());
+			DYN_TEXTURE_CACHE.put(scan.uuid(), tex);
 			
-			tex.write(scan.getData());
+			tex.write(scan.data());
 			
 			ImmersivePetroleum.log.debug("Created survey result texture {}", tex.rl);
 		}

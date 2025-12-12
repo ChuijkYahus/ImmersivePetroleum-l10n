@@ -1,7 +1,6 @@
 package flaxbeard.immersivepetroleum.client.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import flaxbeard.immersivepetroleum.client.render.dyn.DynamicTextureWrapper;
@@ -21,8 +20,6 @@ import org.joml.Matrix4f;
  * @author TwistedGate
  */
 public class SeismicResultRenderer{
-	
-	static final Tesselator TESSELATOR = new Tesselator();
 	
 	private static final ResourceLocation OVERLAY = ResourceUtils.ip("textures/gui/seismicsurvey_overlay.png");
 	

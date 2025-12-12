@@ -21,7 +21,7 @@ public class IPPacketHandler{
 		registrar.commonToServer(MessageDerrick.ID, MessageDerrick.CODEC, MessageDerrick::process);
 		
 		registrar.commonToServer(MessageSurveyResultDetails.ClientToServer.ID, MessageSurveyResultDetails.ClientToServer.CODEC, MessageSurveyResultDetails.ClientToServer::process);
-		registrar.commonToServer(MessageSurveyResultDetails.ServerToClient.ID, MessageSurveyResultDetails.ServerToClient.CODEC, MessageSurveyResultDetails.ServerToClient::process);
+		registrar.commonToClient(MessageSurveyResultDetails.ServerToClient.ID, MessageSurveyResultDetails.ServerToClient.CODEC, MessageSurveyResultDetails.ServerToClient::process);
 	}
 	
 	/**

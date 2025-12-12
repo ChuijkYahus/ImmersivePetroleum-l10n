@@ -81,7 +81,7 @@ public class SeismicSurveyScreen extends Screen{
 			return -1;
 		
 		int index = y * SurveyScan.SCAN_SIZE + x;
-		return ((int) this.scan.getData()[index]) & 0xFF;
+		return ((int) this.scan.data()[index]) & 0xFF;
 	}
 	
 	private boolean hasReservoirAt(int x, int y){

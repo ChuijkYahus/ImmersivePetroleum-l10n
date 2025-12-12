@@ -48,7 +48,7 @@ public class SurveyResultItem extends IPItemBase{
 		ItemStack held = pPlayer.getItemInHand(pUsedHand);
 		
 		if(pLevel.isClientSide && ISurveyInfo.from(held) instanceof SurveyScan scan){
-			if(scan.getUuid() == null){ // Faulty
+			if(scan.uuid() == null){ // Faulty
 				pPlayer.displayClientMessage(Component.literal("This survey is faulty. (Destroy me!)").withStyle(ChatFormatting.RED), true);
 				return InteractionResultHolder.fail(held);
 			}
@@ -70,7 +70,7 @@ public class SurveyResultItem extends IPItemBase{
 		ISurveyInfo info = ISurveyInfo.from(stack);
 		
 		if(info instanceof SurveyScan scan){
-			if(scan.getUuid() == null){
+			if(scan.uuid() == null){
 				tooltip.add(Component.literal("SORRY, IM FAULTY!").withStyle(ChatFormatting.RED));
 				tooltip.add(Component.literal("YOU'LL HAVE TO TOSS ME!").withStyle(ChatFormatting.RED));
 				return;
@@ -79,18 +79,18 @@ public class SurveyResultItem extends IPItemBase{
 			tooltip.add(Component.translatable("desc.immersivepetroleum.flavour.surveytool.rightclickme"));
 			
 			if(flag == TooltipFlag.Default.ADVANCED){
-				tooltip.add(Component.literal("ID: " + (scan.getUuid() != null ? scan.getUuid().toString() : "Null")));
-				tooltip.add(Component.literal("dSize: " + (scan.getData() != null ? scan.getData().length : "Null")));
+				tooltip.add(Component.literal("ID: " + scan.uuid()));
+				tooltip.add(Component.literal("dSize: " + (scan.data() != null ? scan.data().length : "Null")));
 			}
 		}
 		
 		if(info instanceof IslandInfo islandInfo){
-			int expected = islandInfo.getExpected();
-			long amount = islandInfo.getAmount();
-			byte percentage = islandInfo.getStatus();
-			FluidStack fs = islandInfo.getFluidStack();
+			int expected = islandInfo.expected();
+			long amount = islandInfo.amount();
+			byte percentage = islandInfo.status();
+			FluidStack fs = islandInfo.fluidStack();
 			
-			if(islandInfo.getFluidStack() == FluidStack.EMPTY){
+			if(islandInfo.fluidStack() == FluidStack.EMPTY){
 				tooltip.add(Component.literal("SORRY, IM FAULTY!").withStyle(ChatFormatting.RED));
 				tooltip.add(Component.literal("YOU'LL HAVE TO TOSS ME!").withStyle(ChatFormatting.RED));
 				return;

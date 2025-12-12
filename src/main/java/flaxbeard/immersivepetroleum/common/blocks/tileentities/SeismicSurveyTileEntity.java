@@ -158,7 +158,7 @@ public class SeismicSurveyTileEntity extends IPTileEntityBase implements IPCommo
 						world.addParticle(Math.random() < 0.5 ? ParticleTypes.SMOKE : ParticleTypes.LARGE_SMOKE, bX + xa, bY, bZ + za, hSpeed * xa, 0, hSpeed * za);
 					}
 				}else{
-					SoundEvent sound = ((BulletItem) ExternalModContent.IE.itemBuckshot()).getType().getSound();
+					SoundEvent sound = ((BulletItem<?>) ExternalModContent.IE.itemBuckshot()).getType().getSound();
 					if(sound == null){
 						sound = IESounds.revolverFire.value();
 					}
@@ -182,7 +182,7 @@ public class SeismicSurveyTileEntity extends IPTileEntityBase implements IPCommo
 					if(currentIsland != null){
 						// Give info about the current one.
 						
-						info = new IslandInfo(world, pos, currentIsland);
+						info = IslandInfo.create(world, pos, currentIsland);
 						
 						if(((IslandInfo) info).getFluid().equals(IPContent.Fluids.CRUDEOIL.get())){
 							Utils.unlockIPAdvancement(player, "main/root");
@@ -191,7 +191,7 @@ public class SeismicSurveyTileEntity extends IPTileEntityBase implements IPCommo
 					}else{
 						// Try to find one nearby instead.
 						
-						info = new SurveyScan(world, pos);
+						info = SurveyScan.create(world, pos);
 					}
 					
 					info.writeToStack(stack);
