@@ -7,6 +7,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.material.Fluid;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
@@ -14,7 +15,7 @@ import java.util.function.Function;
 
 public class ExternalModContent{
 	
-	public static void init(){
+	public static void setup(FMLCommonSetupEvent event){
 		IE.forceClassLoad();
 	}
 	

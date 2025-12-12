@@ -76,6 +76,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.EventBusSubscriber.Bus;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.fml.event.lifecycle.ParallelDispatchEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -237,10 +238,7 @@ public class IPContent{
 		IPDataComponents.forceClassLoad();
 	}
 	
-	public static void preInit(){
-	}
-	
-	public static void init(ParallelDispatchEvent event){
+	public static void setup(FMLCommonSetupEvent event){
 		//event.enqueueWork(IPWorldGen::registerReservoirGen);
 		
 		Fluids.CRUDEOIL.setEffect(IEPotions.FLAMMABLE, 100, 1);

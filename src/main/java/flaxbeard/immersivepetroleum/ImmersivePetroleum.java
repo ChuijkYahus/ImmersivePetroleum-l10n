@@ -10,7 +10,6 @@ import flaxbeard.immersivepetroleum.common.ExternalModContent;
 import flaxbeard.immersivepetroleum.common.IPContent;
 import flaxbeard.immersivepetroleum.common.IPRegisters;
 import flaxbeard.immersivepetroleum.common.IPSaveData;
-import flaxbeard.immersivepetroleum.common.IPToolShaders;
 import flaxbeard.immersivepetroleum.common.ReservoirRegionDataStorage;
 import flaxbeard.immersivepetroleum.common.cfg.IPClientConfig;
 import flaxbeard.immersivepetroleum.common.cfg.IPServerConfig;
@@ -78,27 +77,15 @@ public class ImmersivePetroleum{
 		IPLootFunctions.modConstruction(eBus);
 		IPRecipeTypes.modConstruction(eBus);
 		
-		//IPToolShaders.modConstruction();
+		//IPToolShaders.modConstruction(); // TODO Perhaps IPToolShaders will make a return in the Future.
 	}
 	
 	private void setup(FMLCommonSetupEvent event){
-		proxy.setup();
-		
-		// ---------------------------------------------------------------------------------------------------------------------------------------------
-		
-		proxy.preInit();
-		
-		IPContent.preInit();
-		
-		proxy.preInitEnd();
-		
-		// ---------------------------------------------------------------------------------------------------------------------------------------------
-		
-		IPContent.init(event);
-		
 		NeoForge.EVENT_BUS.register(new CommonEventHandler());
 		
-		proxy.init();
+		proxy.setup(event);
+		
+		IPContent.setup(event);
 		
 		/*
 		if(ModList.get().isLoaded("computercraft")){
@@ -106,12 +93,8 @@ public class ImmersivePetroleum{
 		}
 		*/
 		
-		// ---------------------------------------------------------------------------------------------------------------------------------------------
-		
-		proxy.postInit();
-		
+		ExternalModContent.setup(event);
 		ReservoirHandler.recalculateChances();
-		ExternalModContent.init();
 	}
 	
 	private void loadComplete(FMLLoadCompleteEvent event){

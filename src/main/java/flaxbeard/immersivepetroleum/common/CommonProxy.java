@@ -14,26 +14,13 @@ import net.neoforged.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 
 public class CommonProxy{
-	/** Fired at {@link FMLCommonSetupEvent} */
-	public void setup(){
+	
+	public void setup(FMLCommonSetupEvent event){
 	}
 	
 	public void registerContainersAndScreens(RegisterMenuScreensEvent ev){
 	}
 	
-	public void preInit(){
-	}
-	
-	public void preInitEnd(){
-	}
-	
-	public void init(){
-	}
-	
-	public void postInit(){
-	}
-	
-	/** Fired at {@link FMLLoadCompleteEvent} */
 	public void completed(FMLLoadCompleteEvent event){
 	}
 	

@@ -65,6 +65,7 @@ import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.model.data.ModelData;
@@ -77,7 +78,12 @@ import java.util.List;
 public class ClientProxy extends CommonProxy{
 	
 	@Override
-	public void setup(){
+	public void setup(FMLCommonSetupEvent event){
+		NeoForge.EVENT_BUS.register(new ClientEventHandler());
+		NeoForge.EVENT_BUS.register(new RecipeReloadListener(null));
+		
+		NeoForge.EVENT_BUS.register(new DebugRenderHandler());
+		NeoForge.EVENT_BUS.register(new SeismicResultRenderer());
 	}
 	
 	@Override
@@ -127,23 +133,6 @@ public class ClientProxy extends CommonProxy{
 		}));
 		
 		setupManualPages();
-	}
-	
-	@Override
-	public void preInit(){
-	}
-	
-	@Override
-	public void preInitEnd(){
-	}
-	
-	@Override
-	public void init(){
-		NeoForge.EVENT_BUS.register(new ClientEventHandler());
-		NeoForge.EVENT_BUS.register(new RecipeReloadListener(null));
-		
-		NeoForge.EVENT_BUS.register(new DebugRenderHandler());
-		NeoForge.EVENT_BUS.register(new SeismicResultRenderer());
 	}
 	
 	@Override
