@@ -617,7 +617,7 @@ public class ProjectorItem extends IPItemBase implements IUpgradeableTool{
 						
 						RenderType renderType = IPRenderTypes.PROJECTION;
 						VertexConsumer vc = buffer.getBuffer(renderType);
-						blockRenderer.renderModel(matrix.last(), vc, state, ibakedmodel, red, green, blue, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, modelData, renderType);
+						blockRenderer.renderModel(matrix.last(), vc, state, ibakedmodel, red, green, blue, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, modelData, RenderType.cutout());
 					}
 					case ENTITYBLOCK_ANIMATED -> {
 						ItemStack stack = new ItemStack(state.getBlock());
