@@ -66,7 +66,7 @@ public class OilCanItem extends IPItemBase{
 		BlockPos pos = context.getClickedPos();
 		
 		IFluidHandler handler = level.getCapability(Capabilities.FluidHandler.BLOCK, pos, null);
-		if(handler != null && !FluidUtil.interactWithFluidHandler(player, hand, handler)){
+		if(handler == null || !FluidUtil.interactWithFluidHandler(player, hand, handler)){
 			return FluidUtil.getFluidHandler(stack)
 				.map(h -> tryLubricateMachine(level, pos, player, h))
 				.orElse(InteractionResult.PASS);
@@ -107,28 +107,27 @@ public class OilCanItem extends IPItemBase{
 	@Override
 	@Nonnull
 	public InteractionResult interactLivingEntity(@Nonnull ItemStack stack, @Nonnull Player player, @Nonnull LivingEntity target, @Nonnull InteractionHand hand){
-		if(target instanceof IronGolem golem){
-			
-			FluidUtil.getFluidHandler(stack).ifPresent(con -> {
-				if(con instanceof FluidHandlerItemStack handler){
-					
-					if(!handler.getFluid().isEmpty() && LubricantHandler.isValidLube(handler.getFluid().getFluid())){
-						int amountNeeded = (LubricantHandler.getLubeAmount(handler.getFluid().getFluid()) * 5 * 20);
-						if(handler.getFluid().getAmount() >= amountNeeded){
-							player.playSound(SoundEvents.BUCKET_EMPTY, 1F, 1F);
-							golem.setHealth(Math.max(golem.getHealth() + 2F, golem.getMaxHealth()));
-							golem.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 1200, 1)); // 1 Minute
-							golem.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 1200, 1)); // 1 Minute
-							if(!player.isCreative()){
-								handler.drain(amountNeeded, FluidAction.EXECUTE);
-							}
+		if(!(target instanceof IronGolem golem))
+			return InteractionResult.FAIL;
+		
+		FluidUtil.getFluidHandler(stack).ifPresent(con -> {
+			if(con instanceof FluidHandlerItemStack handler){
+				
+				if(!handler.getFluid().isEmpty() && LubricantHandler.isValidLube(handler.getFluid().getFluid())){
+					int amountNeeded = (LubricantHandler.getLubeAmount(handler.getFluid().getFluid()) * 5 * 20);
+					if(handler.getFluid().getAmount() >= amountNeeded){
+						player.playSound(SoundEvents.BUCKET_EMPTY, 1F, 1F);
+						golem.setHealth(Math.max(golem.getHealth() + 2F, golem.getMaxHealth()));
+						golem.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 1200, 1)); // 1 Minute
+						golem.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 1200, 1)); // 1 Minute
+						if(!player.isCreative()){
+							handler.drain(amountNeeded, FluidAction.EXECUTE);
 						}
 					}
 				}
-			});
-			
-			return InteractionResult.SUCCESS;
-		}else
-			return InteractionResult.FAIL;
+			}
+		});
+		
+		return InteractionResult.SUCCESS;
 	}
 }
