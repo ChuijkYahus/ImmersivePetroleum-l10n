@@ -99,12 +99,6 @@ public class Utils{
 		return new ColumnPos(pos.getX(), pos.getZ());
 	}
 	
-	public static boolean hasKey(ItemStack stack, String key, int tagId){
-		// TODO Either adapt or replace
-		return false;
-		//return stack.hasTag() && stack.getTag().contains(key, tagId);
-	}
-	
 	@Nullable
 	public static MultiblockBlockEntityMaster<?> getMultiblockMasterBE(Level level, BlockPos pos){
 		BlockEntity be = level.getBlockEntity(pos);

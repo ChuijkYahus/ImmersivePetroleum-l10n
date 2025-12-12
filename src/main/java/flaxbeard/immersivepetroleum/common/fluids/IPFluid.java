@@ -376,12 +376,6 @@ public class IPFluid extends FlowingFluid{
 			super(fluid.get(), props.apply(PROPS));
 		}
 		
-		/* // TODO
-		public ICapabilityProvider initCapabilities(@Nonnull ItemStack stack, @Nullable CompoundTag nbt){
-			return new FluidBucketWrapper(stack);
-		}
-		*/
-		
 		@Override
 		public int getBurnTime(ItemStack itemStack, @org.jetbrains.annotations.Nullable RecipeType<?> recipeType){
 			return this.burnTime;
