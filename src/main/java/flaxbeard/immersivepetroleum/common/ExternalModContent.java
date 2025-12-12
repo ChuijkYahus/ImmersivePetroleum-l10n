@@ -28,7 +28,7 @@ public class ExternalModContent{
 		private static final DeferredHolder<Block, Block> BLOCK_REDSTONE_ENGINEERING = loader.block("rs_engineering");
 		private static final DeferredHolder<Item, Item> ITEM_HAMMER = loader.item("hammer");
 		private static final DeferredHolder<Item, Item> ITEM_PIPE = loader.item("fluid_pipe");
-		private static final DeferredHolder<Item, Item> ITEM_BUCKSHOT = loader.item("buckshot");
+		private static final DeferredHolder<Item, Item> ITEM_BUCKSHOT = loader.item("bullet_buckshot");
 		private static final DeferredHolder<Item, Item> ITEM_EMPTY_SHELL = loader.item("empty_shell");
 		private static final DeferredHolder<Fluid, Fluid> FLUID_CONCRETE = loader.fluid("concrete");
 		
