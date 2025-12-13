@@ -1,46 +1,36 @@
 package flaxbeard.immersivepetroleum.client.render;
 
 import blusunrize.immersiveengineering.api.ApiUtils;
-import blusunrize.immersiveengineering.api.multiblocks.blocks.env.IMultiblockBEHelperMaster;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.registry.MultiblockBlockEntityMaster;
-import blusunrize.immersiveengineering.client.render.tile.IEBlockEntityRenderer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.PoseStack.Pose;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import flaxbeard.immersivepetroleum.client.utils.MCUtil;
+import flaxbeard.immersivepetroleum.common.blocks.multiblocks.DerrickMultiblock;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.DerrickLogic;
 import flaxbeard.immersivepetroleum.common.util.ResourceUtils;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.resources.model.ModelResourceLocation;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.client.model.data.ModelData;
 
 import javax.annotation.Nonnull;
 import java.util.List;
 
-public class DerrickRenderer extends IEBlockEntityRenderer<MultiblockBlockEntityMaster<DerrickLogic.State>>{
+public class DerrickRenderer extends IPMultiblockRenderer<MultiblockBlockEntityMaster<DerrickLogic.State>>{
 	public static final ModelResourceLocation DRILL = ResourceUtils.ipModel("multiblock/dyn/derrick_drill");
 	public static final ModelResourceLocation PIPE_SEGMENT = ResourceUtils.ipModel("multiblock/dyn/derrick_pipe_segment");
 	public static final ModelResourceLocation PIPE_TOP = ResourceUtils.ipModel("multiblock/dyn/derrick_pipe_top");
 	
+	public DerrickRenderer(){
+		super(() -> DerrickMultiblock.INSTANCE);
+	}
+	
 	@Override
 	public int getViewDistance(){
 		return 512;
-	}
-	
-	@Nonnull
-	@Override
-	public AABB getRenderBoundingBox(MultiblockBlockEntityMaster<DerrickLogic.State> blockEntity){
-		IMultiblockBEHelperMaster<DerrickLogic.State> helper = blockEntity.getHelper();
-		if(!helper.getPositionInMB().equals(helper.getMultiblock().masterPosInMB()))
-			return super.getRenderBoundingBox(blockEntity);
-		
-		BlockPos pos = blockEntity.getBlockPos();
-		return new AABB(pos.getX() - 1, pos.getY(), pos.getZ() - 1, pos.getX() + 1, pos.getY() + 8, pos.getZ() + 1);
 	}
 	
 	@SuppressWarnings("deprecation")

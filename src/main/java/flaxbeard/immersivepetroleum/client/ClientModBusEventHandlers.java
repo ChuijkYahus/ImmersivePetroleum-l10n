@@ -45,6 +45,7 @@ public class ClientModBusEventHandlers{
 	private static <T extends BlockEntity> void registerBERenderNoContext(RegisterRenderers event, Supplier<BlockEntityType<? extends T>> type, Supplier<BlockEntityRenderer<T>> render){
 		registerBERenderNoContext(event, type.get(), render);
 	}
+	
 	private static <T extends BlockEntity> void registerBERenderNoContext(RegisterRenderers event, BlockEntityType<? extends T> type, Supplier<BlockEntityRenderer<T>> render){
 		event.registerBlockEntityRenderer(type, $ -> render.get());
 	}

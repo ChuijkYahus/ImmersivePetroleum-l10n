@@ -1,12 +1,13 @@
 package flaxbeard.immersivepetroleum.client.render;
 
+import blusunrize.immersiveengineering.api.multiblocks.TemplateMultiblock;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.registry.MultiblockBlockEntityMaster;
-import blusunrize.immersiveengineering.client.render.tile.IEBlockEntityRenderer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import flaxbeard.immersivepetroleum.client.model.IPModel;
 import flaxbeard.immersivepetroleum.client.model.IPModels;
 import flaxbeard.immersivepetroleum.client.model.ModelPumpjack;
+import flaxbeard.immersivepetroleum.common.blocks.multiblocks.PumpjackMultiblock;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.PumpjackLogic;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.Direction;
@@ -17,8 +18,12 @@ import javax.annotation.Nonnull;
 import java.util.function.Supplier;
 
 @OnlyIn(Dist.CLIENT)
-public class MultiblockPumpjackRenderer extends IEBlockEntityRenderer<MultiblockBlockEntityMaster<PumpjackLogic.State>>{
+public class MultiblockPumpjackRenderer extends IPMultiblockRenderer<MultiblockBlockEntityMaster<PumpjackLogic.State>>{
 	private static final Supplier<IPModel> pumpjackarm = IPModels.getSupplier(ModelPumpjack.ID);
+	
+	public MultiblockPumpjackRenderer(){
+		super(() -> PumpjackMultiblock.INSTANCE);
+	}
 	
 	@Override
 	public int getViewDistance(){

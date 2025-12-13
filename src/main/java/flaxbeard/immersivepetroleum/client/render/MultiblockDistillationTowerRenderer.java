@@ -1,10 +1,10 @@
 package flaxbeard.immersivepetroleum.client.render;
 
 import blusunrize.immersiveengineering.api.multiblocks.blocks.registry.MultiblockBlockEntityMaster;
-import blusunrize.immersiveengineering.client.render.tile.IEBlockEntityRenderer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
+import flaxbeard.immersivepetroleum.common.blocks.multiblocks.DistillationTowerMultiblock;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.distillation_tower.DistillationTowerLogic;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -15,10 +15,10 @@ import net.neoforged.api.distmarker.OnlyIn;
 import javax.annotation.Nonnull;
 
 @OnlyIn(Dist.CLIENT)
-public class MultiblockDistillationTowerRenderer extends IEBlockEntityRenderer<MultiblockBlockEntityMaster<DistillationTowerLogic.State>>{
-	@Override
-	public boolean shouldRenderOffScreen(@Nonnull MultiblockBlockEntityMaster<DistillationTowerLogic.State> te){
-		return true;
+public class MultiblockDistillationTowerRenderer extends IPMultiblockRenderer<MultiblockBlockEntityMaster<DistillationTowerLogic.State>>{
+	
+	public MultiblockDistillationTowerRenderer(){
+		super(() -> DistillationTowerMultiblock.INSTANCE);
 	}
 	
 	@Override

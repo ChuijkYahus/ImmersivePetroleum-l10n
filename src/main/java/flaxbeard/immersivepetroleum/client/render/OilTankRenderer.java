@@ -1,11 +1,11 @@
 package flaxbeard.immersivepetroleum.client.render;
 
 import blusunrize.immersiveengineering.api.multiblocks.blocks.registry.MultiblockBlockEntityMaster;
-import blusunrize.immersiveengineering.client.render.tile.IEBlockEntityRenderer;
 import blusunrize.immersiveengineering.client.utils.GuiHelper;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
+import flaxbeard.immersivepetroleum.common.blocks.multiblocks.OilTankMultiblock;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.OilTankLogic;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -19,7 +19,12 @@ import org.joml.Matrix4f;
 import javax.annotation.Nonnull;
 
 @OnlyIn(Dist.CLIENT)
-public class OilTankRenderer extends IEBlockEntityRenderer<MultiblockBlockEntityMaster<OilTankLogic.State>>{
+public class OilTankRenderer extends IPMultiblockRenderer<MultiblockBlockEntityMaster<OilTankLogic.State>>{
+	
+	public OilTankRenderer(){
+		super(() -> OilTankMultiblock.INSTANCE);
+	}
+	
 	@Override
 	public boolean shouldRenderOffScreen(@Nonnull MultiblockBlockEntityMaster<OilTankLogic.State> te){
 		return true;
