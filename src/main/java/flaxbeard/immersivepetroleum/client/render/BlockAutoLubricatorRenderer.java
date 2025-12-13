@@ -13,7 +13,6 @@ import flaxbeard.immersivepetroleum.api.crafting.LubricatedHandler.ILubricationH
 import flaxbeard.immersivepetroleum.common.blocks.tileentities.AutoLubricatorTileEntity;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -23,7 +22,7 @@ import net.neoforged.neoforge.fluids.FluidStack;
 
 import javax.annotation.Nonnull;
 
-public class AutoLubricatorRenderer extends IPBlockEntityRenderer<AutoLubricatorTileEntity>{
+public class BlockAutoLubricatorRenderer extends IPBlockEntityRenderer<AutoLubricatorTileEntity>{
 	
 	@Override
 	public boolean shouldRenderOffScreen(@Nonnull AutoLubricatorTileEntity te){

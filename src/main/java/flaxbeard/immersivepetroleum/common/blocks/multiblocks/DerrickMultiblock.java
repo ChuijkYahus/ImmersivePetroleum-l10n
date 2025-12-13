@@ -20,9 +20,9 @@ import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.function.Consumer;
 
-import static flaxbeard.immersivepetroleum.client.render.DerrickRenderer.DRILL;
-import static flaxbeard.immersivepetroleum.client.render.DerrickRenderer.PIPE_SEGMENT;
-import static flaxbeard.immersivepetroleum.client.render.DerrickRenderer.PIPE_TOP;
+import static flaxbeard.immersivepetroleum.client.render.multiblock.MultiblockDerrickRenderer.DRILL;
+import static flaxbeard.immersivepetroleum.client.render.multiblock.MultiblockDerrickRenderer.PIPE_SEGMENT;
+import static flaxbeard.immersivepetroleum.client.render.multiblock.MultiblockDerrickRenderer.PIPE_TOP;
 
 public class DerrickMultiblock extends IPTemplateMultiblock{
 	public static final DerrickMultiblock INSTANCE = new DerrickMultiblock();

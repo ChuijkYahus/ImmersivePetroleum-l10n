@@ -1,6 +1,5 @@
-package flaxbeard.immersivepetroleum.client.render;
+package flaxbeard.immersivepetroleum.client.render.multiblock;
 
-import blusunrize.immersiveengineering.api.multiblocks.TemplateMultiblock;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.registry.MultiblockBlockEntityMaster;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;

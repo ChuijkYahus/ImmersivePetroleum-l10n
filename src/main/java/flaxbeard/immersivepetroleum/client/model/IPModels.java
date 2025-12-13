@@ -1,8 +1,8 @@
 package flaxbeard.immersivepetroleum.client.model;
 
 import flaxbeard.immersivepetroleum.ImmersivePetroleum;
-import flaxbeard.immersivepetroleum.client.render.DerrickRenderer;
-import flaxbeard.immersivepetroleum.client.render.SeismicSurveyBarrelRenderer;
+import flaxbeard.immersivepetroleum.client.render.multiblock.MultiblockDerrickRenderer;
+import flaxbeard.immersivepetroleum.client.render.BlockSeismicSurveyBarrelRenderer;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -35,10 +35,10 @@ public class IPModels{
 	
 	@SubscribeEvent
 	public static void registerDynamicOBJModels(ModelEvent.RegisterAdditional event){
-		event.register(SeismicSurveyBarrelRenderer.BARREL);
-		event.register(DerrickRenderer.DRILL);
-		event.register(DerrickRenderer.PIPE_SEGMENT);
-		event.register(DerrickRenderer.PIPE_TOP);
+		event.register(BlockSeismicSurveyBarrelRenderer.BARREL);
+		event.register(MultiblockDerrickRenderer.DRILL);
+		event.register(MultiblockDerrickRenderer.PIPE_SEGMENT);
+		event.register(MultiblockDerrickRenderer.PIPE_TOP);
 	}
 	
 	private static final Map<String, IPModel> MODELS = new HashMap<>();

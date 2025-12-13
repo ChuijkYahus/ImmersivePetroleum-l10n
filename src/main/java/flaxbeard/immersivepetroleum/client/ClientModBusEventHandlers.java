@@ -1,13 +1,13 @@
 package flaxbeard.immersivepetroleum.client;
 
 import flaxbeard.immersivepetroleum.ImmersivePetroleum;
-import flaxbeard.immersivepetroleum.client.render.AutoLubricatorRenderer;
-import flaxbeard.immersivepetroleum.client.render.DerrickRenderer;
-import flaxbeard.immersivepetroleum.client.render.MotorboatRenderer;
-import flaxbeard.immersivepetroleum.client.render.MultiblockDistillationTowerRenderer;
-import flaxbeard.immersivepetroleum.client.render.MultiblockPumpjackRenderer;
-import flaxbeard.immersivepetroleum.client.render.OilTankRenderer;
-import flaxbeard.immersivepetroleum.client.render.SeismicSurveyBarrelRenderer;
+import flaxbeard.immersivepetroleum.client.render.BlockAutoLubricatorRenderer;
+import flaxbeard.immersivepetroleum.client.render.multiblock.MultiblockDerrickRenderer;
+import flaxbeard.immersivepetroleum.client.render.EntityMotorboatRenderer;
+import flaxbeard.immersivepetroleum.client.render.multiblock.MultiblockDistillationTowerRenderer;
+import flaxbeard.immersivepetroleum.client.render.multiblock.MultiblockPumpjackRenderer;
+import flaxbeard.immersivepetroleum.client.render.multiblock.MultiblockOilTankRenderer;
+import flaxbeard.immersivepetroleum.client.render.BlockSeismicSurveyBarrelRenderer;
 import flaxbeard.immersivepetroleum.common.IPContent;
 import flaxbeard.immersivepetroleum.common.IPTileTypes;
 import flaxbeard.immersivepetroleum.common.entity.IPEntityTypes;
@@ -32,13 +32,13 @@ public class ClientModBusEventHandlers{
 	public static void registerRenders(RegisterRenderers ev){
 		registerBERenderNoContext(ev, IPContent.Multiblock.DISTILLATIONTOWER.masterBE(), MultiblockDistillationTowerRenderer::new);
 		registerBERenderNoContext(ev, IPContent.Multiblock.PUMPJACK.masterBE(), MultiblockPumpjackRenderer::new);
-		registerBERenderNoContext(ev, IPContent.Multiblock.OILTANK.masterBE(), OilTankRenderer::new);
-		registerBERenderNoContext(ev, IPContent.Multiblock.DERRICK.masterBE(), DerrickRenderer::new);
+		registerBERenderNoContext(ev, IPContent.Multiblock.OILTANK.masterBE(), MultiblockOilTankRenderer::new);
+		registerBERenderNoContext(ev, IPContent.Multiblock.DERRICK.masterBE(), MultiblockDerrickRenderer::new);
 		
-		registerBERender(ev, IPTileTypes.AUTOLUBE.get(), AutoLubricatorRenderer::new);
-		registerBERender(ev, IPTileTypes.SEISMIC_SURVEY.get(), SeismicSurveyBarrelRenderer::new);
+		registerBERender(ev, IPTileTypes.AUTOLUBE.get(), BlockAutoLubricatorRenderer::new);
+		registerBERender(ev, IPTileTypes.SEISMIC_SURVEY.get(), BlockSeismicSurveyBarrelRenderer::new);
 		
-		registerEntityRenderingHandler(ev, IPEntityTypes.MOTORBOAT, MotorboatRenderer::new);
+		registerEntityRenderingHandler(ev, IPEntityTypes.MOTORBOAT, EntityMotorboatRenderer::new);
 		registerEntityRenderingHandler(ev, IPEntityTypes.MOLOTOV, ThrownItemRenderer::new);
 	}
 	

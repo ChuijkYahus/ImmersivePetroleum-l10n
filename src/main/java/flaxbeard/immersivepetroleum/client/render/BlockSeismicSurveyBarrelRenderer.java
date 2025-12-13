@@ -16,7 +16,7 @@ import net.neoforged.neoforge.client.model.data.ModelData;
 import javax.annotation.Nonnull;
 import java.util.List;
 
-public class SeismicSurveyBarrelRenderer extends IPBlockEntityRenderer<SeismicSurveyTileEntity>{
+public class BlockSeismicSurveyBarrelRenderer extends IPBlockEntityRenderer<SeismicSurveyTileEntity>{
 	
 	public static final ModelResourceLocation BARREL = ResourceUtils.ipModel("block/dyn/seismic_survey_tool_barrel");
 	

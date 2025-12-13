@@ -1,4 +1,4 @@
-package flaxbeard.immersivepetroleum.client.render;
+package flaxbeard.immersivepetroleum.client.render.multiblock;
 
 import blusunrize.immersiveengineering.api.ApiUtils;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.registry.MultiblockBlockEntityMaster;
@@ -19,12 +19,12 @@ import net.neoforged.neoforge.client.model.data.ModelData;
 import javax.annotation.Nonnull;
 import java.util.List;
 
-public class DerrickRenderer extends IPMultiblockRenderer<MultiblockBlockEntityMaster<DerrickLogic.State>>{
+public class MultiblockDerrickRenderer extends IPMultiblockRenderer<MultiblockBlockEntityMaster<DerrickLogic.State>>{
 	public static final ModelResourceLocation DRILL = ResourceUtils.ipModel("multiblock/dyn/derrick_drill");
 	public static final ModelResourceLocation PIPE_SEGMENT = ResourceUtils.ipModel("multiblock/dyn/derrick_pipe_segment");
 	public static final ModelResourceLocation PIPE_TOP = ResourceUtils.ipModel("multiblock/dyn/derrick_pipe_top");
 	
-	public DerrickRenderer(){
+	public MultiblockDerrickRenderer(){
 		super(() -> DerrickMultiblock.INSTANCE);
 	}
 	

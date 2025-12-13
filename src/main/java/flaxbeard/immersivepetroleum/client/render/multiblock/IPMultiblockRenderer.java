@@ -1,9 +1,10 @@
-package flaxbeard.immersivepetroleum.client.render;
+package flaxbeard.immersivepetroleum.client.render.multiblock;
 
 import blusunrize.immersiveengineering.api.multiblocks.TemplateMultiblock;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.env.IMultiblockBEHelperMaster;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.env.IMultiblockLevel;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.registry.MultiblockBlockEntityMaster;
+import flaxbeard.immersivepetroleum.client.render.IPBlockEntityRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.AABB;
 

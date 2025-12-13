@@ -19,14 +19,14 @@ import net.neoforged.api.distmarker.OnlyIn;
 import javax.annotation.Nonnull;
 
 @OnlyIn(Dist.CLIENT)
-public class MotorboatRenderer extends EntityRenderer<MotorboatEntity>{
+public class EntityMotorboatRenderer extends EntityRenderer<MotorboatEntity>{
 	private static final ResourceLocation texture = ResourceUtils.ip("textures/models/boat_motor.png");
 	private static final ResourceLocation textureArmor = ResourceUtils.ip("textures/models/boat_motor_armor.png");
 	
 	/** instance of ModelBoat for rendering */
 	protected final ModelMotorboat modelBoat = new ModelMotorboat();
 	
-	public MotorboatRenderer(EntityRendererProvider.Context renderManagerIn){
+	public EntityMotorboatRenderer(EntityRendererProvider.Context renderManagerIn){
 		super(renderManagerIn);
 		this.shadowRadius = 0.8F;
 	}
