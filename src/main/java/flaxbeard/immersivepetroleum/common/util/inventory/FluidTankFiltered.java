@@ -1,5 +1,6 @@
 package flaxbeard.immersivepetroleum.common.util.inventory;
 
+import blusunrize.immersiveengineering.api.IEApiDataComponents;
 import blusunrize.immersiveengineering.common.gui.sync.GenericContainerData;
 import blusunrize.immersiveengineering.common.gui.sync.GenericDataSerializers;
 import blusunrize.immersiveengineering.common.gui.sync.GetterAndSetter;
@@ -95,6 +96,11 @@ public class FluidTankFiltered implements IFluidHandler, IFluidTank{
 	
 	@Override
 	public int fill(@Nonnull FluidStack fluid, @Nonnull FluidAction action){
+		if(fluid.has(IEApiDataComponents.FLUID_PRESSURIZED)){
+			fluid = fluid.copy();
+			fluid.remove(IEApiDataComponents.FLUID_PRESSURIZED);
+		}
+		
 		if(!fluid.isEmpty() && this.isFluidValid(fluid)){
 			if(action.simulate()){
 				if(this.fluid.isEmpty()){

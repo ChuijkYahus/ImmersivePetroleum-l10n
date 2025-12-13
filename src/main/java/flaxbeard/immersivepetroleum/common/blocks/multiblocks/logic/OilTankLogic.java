@@ -25,6 +25,7 @@ import flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.OilTankLogic
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.shapes.OilTankShape;
 import flaxbeard.immersivepetroleum.common.util.FluidHelper;
 import flaxbeard.immersivepetroleum.common.util.Utils;
+import flaxbeard.immersivepetroleum.common.util.inventory.FluidTankFiltered;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
@@ -159,7 +160,7 @@ public class OilTankLogic implements IMultiblockLogic<State>, IServerTickableCom
 						int accepted = out.fill(fs, IFluidHandler.FluidAction.SIMULATE);
 						if(accepted > 0){
 							int drained = out.fill(FluidHelper.copyFluid(fs, Math.min(fs.getAmount(), accepted), false), IFluidHandler.FluidAction.EXECUTE);
-							state.tank.drain(FluidHelper.copyFluid(state.tank.getFluid(), drained, false), IFluidHandler.FluidAction.EXECUTE);
+							state.tank.drain(drained, IFluidHandler.FluidAction.EXECUTE);
 						}
 					});
 				}
@@ -231,7 +232,7 @@ public class OilTankLogic implements IMultiblockLogic<State>, IServerTickableCom
 	public static class State implements IMultiblockState{
 		public final RedstoneControl.RSState rsState = RedstoneControl.RSState.disabledByDefault();
 		
-		public final FluidTank tank = new FluidTank(1024 * FluidType.BUCKET_VOLUME, f -> !f.getFluid().getFluidType().isLighterThanAir());
+		public final FluidTankFiltered tank = new FluidTankFiltered(1024 * FluidType.BUCKET_VOLUME, f -> !f.getFluid().getFluidType().isLighterThanAir());
 		public final EnumMap<Port, PortState> portConfig = new EnumMap<>(Port.class);
 		
 		private final LayeredComparatorOutput<IMultiblockContext<?>> comparatorHelper;
@@ -280,7 +281,7 @@ public class OilTankLogic implements IMultiblockLogic<State>, IServerTickableCom
 		
 		@Override
 		public void writeSaveNBT(CompoundTag nbt, HolderLookup.Provider provider){
-			nbt.put("tank", this.tank.writeToNBT(provider, new CompoundTag()));
+			nbt.put("tank", this.tank.writeToNBT(new CompoundTag(), provider));
 			
 			for(Port port: Port.DYNAMIC_PORTS){
 				nbt.putInt(port.getSerializedName(), getPortStateFor(port).ordinal());
@@ -291,7 +292,7 @@ public class OilTankLogic implements IMultiblockLogic<State>, IServerTickableCom
 		
 		@Override
 		public void readSaveNBT(CompoundTag nbt, HolderLookup.Provider provider){
-			this.tank.readFromNBT(provider, nbt.getCompound("tank"));
+			this.tank.readFromNBT(nbt.getCompound("tank"), provider);
 			
 			for(Port port: Port.DYNAMIC_PORTS){
 				this.portConfig.put(port, PortState.values()[nbt.getInt(port.getSerializedName())]);
