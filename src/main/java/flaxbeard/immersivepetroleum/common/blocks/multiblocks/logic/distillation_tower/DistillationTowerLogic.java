@@ -130,7 +130,7 @@ public class DistillationTowerLogic implements IMultiblockLogic<State>, IServerT
 						DistillationTowerRecipe recipe = holder.value();
 						
 						if(state.tanks.input().getFluidAmount() >= recipe.getInputFluid().amount() && state.energy.getEnergyStored() >= recipe.getTotalProcessEnergy() / recipe.getTotalProcessTime()){
-							MultiblockProcessInMachine<DistillationTowerRecipe> process = new DistillationTowerProcess(holder).setInputTanks(TANK_INPUT);
+							MultiblockProcessInMachine<DistillationTowerRecipe> process = new DistillationTowerProcess(holder);
 							if(state.processor.addProcessToQueue(process, level.getRawLevel(), true)){
 								state.processor.addProcessToQueue(process, level.getRawLevel(), false);
 								update = true;

@@ -23,9 +23,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.BiFunction;
 
+import static flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.distillation_tower.DistillationTowerLogic.TANK_INPUT;
+
 public class DistillationTowerProcess extends MultiblockProcessInMachine<DistillationTowerRecipe>{
-	public DistillationTowerProcess(RecipeHolder<DistillationTowerRecipe> recipe, int... inputSlots){
-		super(recipe, inputSlots);
+	static final int[] SLOTS_NONE = new int[0];
+	
+	public DistillationTowerProcess(RecipeHolder<DistillationTowerRecipe> recipe){
+		super(recipe, SLOTS_NONE);
+		setInputTanks(TANK_INPUT);
 	}
 	
 	public DistillationTowerProcess(BiFunction<Level, ResourceLocation, DistillationTowerRecipe> loader, CompoundTag compoundTag, HolderLookup.Provider provider){
