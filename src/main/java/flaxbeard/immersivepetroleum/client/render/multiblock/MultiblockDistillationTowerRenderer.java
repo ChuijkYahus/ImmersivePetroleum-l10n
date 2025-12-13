@@ -32,95 +32,96 @@ public class MultiblockDistillationTowerRenderer extends IPMultiblockRenderer<Mu
 		if(te.isRemoved() || te.getLevel() == null || !te.getLevel().hasChunkAt(te.getBlockPos()))
 			return;
 		
-		if(te.getHelper().getState().wasActive){
-			overlay = OverlayTexture.NO_OVERLAY;
-			
-			transform.pushPose();
-			{
-				Direction rotation = te.getHelper().getContext().getLevel().getOrientation().front();
-				switch(rotation){
-					case NORTH -> {
-						//transform.rotate(new Quaternion(0, 0, 0, true));
-						transform.translate(3, 0, 4);
-					}
-					case SOUTH -> {
-						transform.mulPose(Axis.YP.rotationDegrees(180F));
-						transform.translate(2, 0, 3);
-					}
-					case EAST -> {
-						transform.mulPose(Axis.YP.rotationDegrees(270F));
-						transform.translate(3, 0, 3);
-					}
-					case WEST -> {
-						transform.mulPose(Axis.YP.rotationDegrees(90F));
-						transform.translate(2, 0, 4);
-					}
-					default -> {
-					}
+		if(te.getHelper().getState().cooldownTicks <= 0)
+			return;
+		
+		overlay = OverlayTexture.NO_OVERLAY;
+		
+		transform.pushPose();
+		{
+			Direction rotation = te.getHelper().getContext().getLevel().getOrientation().front();
+			switch(rotation){
+				case NORTH -> {
+					//transform.rotate(new Quaternion(0, 0, 0, true));
+					transform.translate(3, 0, 4);
 				}
-				
-				VertexConsumer buf = bufferIn.getBuffer(IPRenderTypes.DISTILLATION_TOWER_ACTIVE);
-				if(te.getHelper().getContext().getLevel().getOrientation().mirrored()){
-					transform.pushPose();
-					{
-						transform.translate(-4.0, 0.0, -4.0);
-						final QuickDraw draw = new QuickDraw(buf, transform, 0xFFFFFFFF, overlay, LightTexture.FULL_BRIGHT);
-						
-						// Active Boiler Front
-						Face face0 = ACTIVE_BOILER_FRONT;
-						draw.vertex(-0.0015F, 0.5F, face0.w16,				face0.u1, face0.v1);
-						draw.vertex(-0.0015F, 0.5F + face0.h16, face0.w16,	face0.u1, face0.v0);
-						draw.vertex(-0.0015F, 0.5F + face0.h16, 0.0F,		face0.u0, face0.v0);
-						draw.vertex(-0.0015F, 0.5F, 0.0F,					face0.u0, face0.v1);
-						
-						// Active Boiler Back
-						Face face1 = ACTIVE_BOILER_BACK;
-						draw.vertex(1.0015F, 0.5F + face1.h16, 0.0F,		face1.u1, face1.v0);
-						draw.vertex(1.0015F, 0.5F + face1.h16, face1.w16,	face1.u0, face1.v0);
-						draw.vertex(1.0015F, 0.5F, face1.w16,				face1.u0, face1.v1);
-						draw.vertex(1.0015F, 0.5F, 0.0F,					face1.u1, face1.v1);
-						
-						// Active Boiler Side
-						Face face2 = ACTIVE_BOILER_SIDE;
-						draw.vertex(face2.w16, 0.5F, 2.0015F,				face2.u1, face2.v1);
-						draw.vertex(face2.w16, 0.5F + face2.h16, 2.0015F,	face2.u1, face2.v0);
-						draw.vertex(0.0F, 0.5F + face2.h16, 2.0015F,		face2.u0, face2.v0);
-						draw.vertex(0.0F, 0.5F, 2.0015F,					face2.u0, face2.v1);
-					}
-					transform.popPose();
-					
-				}else{
-					transform.pushPose();
-					{
-						transform.translate(-2.0, 0.0, -4.0);
-						final QuickDraw draw = new QuickDraw(buf, transform, 0xFFFFFFFF, overlay, LightTexture.FULL_BRIGHT);
-						
-						// Active Boiler Back
-						Face face0 = ACTIVE_BOILER_BACK;
-						draw.vertex(-0.0015F, 0.5F, face0.w16,				face0.u0, face0.v1);
-						draw.vertex(-0.0015F, 0.5F + face0.h16, face0.w16,	face0.u0, face0.v0);
-						draw.vertex(-0.0015F, 0.5F + face0.h16, 0.0F,		face0.u1, face0.v0);
-						draw.vertex(-0.0015F, 0.5F, 0.0F,					face0.u1, face0.v1);
-						
-						// Active Boiler Front
-						Face face1 = ACTIVE_BOILER_FRONT;
-						draw.vertex(1.0015F, 0.5F + face1.h16, 0.0F,		face1.u0, face1.v0);
-						draw.vertex(1.0015F, 0.5F + face1.h16, face1.w16,	face1.u1, face1.v0);
-						draw.vertex(1.0015F, 0.5F, face1.w16,				face1.u1, face1.v1);
-						draw.vertex(1.0015F, 0.5F, 0.0F,					face1.u0, face1.v1);
-						
-						// Active Boiler Side
-						Face face2 = ACTIVE_BOILER_SIDE;
-						draw.vertex(face2.w16, 0.5F, 2.0015F,				face2.u0, face2.v1);
-						draw.vertex(face2.w16, 0.5F + face2.h16, 2.0015F,	face2.u0, face2.v0);
-						draw.vertex(0.0F, 0.5F + face2.h16, 2.0015F,		face2.u1, face2.v0);
-						draw.vertex(0.0F, 0.5F, 2.0015F,					face2.u1, face2.v1);
-					}
-					transform.popPose();
+				case SOUTH -> {
+					transform.mulPose(Axis.YP.rotationDegrees(180F));
+					transform.translate(2, 0, 3);
+				}
+				case EAST -> {
+					transform.mulPose(Axis.YP.rotationDegrees(270F));
+					transform.translate(3, 0, 3);
+				}
+				case WEST -> {
+					transform.mulPose(Axis.YP.rotationDegrees(90F));
+					transform.translate(2, 0, 4);
+				}
+				default -> {
 				}
 			}
-			transform.popPose();
+			
+			VertexConsumer buf = bufferIn.getBuffer(IPRenderTypes.DISTILLATION_TOWER_ACTIVE);
+			if(te.getHelper().getContext().getLevel().getOrientation().mirrored()){
+				transform.pushPose();
+				{
+					transform.translate(-4.0, 0.0, -4.0);
+					final QuickDraw draw = new QuickDraw(buf, transform, 0xFFFFFFFF, overlay, LightTexture.FULL_BRIGHT);
+					
+					// Active Boiler Front
+					Face face0 = ACTIVE_BOILER_FRONT;
+					draw.vertex(-0.0015F, 0.5F, face0.w16,				face0.u1, face0.v1);
+					draw.vertex(-0.0015F, 0.5F + face0.h16, face0.w16,	face0.u1, face0.v0);
+					draw.vertex(-0.0015F, 0.5F + face0.h16, 0.0F,		face0.u0, face0.v0);
+					draw.vertex(-0.0015F, 0.5F, 0.0F,					face0.u0, face0.v1);
+					
+					// Active Boiler Back
+					Face face1 = ACTIVE_BOILER_BACK;
+					draw.vertex(1.0015F, 0.5F + face1.h16, 0.0F,		face1.u1, face1.v0);
+					draw.vertex(1.0015F, 0.5F + face1.h16, face1.w16,	face1.u0, face1.v0);
+					draw.vertex(1.0015F, 0.5F, face1.w16,				face1.u0, face1.v1);
+					draw.vertex(1.0015F, 0.5F, 0.0F,					face1.u1, face1.v1);
+					
+					// Active Boiler Side
+					Face face2 = ACTIVE_BOILER_SIDE;
+					draw.vertex(face2.w16, 0.5F, 2.0015F,				face2.u1, face2.v1);
+					draw.vertex(face2.w16, 0.5F + face2.h16, 2.0015F,	face2.u1, face2.v0);
+					draw.vertex(0.0F, 0.5F + face2.h16, 2.0015F,		face2.u0, face2.v0);
+					draw.vertex(0.0F, 0.5F, 2.0015F,					face2.u0, face2.v1);
+				}
+				transform.popPose();
+				
+			}else{
+				transform.pushPose();
+				{
+					transform.translate(-2.0, 0.0, -4.0);
+					final QuickDraw draw = new QuickDraw(buf, transform, 0xFFFFFFFF, overlay, LightTexture.FULL_BRIGHT);
+					
+					// Active Boiler Back
+					Face face0 = ACTIVE_BOILER_BACK;
+					draw.vertex(-0.0015F, 0.5F, face0.w16,				face0.u0, face0.v1);
+					draw.vertex(-0.0015F, 0.5F + face0.h16, face0.w16,	face0.u0, face0.v0);
+					draw.vertex(-0.0015F, 0.5F + face0.h16, 0.0F,		face0.u1, face0.v0);
+					draw.vertex(-0.0015F, 0.5F, 0.0F,					face0.u1, face0.v1);
+					
+					// Active Boiler Front
+					Face face1 = ACTIVE_BOILER_FRONT;
+					draw.vertex(1.0015F, 0.5F + face1.h16, 0.0F,		face1.u0, face1.v0);
+					draw.vertex(1.0015F, 0.5F + face1.h16, face1.w16,	face1.u1, face1.v0);
+					draw.vertex(1.0015F, 0.5F, face1.w16,				face1.u1, face1.v1);
+					draw.vertex(1.0015F, 0.5F, 0.0F,					face1.u0, face1.v1);
+					
+					// Active Boiler Side
+					Face face2 = ACTIVE_BOILER_SIDE;
+					draw.vertex(face2.w16, 0.5F, 2.0015F,				face2.u0, face2.v1);
+					draw.vertex(face2.w16, 0.5F + face2.h16, 2.0015F,	face2.u0, face2.v0);
+					draw.vertex(0.0F, 0.5F + face2.h16, 2.0015F,		face2.u1, face2.v0);
+					draw.vertex(0.0F, 0.5F, 2.0015F,					face2.u1, face2.v1);
+				}
+				transform.popPose();
+			}
 		}
+		transform.popPose();
 	}
 	
 	private record Face(int x, int y, int w, int h, float w16, float h16, float u0, float v0, float u1, float v1){

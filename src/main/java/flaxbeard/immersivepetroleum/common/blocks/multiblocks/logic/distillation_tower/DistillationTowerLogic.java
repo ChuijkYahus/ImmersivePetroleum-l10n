@@ -97,6 +97,15 @@ public class DistillationTowerLogic implements IMultiblockLogic<State>, IServerT
 	
 	@Override
 	public void tickClient(IMultiblockContext<State> context){
+		final State state = context.getState();
+		
+		if(state.cooldownTicks > 0){
+			state.cooldownTicks--;
+		}
+		
+		if(state.wasActive){
+			state.cooldownTicks = 20;
+		}
 	}
 	
 	@Override
@@ -107,13 +116,9 @@ public class DistillationTowerLogic implements IMultiblockLogic<State>, IServerT
 		
 		boolean update = false;
 		
-		if(state.wasActive && state.cooldownTicks == 0){
+		if(state.wasActive){
 			state.wasActive = false;
 			update = true;
-		}
-		
-		if(state.cooldownTicks > 0){
-			state.cooldownTicks--;
 		}
 		
 		if(rsEnabled){
@@ -135,13 +140,10 @@ public class DistillationTowerLogic implements IMultiblockLogic<State>, IServerT
 				}
 			}
 			
-			if(!state.processor.getQueue().isEmpty()){
+			if(state.processor.tickServer(state, level, !state.processor.getQueue().isEmpty())){
 				state.wasActive = true;
-				state.cooldownTicks = 10;
 				update = true;
 			}
-			
-			state.processor.tickServer(state, level, state.wasActive);
 		}
 		
 		if(!state.inventory.get(Inventory.INPUT_FILLED).isEmpty() && state.tanks.input().getFluidAmount() < state.tanks.input().getCapacity()){
@@ -266,7 +268,7 @@ public class DistillationTowerLogic implements IMultiblockLogic<State>, IServerT
 		public final EnumInventory<Inventory> inventory = new EnumInventory<>(Inventory.class);
 		public final Tanks tanks = Tanks.server();
 		
-		/** Flickering avoidance for the "On" Texture overlay */
+		/** Flickering avoidance for the "Active" Texture overlay */
 		public int cooldownTicks = 0;
 		public boolean wasActive = false;
 		
@@ -313,7 +315,6 @@ public class DistillationTowerLogic implements IMultiblockLogic<State>, IServerT
 		public void readSaveNBT(CompoundTag nbt, HolderLookup.Provider provider){
 			this.tanks.readNBT(nbt.getCompound("tanks"), provider);
 			this.energy.deserializeNBT(provider, nbt.getCompound("energy"));
-			this.cooldownTicks = nbt.getInt("cooldownTicks");
 			this.processor.fromNBT(nbt.getCompound("recipeworker"), DistillationTowerProcess::new, provider);
 			
 			this.inventory.load(nbt, provider);
@@ -326,7 +327,6 @@ public class DistillationTowerLogic implements IMultiblockLogic<State>, IServerT
 		public void writeSaveNBT(CompoundTag nbt, HolderLookup.Provider provider){
 			nbt.put("tanks", this.tanks.writeNBT(provider));
 			nbt.put("energy", this.energy.serializeNBT(provider));
-			nbt.putInt("cooldownTicks", this.cooldownTicks);
 			nbt.put("recipeworker", this.processor.toNBT(provider));
 			
 			this.inventory.save(nbt, provider);
