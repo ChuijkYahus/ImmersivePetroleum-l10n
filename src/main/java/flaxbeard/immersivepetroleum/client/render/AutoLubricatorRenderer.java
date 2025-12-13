@@ -23,7 +23,7 @@ import net.neoforged.neoforge.fluids.FluidStack;
 
 import javax.annotation.Nonnull;
 
-public class AutoLubricatorRenderer implements BlockEntityRenderer<AutoLubricatorTileEntity>{
+public class AutoLubricatorRenderer extends IPBlockEntityRenderer<AutoLubricatorTileEntity>{
 	
 	@Override
 	public boolean shouldRenderOffScreen(@Nonnull AutoLubricatorTileEntity te){

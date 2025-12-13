@@ -10,14 +10,13 @@ import flaxbeard.immersivepetroleum.common.util.ResourceUtils;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.neoforged.neoforge.client.model.data.ModelData;
 
 import javax.annotation.Nonnull;
 import java.util.List;
 
-public class SeismicSurveyBarrelRenderer implements BlockEntityRenderer<SeismicSurveyTileEntity>{
+public class SeismicSurveyBarrelRenderer extends IPBlockEntityRenderer<SeismicSurveyTileEntity>{
 	
 	public static final ModelResourceLocation BARREL = ResourceUtils.ipModel("block/dyn/seismic_survey_tool_barrel");
 	
