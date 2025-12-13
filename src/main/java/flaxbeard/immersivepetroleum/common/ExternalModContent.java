@@ -27,6 +27,7 @@ public class ExternalModContent{
 		
 		private static final DeferredHolder<Block, Block> BLOCK_REDSTONE_ENGINEERING = loader.block("rs_engineering");
 		private static final DeferredHolder<Item, Item> ITEM_HAMMER = loader.item("hammer");
+		private static final DeferredHolder<Item, Item> ITEM_SCREWDRIVER = loader.item("screwdriver");
 		private static final DeferredHolder<Item, Item> ITEM_PIPE = loader.item("fluid_pipe");
 		private static final DeferredHolder<Item, Item> ITEM_BUCKSHOT = loader.item("bullet_buckshot");
 		private static final DeferredHolder<Item, Item> ITEM_EMPTY_SHELL = loader.item("empty_shell");
@@ -58,6 +59,10 @@ public class ExternalModContent{
 		
 		public static Item itemHammer(){
 			return ITEM_HAMMER.get();
+		}
+		
+		public static Item itemScrewdriver(){
+			return ITEM_SCREWDRIVER.get();
 		}
 		
 		public static boolean isConcrete(FluidStack fluid){
@@ -102,6 +107,14 @@ public class ExternalModContent{
 		
 		public static boolean isHammer(Item item){
 			return itemHammer().equals(item);
+		}
+		
+		public static boolean isScrewdriver(ItemStack stack){
+			return isScrewdriver(stack.getItem());
+		}
+		
+		public static boolean isScrewdriver(Item item){
+			return itemScrewdriver().equals(item);
 		}
 		
 		private static void forceClassLoad(){

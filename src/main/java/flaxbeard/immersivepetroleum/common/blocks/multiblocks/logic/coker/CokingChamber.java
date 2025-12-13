@@ -2,7 +2,6 @@ package flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.coker;
 
 import blusunrize.immersiveengineering.api.multiblocks.blocks.env.IMultiblockContext;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.env.IMultiblockLevel;
-import blusunrize.immersiveengineering.common.util.Utils;
 import flaxbeard.immersivepetroleum.ImmersivePetroleum;
 import flaxbeard.immersivepetroleum.api.crafting.CokerUnitRecipe;
 import flaxbeard.immersivepetroleum.common.util.inventory.FluidTankFiltered;
@@ -219,7 +218,7 @@ public class CokingChamber{
 						if(this.timer >= (recipe.getTotalProcessTime() * recipe.getInputItem().getCount())){
 							this.timer = 0;
 							
-							this.tank.fill(Utils.copyFluidStackWithAmount(recipe.getOutputFluid(), recipe.getOutputFluid().getAmount(), false), IFluidHandler.FluidAction.EXECUTE);
+							this.tank.fill(recipe.getOutputFluid().copyWithAmount(recipe.getOutputFluid().getAmount()), IFluidHandler.FluidAction.EXECUTE);
 							this.inputAmount--;
 							this.outputAmount++;
 							
@@ -242,7 +241,7 @@ public class CokingChamber{
 						int amount = Math.min(drained.getAmount(), accepted);
 						
 						this.tank.drain(amount, IFluidHandler.FluidAction.EXECUTE);
-						buffer.fill(Utils.copyFluidStackWithAmount(drained, amount, false), IFluidHandler.FluidAction.EXECUTE);
+						buffer.fill(drained.copyWithAmount(amount), IFluidHandler.FluidAction.EXECUTE);
 						
 						return true;
 					}

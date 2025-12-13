@@ -58,9 +58,9 @@ public class Utils{
 	
 	/** Copy of {@link blusunrize.immersiveengineering.common.util.Utils#unlockIEAdvancement(Player, String)} */
 	public static void unlockIPAdvancement(Player player, String name){
-		if(player instanceof ServerPlayer serverPlayer){
+		if(player instanceof ServerPlayer serverPlayer && serverPlayer.getCommandSenderWorld() instanceof ServerLevel level){
 			PlayerAdvancements advancements = serverPlayer.getAdvancements();
-			ServerAdvancementManager manager = ((ServerLevel) serverPlayer.getCommandSenderWorld()).getServer().getAdvancements();
+			ServerAdvancementManager manager = level.getServer().getAdvancements();
 			AdvancementHolder advancement = manager.get(ResourceUtils.ip(name));
 			if(advancement != null)
 				advancements.award(advancement, "code_trigger");
@@ -69,9 +69,7 @@ public class Utils{
 	
 	/** Copy of {@link blusunrize.immersiveengineering.common.util.Utils#isFluidRelatedItemStack(ItemStack)} */
 	public static boolean isFluidRelatedItemStack(ItemStack stack){
-		if(stack.isEmpty())
-			return false;
-		return stack.getCapability(Capabilities.FluidHandler.ITEM) != null;
+		return !stack.isEmpty() && stack.getCapability(Capabilities.FluidHandler.ITEM) != null;
 	}
 	
 	public static void dropItem(Level level, BlockPos pos, ItemStack stack){

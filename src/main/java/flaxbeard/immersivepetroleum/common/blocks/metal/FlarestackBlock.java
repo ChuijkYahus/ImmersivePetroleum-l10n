@@ -2,7 +2,7 @@ package flaxbeard.immersivepetroleum.common.blocks.metal;
 
 import blusunrize.immersiveengineering.api.Lib;
 import blusunrize.immersiveengineering.common.util.ChatUtils;
-import blusunrize.immersiveengineering.common.util.Utils;
+import flaxbeard.immersivepetroleum.common.ExternalModContent;
 import flaxbeard.immersivepetroleum.common.IPTileTypes;
 import flaxbeard.immersivepetroleum.common.blocks.IPBlockBase;
 import flaxbeard.immersivepetroleum.common.blocks.IPBlockItemBase;
@@ -93,7 +93,7 @@ public class FlarestackBlock extends IPBlockBase implements EntityBlock{
 	@Override
 	@Nonnull
 	public InteractionResult use(@Nonnull BlockState state, @Nonnull Level worldIn, @Nonnull BlockPos pos, Player player, @Nonnull InteractionHand handIn, @Nonnull BlockHitResult hit){
-		if(Utils.isScrewdriver(player.getItemInHand(handIn))){
+		if(ExternalModContent.IE.isScrewdriver(player.getItemInHand(handIn))){
 			if(state.getValue(SLAVE)){
 				pos = pos.relative(Direction.DOWN);
 			}
