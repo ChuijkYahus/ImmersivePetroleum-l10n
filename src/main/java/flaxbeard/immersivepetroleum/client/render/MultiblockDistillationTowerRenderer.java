@@ -6,6 +6,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.DistillationTowerMultiblock;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.distillation_tower.DistillationTowerLogic;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.Direction;
@@ -17,6 +18,10 @@ import javax.annotation.Nonnull;
 @OnlyIn(Dist.CLIENT)
 public class MultiblockDistillationTowerRenderer extends IPMultiblockRenderer<MultiblockBlockEntityMaster<DistillationTowerLogic.State>>{
 	
+	static final Face ACTIVE_BOILER_SIDE = Face.of(0, 0, 16, 24);
+	static final Face ACTIVE_BOILER_FRONT = Face.of(16, 0, 32, 24);
+	static final Face ACTIVE_BOILER_BACK = Face.of(16, 24, 32, 24);
+	
 	public MultiblockDistillationTowerRenderer(){
 		super(() -> DistillationTowerMultiblock.INSTANCE);
 	}
@@ -26,7 +31,6 @@ public class MultiblockDistillationTowerRenderer extends IPMultiblockRenderer<Mu
 		if(te.isRemoved() || te.getLevel() == null || !te.getLevel().hasChunkAt(te.getBlockPos()))
 			return;
 		
-		
 		if(te.getHelper().getState().wasActive){
 			overlay = OverlayTexture.NO_OVERLAY;
 			
@@ -35,7 +39,7 @@ public class MultiblockDistillationTowerRenderer extends IPMultiblockRenderer<Mu
 				Direction rotation = te.getHelper().getContext().getLevel().getOrientation().front();
 				switch(rotation){
 					case NORTH -> {
-						// transform.rotate(new Quaternion(0, 0, 0, true));
+						//transform.rotate(new Quaternion(0, 0, 0, true));
 						transform.translate(3, 0, 4);
 					}
 					case SOUTH -> {
@@ -54,44 +58,33 @@ public class MultiblockDistillationTowerRenderer extends IPMultiblockRenderer<Mu
 					}
 				}
 				
-				// Is it the most efficient way of doing this? Probably not.
-				// Does it make me look smart af? hell yeah!
 				VertexConsumer buf = bufferIn.getBuffer(IPRenderTypes.DISTILLATION_TOWER_ACTIVE);
 				if(te.getHelper().getContext().getLevel().getOrientation().mirrored()){
 					transform.pushPose();
 					{
 						transform.translate(-4.0, 0.0, -4.0);
-						final QuickDraw draw = new QuickDraw(buf, transform, 0xBFBFBFFF, overlay, light);
+						final QuickDraw draw = new QuickDraw(buf, transform, 0xFFFFFFFF, overlay, LightTexture.FULL_BRIGHT);
 						
 						// Active Boiler Front
-						int ux = 96, vy = 134;
-						int w = 32, h = 24;
-						float uw = w / 256F, vh = h / 256F, u0 = ux / 256F, v0 = vy / 256F, u1 = u0 + uw, v1 = v0 + vh;
-						
-						draw.vertex(-0.0015F, 0.5F, w / 16F,			u1, v1);
-						draw.vertex(-0.0015F, 0.5F + h / 16F, w / 16F,	u1, v0);
-						draw.vertex(-0.0015F, 0.5F + h / 16F, 0.0F,		u0, v0);
-						draw.vertex(-0.0015F, 0.5F, 0.0F,				u0, v1);
+						Face face0 = ACTIVE_BOILER_FRONT;
+						draw.vertex(-0.0015F, 0.5F, face0.w16,				face0.u1, face0.v1);
+						draw.vertex(-0.0015F, 0.5F + face0.h16, face0.w16,	face0.u1, face0.v0);
+						draw.vertex(-0.0015F, 0.5F + face0.h16, 0.0F,		face0.u0, face0.v0);
+						draw.vertex(-0.0015F, 0.5F, 0.0F,					face0.u0, face0.v1);
 						
 						// Active Boiler Back
-						ux = 96; vy = 158;
-						w = 32; h = 24;
-						uw = w / 256F; vh = h / 256F; u0 = ux / 256F; v0 = vy / 256F; u1 = u0 + uw; v1 = v0 + vh;
-						
-						draw.vertex(1.0015F, 0.5F + h / 16F, 0.0F,		u1, v0);
-						draw.vertex(1.0015F, 0.5F + h / 16F, w / 16F,	u0, v0);
-						draw.vertex(1.0015F, 0.5F, w / 16F,				u0, v1);
-						draw.vertex(1.0015F, 0.5F, 0.0F,				u1, v1);
+						Face face1 = ACTIVE_BOILER_BACK;
+						draw.vertex(1.0015F, 0.5F + face1.h16, 0.0F,		face1.u1, face1.v0);
+						draw.vertex(1.0015F, 0.5F + face1.h16, face1.w16,	face1.u0, face1.v0);
+						draw.vertex(1.0015F, 0.5F, face1.w16,				face1.u0, face1.v1);
+						draw.vertex(1.0015F, 0.5F, 0.0F,					face1.u1, face1.v1);
 						
 						// Active Boiler Side
-						ux = 80; vy = 134;
-						w = 16; h = 24;
-						uw = w / 256F; vh = h / 256F; u0 = ux / 256F; v0 = vy / 256F; u1 = u0 + uw; v1 = v0 + vh;
-						
-						draw.vertex(w / 16F, 0.5F, 2.0015F,				u1, v1);
-						draw.vertex(w / 16F, 0.5F + h / 16F, 2.0015F,	u1, v0);
-						draw.vertex(0.0F, 0.5F + h / 16F, 2.0015F,		u0, v0);
-						draw.vertex(0.0F, 0.5F, 2.0015F,				u0, v1);
+						Face face2 = ACTIVE_BOILER_SIDE;
+						draw.vertex(face2.w16, 0.5F, 2.0015F,				face2.u1, face2.v1);
+						draw.vertex(face2.w16, 0.5F + face2.h16, 2.0015F,	face2.u1, face2.v0);
+						draw.vertex(0.0F, 0.5F + face2.h16, 2.0015F,		face2.u0, face2.v0);
+						draw.vertex(0.0F, 0.5F, 2.0015F,					face2.u0, face2.v1);
 					}
 					transform.popPose();
 					
@@ -99,37 +92,28 @@ public class MultiblockDistillationTowerRenderer extends IPMultiblockRenderer<Mu
 					transform.pushPose();
 					{
 						transform.translate(-2.0, 0.0, -4.0);
-						final QuickDraw draw = new QuickDraw(buf, transform, 0xBFBFBFFF, overlay, light);
+						final QuickDraw draw = new QuickDraw(buf, transform, 0xFFFFFFFF, overlay, LightTexture.FULL_BRIGHT);
 						
 						// Active Boiler Back
-						int ux = 96, vy = 158;
-						int w = 32, h = 24;
-						float uw = w / 256F, vh = h / 256F, u0 = ux / 256F, v0 = vy / 256F, u1 = u0 + uw, v1 = v0 + vh;
-						
-						draw.vertex(-0.0015F, 0.5F, w / 16F, u0, v1);
-						draw.vertex(-0.0015F, 0.5F + h / 16F, w / 16F, u0, v0);
-						draw.vertex(-0.0015F, 0.5F + h / 16F, 0.0F, u1, v0);
-						draw.vertex(-0.0015F, 0.5F, 0.0F, u1, v1);
+						Face face0 = ACTIVE_BOILER_BACK;
+						draw.vertex(-0.0015F, 0.5F, face0.w16,				face0.u0, face0.v1);
+						draw.vertex(-0.0015F, 0.5F + face0.h16, face0.w16,	face0.u0, face0.v0);
+						draw.vertex(-0.0015F, 0.5F + face0.h16, 0.0F,		face0.u1, face0.v0);
+						draw.vertex(-0.0015F, 0.5F, 0.0F,					face0.u1, face0.v1);
 						
 						// Active Boiler Front
-						ux = 96; vy = 134;
-						w = 32; h = 24;
-						uw = w / 256F; vh = h / 256F; u0 = ux / 256F; v0 = vy / 256F; u1 = u0 + uw; v1 = v0 + vh;
-						
-						draw.vertex(1.0015F, 0.5F + h / 16F, 0.0F, u0, v0);
-						draw.vertex(1.0015F, 0.5F + h / 16F, w / 16F, u1, v0);
-						draw.vertex(1.0015F, 0.5F, w / 16F, u1, v1);
-						draw.vertex(1.0015F, 0.5F, 0.0F, u0, v1);
+						Face face1 = ACTIVE_BOILER_FRONT;
+						draw.vertex(1.0015F, 0.5F + face1.h16, 0.0F,		face1.u0, face1.v0);
+						draw.vertex(1.0015F, 0.5F + face1.h16, face1.w16,	face1.u1, face1.v0);
+						draw.vertex(1.0015F, 0.5F, face1.w16,				face1.u1, face1.v1);
+						draw.vertex(1.0015F, 0.5F, 0.0F,					face1.u0, face1.v1);
 						
 						// Active Boiler Side
-						ux = 80; vy = 134;
-						w = 16; h = 24;
-						uw = w / 256F; vh = h / 256F; u0 = ux / 256F; v0 = vy / 256F; u1 = u0 + uw; v1 = v0 + vh;
-						
-						draw.vertex(w / 16F, 0.5F, 2.0015F, u0, v1);
-						draw.vertex(w / 16F, 0.5F + h / 16F, 2.0015F, u0, v0);
-						draw.vertex(0.0F, 0.5F + h / 16F, 2.0015F, u1, v0);
-						draw.vertex(0.0F, 0.5F, 2.0015F, u1, v1);
+						Face face2 = ACTIVE_BOILER_SIDE;
+						draw.vertex(face2.w16, 0.5F, 2.0015F,				face2.u0, face2.v1);
+						draw.vertex(face2.w16, 0.5F + face2.h16, 2.0015F,	face2.u0, face2.v0);
+						draw.vertex(0.0F, 0.5F + face2.h16, 2.0015F,		face2.u1, face2.v0);
+						draw.vertex(0.0F, 0.5F, 2.0015F,					face2.u1, face2.v1);
 					}
 					transform.popPose();
 				}
@@ -138,11 +122,23 @@ public class MultiblockDistillationTowerRenderer extends IPMultiblockRenderer<Mu
 		}
 	}
 	
-	private record QuickDraw(VertexConsumer buf, PoseStack pose, int brightnessRGBA, int overlay, int light){
+	private record Face(int x, int y, int w, int h, float w16, float h16, float u0, float v0, float u1, float v1){
+		private static Face of(int x, int y, int w, int h){
+			float u0 = x / 64F;
+			float v0 = y / 64F;
+			float u1 = u0 + (w / 64F);
+			float v1 = v0 + (h / 64F);
+			float w16 = w / 16F;
+			float h16 = h / 16F;
+			return new Face(x, y, w, h, w16, h16, u0, v0, u1, v1);
+		}
+	}
+	
+	private record QuickDraw(VertexConsumer buf, PoseStack pose, int colorARGB, int overlay, int light){
 		private void vertex(float x, float y, float z, float u, float v){
 			//@formatter:off
 			this.buf.addVertex(this.pose.last().pose(), x, y, z)
-				.setColor(this.brightnessRGBA)
+				.setColor(this.colorARGB)
 				.setUv(u, v)
 				.setOverlay(this.overlay)
 				.setLight(this.light)

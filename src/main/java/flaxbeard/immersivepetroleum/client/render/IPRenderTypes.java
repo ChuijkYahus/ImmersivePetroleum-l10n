@@ -15,7 +15,7 @@ import org.lwjgl.opengl.GL11;
 import java.util.OptionalDouble;
 
 public class IPRenderTypes extends RenderStateShard{
-	static final ResourceLocation activeTexture = ResourceUtils.ip("textures/multiblock/distillation_tower_active.png");
+	static final ResourceLocation activeTexture = ResourceUtils.ip("textures/multiblock/distillation_tower_active_overlay.png");
 	static final ResourceLocation oilTankTexture = ResourceUtils.ip("textures/multiblock/oiltank.png");
 	
 	/**
@@ -117,7 +117,7 @@ public class IPRenderTypes extends RenderStateShard{
 			.createCompositeState(false);
 		
 		DISTILLATION_TOWER_ACTIVE = RenderType.create(
-				typeName("distillation_tower_active"),
+				typeName("distillation_tower_active_overlay"),
 				DefaultVertexFormat.BLOCK,
 				VertexFormat.Mode.QUADS,
 				RenderType.TRANSIENT_BUFFER_SIZE,
@@ -128,6 +128,7 @@ public class IPRenderTypes extends RenderStateShard{
 					.setTextureState(TEXTURE_ACTIVE_TOWER)
 					.setLightmapState(LIGHTMAP_ENABLED)
 					.setOverlayState(OVERLAY_DISABLED)
+					.setTransparencyState(IPRenderTypes.TRANSLUCENT_TRANSPARENCY)
 					.createCompositeState(false)
 		);
 		
