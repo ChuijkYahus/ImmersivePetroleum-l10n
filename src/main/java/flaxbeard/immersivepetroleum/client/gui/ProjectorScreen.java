@@ -195,7 +195,12 @@ public class ProjectorScreen extends Screen{
 			MultiBufferSource.BufferSource buffer = RenderUtils.immediate();
 			try{
 				
-				this.rotation += 0.5F * partialTick;
+				if(this.minecraft.level != null){
+					this.rotation = (this.minecraft.level.getGameTime() * 2 + 2 * partialTick) % 360F;
+				}else{
+					// Backup to this just in case
+					this.rotation = (this.rotation + 0.5F * partialTick) % 360F;
+				}
 				
 				Vec3i size = mb.getSize(null);
 				
