@@ -13,7 +13,6 @@ import blusunrize.immersiveengineering.api.multiblocks.blocks.util.MultiblockFac
 import blusunrize.immersiveengineering.api.multiblocks.blocks.util.RelativeBlockFace;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.util.ShapeType;
 import blusunrize.immersiveengineering.common.blocks.multiblocks.process.MultiblockProcess;
-import blusunrize.immersiveengineering.common.blocks.multiblocks.process.MultiblockProcessInMachine;
 import blusunrize.immersiveengineering.common.blocks.multiblocks.process.MultiblockProcessor;
 import blusunrize.immersiveengineering.common.blocks.multiblocks.process.ProcessContext;
 import blusunrize.immersiveengineering.common.fluids.ArrayFluidHandler;
@@ -77,6 +76,15 @@ public class HydroTreaterLogic implements IMultiblockLogic<State>, IServerTickab
 	
 	@Override
 	public void tickClient(IMultiblockContext<State> context){
+		final State state = context.getState();
+		
+		if(state.cooldownTicks > 0){
+			state.cooldownTicks--;
+		}
+		
+		if(state.wasActive){
+			state.cooldownTicks = 20;
+		}
 	}
 	
 	@Override
@@ -85,6 +93,11 @@ public class HydroTreaterLogic implements IMultiblockLogic<State>, IServerTickab
 		
 		State state = context.getState();
 		Level level = context.getLevel().getRawLevel();
+		
+		if(state.wasActive){
+			state.wasActive = false;
+			update = true;
+		}
 		
 		if(state.rsState.isEnabled(context)){
 			if(state.energy.getEnergyStored() > 0 && state.processor.getQueueSize() < state.processor.getMaxQueueSize()){
@@ -119,9 +132,9 @@ public class HydroTreaterLogic implements IMultiblockLogic<State>, IServerTickab
 			}
 		}
 		
-		if(!state.processor.getQueue().isEmpty()){
+		if(state.processor.tickServer(state, context.getLevel(), !state.processor.getQueue().isEmpty())){
 			update = true;
-			state.processor.tickServer(state, context.getLevel(), true);
+			state.wasActive = true;
 		}
 		
 		if(state.tanks.output().getFluidAmount() > 0){
@@ -185,6 +198,10 @@ public class HydroTreaterLogic implements IMultiblockLogic<State>, IServerTickab
 		
 		private final IFluidHandler outputRef;
 		
+		/** Flickering avoidance for the "Active" Texture overlay */
+		public int cooldownTicks = 0;
+		public boolean wasActive = false;
+		
 		public State(IInitialMultiblockContext<State> context){
 			this.processor = new MultiblockProcessor.InMachineProcessor<>(1, 0, 1, context.getMarkDirtyRunnable(), State::getRecipeForId);
 			
@@ -204,6 +221,8 @@ public class HydroTreaterLogic implements IMultiblockLogic<State>, IServerTickab
 			nbt.put("energy", this.energy.serializeNBT(provider));
 			nbt.put("processor", this.processor.toNBT(provider));
 			this.rsState.writeSaveNBT(nbt, provider);
+			
+			nbt.putBoolean("wasActive", this.wasActive);
 		}
 		
 		@Override
@@ -212,6 +231,8 @@ public class HydroTreaterLogic implements IMultiblockLogic<State>, IServerTickab
 			this.energy.deserializeNBT(provider, nbt.getCompound("energy"));
 			this.processor.fromNBT(nbt.get("processor"), HydroTreaterProcess::new, provider);
 			this.rsState.readSaveNBT(nbt, provider);
+			
+			this.wasActive = nbt.getBoolean("wasActive");
 		}
 		
 		@Override

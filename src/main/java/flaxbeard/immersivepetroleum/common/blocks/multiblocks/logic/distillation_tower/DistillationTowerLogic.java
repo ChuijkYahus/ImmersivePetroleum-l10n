@@ -111,7 +111,7 @@ public class DistillationTowerLogic implements IMultiblockLogic<State>, IServerT
 	@Override
 	public void tickServer(IMultiblockContext<State> context){
 		final State state = context.getState();
-		final IMultiblockLevel level = context.getLevel();
+		final Level level = context.getLevel().getRawLevel();
 		final boolean rsEnabled = state.rsState.isEnabled(context);
 		
 		boolean update = false;
@@ -131,8 +131,8 @@ public class DistillationTowerLogic implements IMultiblockLogic<State>, IServerT
 						
 						if(state.tanks.input().getFluidAmount() >= recipe.getInputFluid().amount() && state.energy.getEnergyStored() >= recipe.getTotalProcessEnergy() / recipe.getTotalProcessTime()){
 							MultiblockProcessInMachine<DistillationTowerRecipe> process = new DistillationTowerProcess(holder);
-							if(state.processor.addProcessToQueue(process, level.getRawLevel(), true)){
-								state.processor.addProcessToQueue(process, level.getRawLevel(), false);
+							if(state.processor.addProcessToQueue(process, level, true)){
+								state.processor.addProcessToQueue(process, level, false);
 								update = true;
 							}
 						}
@@ -140,7 +140,7 @@ public class DistillationTowerLogic implements IMultiblockLogic<State>, IServerT
 				}
 			}
 			
-			if(state.processor.tickServer(state, level, !state.processor.getQueue().isEmpty())){
+			if(state.processor.tickServer(state, context.getLevel(), !state.processor.getQueue().isEmpty())){
 				state.wasActive = true;
 				update = true;
 			}
@@ -201,14 +201,14 @@ public class DistillationTowerLogic implements IMultiblockLogic<State>, IServerT
 				}
 			}
 			
-			MultiblockOrientation orientation = level.getOrientation();
+			MultiblockOrientation orientation = context.getLevel().getOrientation();
 			
-			BlockPos outPos = level.toAbsolute(Fluid_OUT.posInMultiblock()).relative(orientation.front().getOpposite());
-			update |= FluidUtil.getFluidHandler(level.getRawLevel(), outPos, orientation.front()).map(output -> {
+			BlockPos outPos = context.getLevel().toAbsolute(Fluid_OUT.posInMultiblock()).relative(orientation.front().getOpposite());
+			update |= FluidUtil.getFluidHandler(level, outPos, orientation.front()).map(output -> {
 				boolean ret = false;
 				if(!state.tanks.input().getFluid().isEmpty()){
 					List<FluidStack> toDrain = new ArrayList<>();
-					boolean iePipe = level.getRawLevel().getBlockEntity(outPos) instanceof IFluidPipe;
+					boolean iePipe = level.getBlockEntity(outPos) instanceof IFluidPipe;
 					
 					// Tries to Output the output-fluids in parallel
 					for(int i = 0;i < outTank.getTanks();i++){

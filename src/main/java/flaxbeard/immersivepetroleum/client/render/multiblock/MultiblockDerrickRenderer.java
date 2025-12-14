@@ -8,7 +8,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import flaxbeard.immersivepetroleum.client.utils.MCUtil;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.DerrickMultiblock;
-import flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.DerrickLogic;
+import flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.DerrickLogic.State;
 import flaxbeard.immersivepetroleum.common.util.ResourceUtils;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -19,7 +19,7 @@ import net.neoforged.neoforge.client.model.data.ModelData;
 import javax.annotation.Nonnull;
 import java.util.List;
 
-public class MultiblockDerrickRenderer extends IPMultiblockRenderer<MultiblockBlockEntityMaster<DerrickLogic.State>>{
+public class MultiblockDerrickRenderer extends IPMultiblockRenderer<State>{
 	public static final ModelResourceLocation DRILL = ResourceUtils.ipModel("multiblock/dyn/derrick_drill");
 	public static final ModelResourceLocation PIPE_SEGMENT = ResourceUtils.ipModel("multiblock/dyn/derrick_pipe_segment");
 	public static final ModelResourceLocation PIPE_TOP = ResourceUtils.ipModel("multiblock/dyn/derrick_pipe_top");
@@ -35,7 +35,7 @@ public class MultiblockDerrickRenderer extends IPMultiblockRenderer<MultiblockBl
 	
 	@SuppressWarnings("deprecation")
 	@Override
-	public void render(MultiblockBlockEntityMaster<DerrickLogic.State> te, float partialTicks, @Nonnull PoseStack matrix, @Nonnull MultiBufferSource bufferIn, int combinedLightIn, int combinedOverlayIn){
+	public void render(MultiblockBlockEntityMaster<State> te, float partialTicks, @Nonnull PoseStack matrix, @Nonnull MultiBufferSource bufferIn, int combinedLightIn, int combinedOverlayIn){
 		if(te.isRemoved() || te.getLevel() == null || !te.getLevel().hasChunkAt(te.getBlockPos()))
 			return;
 		

@@ -8,6 +8,7 @@ import com.mojang.math.Axis;
 import flaxbeard.immersivepetroleum.client.render.IPRenderTypes;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.OilTankMultiblock;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.OilTankLogic;
+import flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.OilTankLogic.State;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -20,38 +21,33 @@ import org.joml.Matrix4f;
 import javax.annotation.Nonnull;
 
 @OnlyIn(Dist.CLIENT)
-public class MultiblockOilTankRenderer extends IPMultiblockRenderer<MultiblockBlockEntityMaster<OilTankLogic.State>>{
+public class MultiblockOilTankRenderer extends IPMultiblockRenderer<State>{
 	
 	public MultiblockOilTankRenderer(){
 		super(() -> OilTankMultiblock.INSTANCE);
 	}
 	
-	@Override
-	public boolean shouldRenderOffScreen(@Nonnull MultiblockBlockEntityMaster<OilTankLogic.State> te){
-		return true;
-	}
-	
 	@SuppressWarnings("deprecation")
 	@Override
-	public void render(MultiblockBlockEntityMaster<OilTankLogic.State> te, float partialTicks, @Nonnull PoseStack matrix, @Nonnull MultiBufferSource buffer, int combinedLight, int combinedOverlay){
+	public void render(MultiblockBlockEntityMaster<State> te, float partialTicks, @Nonnull PoseStack matrix, @Nonnull MultiBufferSource buffer, int combinedLightIn, int combinedOverlayIn){
 		if(te.isRemoved() || te.getLevel() == null || !te.getLevel().hasChunkAt(te.getBlockPos()))
 			return;
 		
-		combinedOverlay = OverlayTexture.NO_OVERLAY;
+		combinedOverlayIn = OverlayTexture.NO_OVERLAY;
 		
 		matrix.pushPose();
 		{
 			switch(te.getHelper().getContext().getLevel().getOrientation().front()){
 				case EAST -> {
-					matrix.mulPose(Axis.YP.rotationDegrees(270F));
+					matrix.mulPose(ROT_270);
 					matrix.translate(0, 0, -1);
 				}
 				case SOUTH -> {
-					matrix.mulPose(Axis.YP.rotationDegrees(180F));
+					matrix.mulPose(ROT_180);
 					matrix.translate(-1, 0, -1);
 				}
 				case WEST -> {
-					matrix.mulPose(Axis.YP.rotationDegrees(90F));
+					matrix.mulPose(ROT_90);
 					matrix.translate(-1, 0, 0);
 				}
 				default -> {
@@ -87,9 +83,9 @@ public class MultiblockOilTankRenderer extends IPMultiblockRenderer<MultiblockBl
 			}
 			matrix.popPose();
 			
+			// Dynamic Fluid IO Ports
 			matrix.pushPose();
 			{
-				// Dynamic Fluid IO Ports
 				if(te.getHelper().getContext().getLevel().getOrientation().mirrored()){
 					for(OilTankLogic.Port port: OilTankLogic.Port.DYNAMIC_PORTS){
 						matrix.pushPose();
@@ -97,7 +93,7 @@ public class MultiblockOilTankRenderer extends IPMultiblockRenderer<MultiblockBl
 							BlockPos p = port.posInMultiblock.posInMultiblock().subtract(te.getHelper().getPositionInMB());
 							matrix.mulPose(Axis.YP.rotationDegrees(180F));
 							matrix.translate(p.getX() - 1, p.getY(), -p.getZ() - 1);
-							quad(matrix, buffer, te.getHelper().getState().getPortStateFor(port), port.posInMultiblock.posInMultiblock().getX() == 4, combinedLight, combinedOverlay);
+							quad(matrix, buffer, te.getHelper().getState().getPortStateFor(port), port.posInMultiblock.posInMultiblock().getX() == 4, combinedLightIn, combinedOverlayIn);
 						}
 						matrix.popPose();
 					}
@@ -108,7 +104,7 @@ public class MultiblockOilTankRenderer extends IPMultiblockRenderer<MultiblockBl
 						{
 							BlockPos p = port.posInMultiblock.posInMultiblock().subtract(te.getHelper().getPositionInMB());
 							matrix.translate(p.getX(), p.getY(), p.getZ());
-							quad(matrix, buffer, te.getHelper().getState().getPortStateFor(port), port.posInMultiblock.posInMultiblock().getX() == 4, combinedLight, combinedOverlay);
+							quad(matrix, buffer, te.getHelper().getState().getPortStateFor(port), port.posInMultiblock.posInMultiblock().getX() == 4, combinedLightIn, combinedOverlayIn);
 						}
 						matrix.popPose();
 					}
