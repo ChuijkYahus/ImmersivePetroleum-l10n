@@ -21,6 +21,7 @@ import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -194,13 +195,7 @@ public class ProjectorScreen extends Screen{
 			
 			MultiBufferSource.BufferSource buffer = RenderUtils.immediate();
 			try{
-				
-				if(this.minecraft.level != null){
-					this.rotation = (this.minecraft.level.getGameTime() * 2 + 2 * partialTick) % 360F;
-				}else{
-					// Backup to this just in case
-					this.rotation = (this.rotation + 0.5F * partialTick) % 360F;
-				}
+				long millis = System.currentTimeMillis();
 				
 				Vec3i size = mb.getSize(null);
 				
@@ -209,15 +204,15 @@ public class ProjectorScreen extends Screen{
 					guiGraphics.pose().translate(this.guiLeft + 190, this.guiTop + 80, 64);
 					guiGraphics.pose().scale(mb.getManualScale(), -mb.getManualScale(), 1);
 					guiGraphics.pose().mulPose(Axis.XP.rotationDegrees(25));
-					guiGraphics.pose().mulPose(Axis.YP.rotationDegrees(45 - this.rotation));
+					guiGraphics.pose().mulPose(Axis.YP.rotationDegrees(45 - ((millis / 20) % 360 + 1 * ((millis % 20) / 20F))));
 					guiGraphics.pose().translate(size.getX() / -2F, size.getY() / -2F, size.getZ() / -2F);
 					
 					MultiblockManualData mbClientData = ClientMultiblocks.get(mb);
-					boolean tempDisable = true;
-					if(tempDisable && mbClientData.canRenderFormedStructure()){
+					boolean tempDisable = false;
+					if(!tempDisable && mbClientData.canRenderFormedStructure()){
 						guiGraphics.pose().pushPose();
 						{
-							mbClientData.renderFormedStructure(guiGraphics.pose(), IPRenderTypes.disableLighting(buffer));
+							mbClientData.renderFormedStructure(guiGraphics.pose(), buffer);
 						}
 						guiGraphics.pose().popPose();
 					}else{
@@ -238,7 +233,7 @@ public class ProjectorScreen extends Screen{
 									if(te != null){
 										modelData = te.getModelData();
 									}
-									blockRender.renderSingleBlock(info.state(), guiGraphics.pose(), IPRenderTypes.disableLighting(buffer), 0xF000F0, OverlayTexture.NO_OVERLAY, modelData, null);
+									blockRender.renderSingleBlock(info.state(), guiGraphics.pose(), IPRenderTypes.disableLighting(buffer), LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, modelData, null);
 								}
 								guiGraphics.pose().popPose();
 							}
