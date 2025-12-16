@@ -32,57 +32,23 @@ public class EntityMotorboatRenderer extends EntityRenderer<MotorboatEntity>{
 	}
 	
 	@Override
-	public void render(@Nonnull MotorboatEntity entity, float entityYaw, float partialTicks, PoseStack matrix, @Nonnull MultiBufferSource bufferIn, int packedLight){
+	public void render(@Nonnull MotorboatEntity boat, float entityYaw, float partialTicks, PoseStack matrix, @Nonnull MultiBufferSource bufferIn, int packedLight){
 		matrix.pushPose();
 		{
 			matrix.translate(0.0D, 0.375D, 0.0D);
-			this.setupRotation(entity, entityYaw, partialTicks, matrix);
-			this.modelBoat.setupAnim(entity, partialTicks, 0.0F, -0.1F, 0.0F, 0.0F);
+			this.setupRotation(boat, entityYaw, partialTicks, matrix);
+			this.modelBoat.setupAnim(boat, partialTicks, 0.0F, -0.1F, 0.0F, 0.0F);
 			
-			if(entity.isInLava()){
+			if(boat.isInLava()){
 				matrix.translate(0, -3.9F / 16F, 0);
 			}
 			
-			{
-				if(!entity.isEmergency()){
-					if(entity.isForwardDown()){
-						entity.propellerXRotSpeed += entity.isBoosting ? 0.2F : 0.1F;
-					}else if(entity.isBackDown()){
-						entity.propellerXRotSpeed -= 0.1F;
-					}
-					
-					// FIXME Make this FPS independent!
-					entity.propellerXRot += entity.propellerXRotSpeed;
-					entity.propellerXRot %= 360.0F;
-				}
-				
-				if(entity.propellerXRotSpeed != 0.0F){
-					entity.propellerXRotSpeed *= 0.985F;
-					
-					if(Math.abs(entity.propellerXRotSpeed) <= 1.0E-3F)
-						entity.propellerXRotSpeed = 0.0F;
-				}
-				
-				this.modelBoat.propeller.xRot = entity.propellerXRot * Mth.DEG_TO_RAD;
-			}
+			animatePropellerAssembly(boat, partialTicks);
+			animatePropeller(boat, partialTicks);
 			
-			{
-				float pr = entity.isEmergency() ? 0F : entity.propellerYRotation;
-				if(entity.isLeftDown() && !entity.isRightDown() && pr > -1)
-					pr = pr - 0.1F * partialTicks;
-				
-				if(entity.isRightDown() && !entity.isLeftDown() && pr < 1)
-					pr = pr + 0.1F * partialTicks;
-				
-				if(!entity.isLeftDown() && !entity.isRightDown())
-					pr = (float) (pr * Math.pow(0.7, partialTicks));
-				
-				this.modelBoat.propellerAssembly.yRot = (float) Math.toRadians(pr * 15);
-			}
+			this.modelBoat.renderToBuffer(matrix, bufferIn.getBuffer(this.modelBoat.renderType(getEntityTexture(boat.isFireproof))), packedLight, OverlayTexture.NO_OVERLAY);
 			
-			this.modelBoat.renderToBuffer(matrix, bufferIn.getBuffer(this.modelBoat.renderType(getEntityTexture(entity.isFireproof))), packedLight, OverlayTexture.NO_OVERLAY);
-			
-			if(entity.hasPaddles){
+			if(boat.hasPaddles){
 				VertexConsumer vbuilder_normal = bufferIn.getBuffer(this.modelBoat.renderType(texture));
 				
 				this.modelBoat.paddles[0].render(matrix, vbuilder_normal, packedLight, OverlayTexture.NO_OVERLAY);
@@ -91,45 +57,51 @@ public class EntityMotorboatRenderer extends EntityRenderer<MotorboatEntity>{
 			
 			VertexConsumer vbuilder_armored = bufferIn.getBuffer(this.modelBoat.renderType(textureArmor));
 			
-			if(entity.hasIcebreaker){
+			if(boat.hasIcebreaker){
 				this.modelBoat.icebreak.render(matrix, vbuilder_armored, packedLight, OverlayTexture.NO_OVERLAY);
 			}
 			
-			if(entity.hasRudders){
+			if(boat.hasRudders){
 				this.modelBoat.ruddersBase.render(matrix, vbuilder_armored, packedLight, OverlayTexture.NO_OVERLAY);
 				
-				float pr = entity.propellerYRotation;
-				if(entity.isLeftDown() && !entity.isRightDown() && pr > -1){
-					pr = pr - 0.1F * partialTicks;
-				}
-				
-				if(entity.isRightDown() && !entity.isLeftDown() && pr < 1){
-					pr = pr + 0.1F * partialTicks;
-				}
-				
-				if(!entity.isLeftDown() && !entity.isRightDown()){
-					pr = (float) (pr * Math.pow(0.7F, partialTicks));
-				}
-				
-				this.modelBoat.rudder1.yRot = (float) Math.toRadians(pr * 20F);
-				this.modelBoat.rudder2.yRot = (float) Math.toRadians(pr * 20F);
+				animateRudders(boat, partialTicks);
 				
 				this.modelBoat.rudder1.render(matrix, vbuilder_armored, packedLight, OverlayTexture.NO_OVERLAY);
 				this.modelBoat.rudder2.render(matrix, vbuilder_armored, packedLight, OverlayTexture.NO_OVERLAY);
 			}
 			
-			if(entity.hasTank){
+			if(boat.hasTank){
 				this.modelBoat.tank.render(matrix, vbuilder_armored, packedLight, OverlayTexture.NO_OVERLAY);
 			}
 			
-			if(!entity.isUnderWater()){
+			if(!boat.isUnderWater()){
 				VertexConsumer vbuilder_mask = bufferIn.getBuffer(RenderType.waterMask());
 				this.modelBoat.noWaterRenderer().render(matrix, vbuilder_mask, packedLight, OverlayTexture.NO_OVERLAY);
 			}
 		}
 		matrix.popPose();
 		
-		super.render(entity, entityYaw, partialTicks, matrix, bufferIn, packedLight);
+		super.render(boat, entityYaw, partialTicks, matrix, bufferIn, packedLight);
+	}
+	
+	private void animatePropeller(@Nonnull MotorboatEntity boat, float partialTicks){
+		this.modelBoat.propeller.xRot = boat.propellerRotation.rotLerp(partialTicks) * Mth.DEG_TO_RAD;
+	}
+	
+	private void animatePropellerAssembly(@Nonnull MotorboatEntity boat, float partialTicks){
+		if(boat.isEmergency()){
+			this.modelBoat.propellerAssembly.yRot = 0.0F;
+			return;
+		}
+		
+		this.modelBoat.propellerAssembly.yRot = 15 * boat.propellerAssemblyRotation.lerp(partialTicks) * Mth.DEG_TO_RAD;
+	}
+	
+	private void animateRudders(@Nonnull MotorboatEntity boat, float partialTicks){
+		float pr = 20 * boat.propellerAssemblyRotation.lerp(partialTicks) * Mth.DEG_TO_RAD;
+		
+		this.modelBoat.rudder1.yRot = pr;
+		this.modelBoat.rudder2.yRot = pr;
 	}
 	
 	@Override

@@ -199,8 +199,9 @@ public class ClientEventHandler{
 							String[] array = {
 								String.format(Locale.US, "Fuel: %05d/%d mB (%s)", fs.getAmount(), tank.getCapacity(), fs.getHoverName().getString()),
 								String.format(Locale.US, "Speed: %.3f", speed),
-								String.format(Locale.US, "PropXRot: %07.3f° (%.3frad)", motorboat.propellerXRot, motorboat.propellerXRot * Mth.DEG_TO_RAD),
-								String.format(Locale.US, "PropSpeed: %06.3f°", motorboat.propellerXRotSpeed)
+								String.format(Locale.US, "propXRot: n%.3f o%.3f d%.3f", motorboat.propellerRotation.get(), motorboat.propellerRotation.getOld(), motorboat.propellerRotation.get() - motorboat.propellerRotation.getOld()),
+								String.format(Locale.US, "propYRot: n%.3f o%.3f d%.3f", motorboat.propellerAssemblyRotation.get(), motorboat.propellerAssemblyRotation.getOld(), motorboat.propellerAssemblyRotation.get() - motorboat.propellerAssemblyRotation.getOld()),
+								String.format(Locale.US, "propellerXRotSpeed: %06.3f°", motorboat.propellerRotationSpeed)
 							};
 							int w = 3, h = 3;
 							for(int i = 0;i < array.length;i++){

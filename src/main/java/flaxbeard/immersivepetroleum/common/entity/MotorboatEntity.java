@@ -94,9 +94,9 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 	public boolean isBoosting = false;
 	public float lastMoving;
 	
-	public float propellerYRotation = 0.0F;
-	public float propellerXRot = 0.0F;
-	public float propellerXRotSpeed = 0.0F;
+	public InterpolatableFloat propellerAssemblyRotation = new InterpolatableFloat();
+	public InterpolatableFloat propellerRotation = new InterpolatableFloat();
+	public float propellerRotationSpeed = 0.0F;
 	
 	private BoatTank tank;
 	
@@ -176,19 +176,23 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 		}
 	}
 	
+	/** Basically: is the A-Key down? */
 	public boolean isLeftDown(){
 		return this.inputLeft;
 	}
 	
+	/** Basically: is the D-Key down? */
 	public boolean isRightDown(){
 		return this.inputRight;
 	}
 	
+	/** Basically: is the W-Key down? */
 	public boolean isForwardDown(){
 		return this.inputUp;
 	}
 	
-	public boolean isBackDown(){
+	/** Basically: is the S-Key down? */
+	public boolean isReverseDown(){
 		return this.inputDown;
 	}
 	
@@ -417,7 +421,7 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 			// Spin
 			{
 				float diff = this.getYRot() - this.oYRot;
-				this.fastEnough = diff <= -5.0F || diff >= 5.0F;
+				this.fastEnough = Math.abs(diff) >= 5.0F;
 				this.oYRot = this.getYRot();
 			}
 			// Fuel
@@ -434,6 +438,9 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 		}
 		
 		// -----------------------------------------------------
+		
+		this.propellerAssemblyRotation.update();
+		this.propellerRotation.update();
 		
 		this.oldStatus = this.status;
 		this.status = this.getStatus();
@@ -485,15 +492,15 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 		
 		if(this.level().isClientSide){
 			if(!isEmergency()){
-				float moving = (this.inputUp || this.inputDown) ? (this.isBoosting ? .9F : .7F) : 0.5F;
+				float moving = (this.isForwardDown() || this.isReverseDown()) ? (this.isBoosting ? .9F : .7F) : 0.5F;
 				if(this.lastMoving != moving){
 					this.lastMoving = moving;
 					ImmersivePetroleum.proxy.handleEntitySound(IESounds.dieselGenerator.value(), this, false, .5f, 0.5F);
 				}
 				FluidStack fs = this.getTank().getFluid();
-				ImmersivePetroleum.proxy.handleEntitySound(IESounds.dieselGenerator.value(), this, this.isVehicle() && fs != FluidStack.EMPTY && fs.getAmount() > 0, this.inputUp || this.inputDown ? .5f : .3f, moving);
+				ImmersivePetroleum.proxy.handleEntitySound(IESounds.dieselGenerator.value(), this, this.isVehicle() && fs != FluidStack.EMPTY && fs.getAmount() > 0, this.isForwardDown() || this.isReverseDown() ? .5f : .3f, moving);
 				
-				if(this.inputUp && this.level().random.nextInt(2) == 0){
+				if(this.isForwardDown() && this.level().random.nextInt(2) == 0){
 					if(isInLava()){
 						if(this.level().random.nextInt(3) == 0){
 							float xO = Mth.sin(-this.getYRot() * 0.017453292F) + (this.level().random.nextFloat() - .5F) * .3F;
@@ -615,103 +622,158 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 				}
 			}
 		}
+		
+		this.propellerRotation.set((this.propellerRotation.get() + this.propellerRotationSpeed) % 360F);
+		if(this.propellerRotationSpeed != 0.0F){
+			this.propellerRotationSpeed *= 0.9F;
+			
+			if(Math.abs(this.propellerRotationSpeed) <= 0.1F)
+				this.propellerRotationSpeed = 0.0F;
+		}
 	}
 	
 	@Override
 	protected void controlBoat(){
-		if(isVehicle()){
-			float f = 0.0F;
-			
-			if(isEmergency()){
-				if(this.inputLeft){
-					--this.deltaRotation;
-				}
-				
-				if(this.inputRight){
-					++this.deltaRotation;
-				}
-				
-				if(this.inputRight != this.inputLeft && !this.inputUp && !this.inputDown){
-					f += 0.005F;
-				}
-				
-				this.setYRot(this.getYRot() + this.deltaRotation);
-				if(this.inputUp){
-					f += 0.04F;
-				}
-				
-				if(this.inputDown){
-					f -= 0.005F;
-				}
-				
-				double xa = Mth.sin(-this.getYRot() * Mth.DEG_TO_RAD) * f;
-				double za = Mth.cos(this.getYRot() * Mth.DEG_TO_RAD) * f;
-				Vec3 motion = this.getDeltaMovement().add(xa, 0.0F, za);
-				this.setDeltaMovement(motion);
-				this.setPaddleState(this.inputRight && !this.inputLeft || this.inputUp, this.inputLeft && !this.inputRight || this.inputUp);
-			}else{
-				FluidStack fluid = getTank().getFluid();
-				int consumeAmount = 0;
-				if(fluid != FluidStack.EMPTY){
-					consumeAmount = FuelHandler.getBoatFuelUse(fluid.getFluid());
-				}
-				
-				if(fluid != FluidStack.EMPTY && fluid.getAmount() >= consumeAmount && (this.inputUp || this.inputDown)){
-					int toConsume = consumeAmount;
-					if(this.inputUp){
-						f += 0.05F;
-						if(this.isBoosting && fluid.getAmount() >= 3 * consumeAmount){
-							f *= 1.6F;
-							toConsume *= 3;
-						}
-					}
-					
-					if(this.inputDown){
-						f -= 0.01F;
-					}
-					
-					fluid.setAmount(Math.max(0, fluid.getAmount() - toConsume));
-					setContainedFluid(fluid);
-					
-					IPPacketHandler.sendToServer(new MessageConsumeBoatFuel(toConsume));
-					
-					setPaddleState(this.inputUp, this.inputDown);
-				}else{
-					setPaddleState(false, false);
-				}
-				
-				double xa = Mth.sin(-this.getYRot() * Mth.DEG_TO_RAD) * f;
-				double za = Mth.cos(this.getYRot() * Mth.DEG_TO_RAD) * f;
-				Vec3 motion = this.getDeltaMovement().add(xa, 0.0F, za);
-				this.setDeltaMovement(motion);
-				
-				if(this.inputLeft || this.inputRight){
-					float speed = Mth.sqrt((float) (motion.x * motion.x + motion.z * motion.z));
-					
-					if(this.inputRight){
-						this.deltaRotation += 1.1F * speed * (this.hasRudders ? 1.5F : 1F) * (this.isBoosting ? 0.5F : 1) * (this.inputDown && !this.inputUp ? 2F : 1F);
-						
-						this.propellerYRotation = Mth.clamp(this.propellerYRotation - 0.2F, -1.0F, 1.0F);
-					}
-					
-					if(this.inputLeft){
-						this.deltaRotation -= 1.1F * speed * (this.hasRudders ? 1.5F : 1F) * (this.isBoosting ? 0.5F : 1) * (this.inputDown && !this.inputUp ? 2F : 1F);
-						
-						this.propellerYRotation = Mth.clamp(this.propellerYRotation + 0.2F, -1.0F, 1.0F);
-					}
-				}
-				
-				if((!this.inputLeft && !this.inputRight) && this.propellerYRotation != 0.0F){
-					this.propellerYRotation *= 0.7F;
-					if(this.propellerYRotation > -1.0E-2F && this.propellerYRotation < 1.0E-2F){
-						this.propellerYRotation = 0;
-					}
-				}
-				
-				this.setYRot(this.getYRot() + this.deltaRotation);
-				this.setPaddleState((this.inputRight && !this.inputLeft || this.inputUp), (this.inputLeft && !this.inputRight || this.inputUp));
+		if(!isVehicle())
+			return;
+		
+		float movMagnitude = 0.0F;
+		
+		if(isEmergency()){
+			if(this.isLeftDown()){
+				--this.deltaRotation;
 			}
+			
+			if(this.isRightDown()){
+				++this.deltaRotation;
+			}
+			
+			if(this.isRightDown() != this.isLeftDown() && !this.isForwardDown() && !this.isReverseDown()){
+				movMagnitude += 0.005F;
+			}
+			
+			this.setYRot(this.getYRot() + this.deltaRotation);
+			if(this.isForwardDown()){
+				movMagnitude += 0.04F;
+			}
+			
+			if(this.isReverseDown()){
+				movMagnitude -= 0.005F;
+			}
+			
+			addMovement(movMagnitude);
+		}else{
+			FluidStack fluid = getTank().getFluid();
+			int consumeAmount = 0;
+			if(fluid != FluidStack.EMPTY){
+				consumeAmount = FuelHandler.getBoatFuelUse(fluid.getFluid());
+			}
+			
+			if(fluid != FluidStack.EMPTY && fluid.getAmount() >= consumeAmount && (this.isForwardDown() || this.isReverseDown())){
+				int toConsume = consumeAmount;
+				if(this.isForwardDown()){
+					movMagnitude += 0.05F;
+					if(this.isBoosting && fluid.getAmount() >= 3 * consumeAmount){
+						movMagnitude *= 1.6F;
+						toConsume *= 3;
+					}
+				}
+				
+				if(this.isReverseDown()){
+					movMagnitude -= 0.01F;
+				}
+				
+				if(this.isForwardDown()){
+					this.propellerRotationSpeed += this.isBoosting ? 10.0F : 5.5F;
+				}else if(this.isReverseDown()){
+					this.propellerRotationSpeed -= 5.5F;
+				}
+				
+				fluid.setAmount(Math.max(0, fluid.getAmount() - toConsume));
+				setContainedFluid(fluid);
+				
+				// TODO This should probably go the other way?
+				IPPacketHandler.sendToServer(new MessageConsumeBoatFuel(toConsume));
+				
+				setPaddleState(this.isForwardDown(), this.isReverseDown());
+			}else{
+				setPaddleState(false, false);
+			}
+			
+			Vec3 motion = addMovement(movMagnitude);
+			
+			if(this.isLeftDown() || this.isRightDown()){
+				float speed = (float) Math.sqrt(motion.x * motion.x + motion.z * motion.z);
+				
+				float delta = 1.1F * speed * (this.hasRudders ? 1.5F : 1F) * (this.isBoosting ? 0.5F : 1) * (this.isReverseDown() && !this.isForwardDown() ? 2F : 1F);
+				
+				if(this.isRightDown()){
+					this.deltaRotation += delta;
+					
+					this.propellerAssemblyRotation.setClamped(this.propellerAssemblyRotation.get() - 0.2F, -1.0F, 1.0F);
+				}
+				
+				if(this.isLeftDown()){
+					this.deltaRotation -= delta;
+					
+					this.propellerAssemblyRotation.setClamped(this.propellerAssemblyRotation.get() + 0.2F, -1.0F, 1.0F);
+				}
+			}
+			
+			if(!(this.isLeftDown() || this.isRightDown()) && this.propellerAssemblyRotation.get() != 0.0F){
+				this.propellerAssemblyRotation.set(this.propellerAssemblyRotation.get() * 0.7F);
+				if(Math.abs(this.propellerAssemblyRotation.get()) < 1.0E-2F)
+					this.propellerAssemblyRotation.set(0.0F);
+			}
+			
+			this.setYRot(this.getYRot() + this.deltaRotation);
 		}
+		
+		this.setPaddleState(this.isRightDown() && !this.isLeftDown() || this.isForwardDown(), this.isLeftDown() && !this.isRightDown() || this.isForwardDown());
+	}
+	
+	public static class InterpolatableFloat{
+		private float _new, _old;
+		InterpolatableFloat(){
+			this._old = this._new = 0.0F;
+		}
+		
+		public void set(float value){
+			this._new = value;
+		}
+		
+		public void setClamped(float value, float min, float max){
+			this._new = Math.clamp(value, min, max);
+		}
+		
+		/** Has to be called <u>BEFORE</u> any change. */
+		public void update(){
+			this._old = this._new;
+		}
+		
+		public float lerp(float v){
+			return Mth.lerp(v, this._old, this._new);
+		}
+		
+		public float rotLerp(float v){
+			return Mth.rotLerp(v, this._old, this._new);
+		}
+		
+		public float get(){
+			return this._new;
+		}
+		
+		public float getOld(){
+			return this._old;
+		}
+	}
+	
+	private Vec3 addMovement(float magnitude){
+		double xa = Mth.sin(-this.getYRot() * Mth.DEG_TO_RAD) * magnitude;
+		double za = Mth.cos(this.getYRot() * Mth.DEG_TO_RAD) * magnitude;
+		Vec3 motion = this.getDeltaMovement().add(xa, 0.0F, za);
+		this.setDeltaMovement(motion);
+		return motion;
 	}
 	
 	public int getMaxFuel(){
@@ -734,12 +796,11 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 	
 	public boolean isEmergency(){
 		FluidStack fluid = getTank().getFluid();
-		if(fluid != FluidStack.EMPTY){
-			int consumeAmount = FuelHandler.getBoatFuelUse(fluid.getFluid());
-			return fluid.getAmount() < consumeAmount && this.hasPaddles;
-		}
+		if(fluid.isEmpty())
+			return this.hasPaddles;
 		
-		return this.hasPaddles;
+		int consumeAmount = FuelHandler.getBoatFuelUse(fluid.getFluid());
+		return fluid.getAmount() < consumeAmount && this.hasPaddles;
 	}
 	
 	public NonNullList<ItemStack> getUpgrades(){
