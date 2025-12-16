@@ -23,6 +23,6 @@ public class OilTankMultiblock extends IPTemplateMultiblock{
 	
 	@Override
 	public void initializeClient(Consumer<ClientMultiblocks.MultiblockManualData> consumer){
-		consumer.accept(new IPClientMultiblockProperties(this, 2.5, 0.5, 3.5));
+		consumer.accept(new IPMultiblockProperties(this, 2.5, 0.5, 3.5));
 	}
 }

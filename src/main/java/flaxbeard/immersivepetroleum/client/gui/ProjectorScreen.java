@@ -6,6 +6,7 @@ import blusunrize.immersiveengineering.api.multiblocks.MultiblockHandler;
 import blusunrize.immersiveengineering.api.multiblocks.MultiblockHandler.IMultiblock;
 import blusunrize.immersiveengineering.api.utils.TemplateWorldCreator;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import flaxbeard.immersivepetroleum.client.gui.elements.GuiReactiveList;
 import flaxbeard.immersivepetroleum.client.render.IPRenderTypes;
@@ -21,6 +22,7 @@ import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
@@ -190,6 +192,8 @@ public class ProjectorScreen extends Screen{
 		
 		renderDirectionDisplay(guiGraphics, mouseX, mouseY);
 		
+		PoseStack transform = guiGraphics.pose();
+		
 		if(this.settings.getMultiblock() != null){
 			IMultiblock mb = this.settings.getMultiblock();
 			
@@ -199,48 +203,50 @@ public class ProjectorScreen extends Screen{
 				
 				Vec3i size = mb.getSize(null);
 				
-				guiGraphics.pose().pushPose();
+				transform.pushPose();
 				{
-					guiGraphics.pose().translate(this.guiLeft + 190, this.guiTop + 80, 64);
-					guiGraphics.pose().scale(mb.getManualScale(), -mb.getManualScale(), 1);
-					guiGraphics.pose().mulPose(Axis.XP.rotationDegrees(25));
-					guiGraphics.pose().mulPose(Axis.YP.rotationDegrees(45 - ((millis / 20) % 360 + 1 * ((millis % 20) / 20F))));
-					guiGraphics.pose().translate(size.getX() / -2F, size.getY() / -2F, size.getZ() / -2F);
+					transform.translate(this.guiLeft + 190, this.guiTop + 80, 64);
+					transform.scale(mb.getManualScale(), -mb.getManualScale(), 1);
+					transform.mulPose(Axis.XP.rotationDegrees(25));
+					transform.mulPose(Axis.YP.rotationDegrees(45 - ((millis / 20) % 360 + 1 * ((millis % 20) / 20F))));
+					transform.translate(size.getX() / -2F, size.getY() / -2F, size.getZ() / -2F);
 					
 					MultiblockManualData mbClientData = ClientMultiblocks.get(mb);
 					boolean tempDisable = false;
 					if(!tempDisable && mbClientData.canRenderFormedStructure()){
-						guiGraphics.pose().pushPose();
+						transform.pushPose();
 						{
-							mbClientData.renderFormedStructure(guiGraphics.pose(), buffer);
+							mbClientData.renderFormedStructure(transform, buffer);
 						}
-						guiGraphics.pose().popPose();
+						transform.popPose();
 					}else{
+						ClientLevel clientLevel = this.getMinecraft().level;
+						
 						if(this.templateWorld == null || (!this.selectedMultiblock.getUniqueName().equals(mb.getUniqueName()))){
-							this.templateWorld = TemplateWorldCreator.CREATOR.get().makeWorld(mb.getStructure(this.getMinecraft().level), pos -> true, this.getMinecraft().level.registryAccess());
+							this.templateWorld = TemplateWorldCreator.CREATOR.get().makeWorld(mb.getStructure(clientLevel), pos -> true, clientLevel.registryAccess());
 							this.selectedMultiblock = mb;
 						}
 						
 						final BlockRenderDispatcher blockRender = Minecraft.getInstance().getBlockRenderer();
-						List<StructureTemplate.StructureBlockInfo> infos = mb.getStructure(this.getMinecraft().level);
+						List<StructureTemplate.StructureBlockInfo> infos = mb.getStructure(clientLevel);
 						for(StructureTemplate.StructureBlockInfo info:infos){
 							if(!info.state().is(Blocks.AIR)){
-								guiGraphics.pose().pushPose();
+								transform.pushPose();
 								{
-									guiGraphics.pose().translate(info.pos().getX(), info.pos().getY(), info.pos().getZ());
+									transform.translate(info.pos().getX(), info.pos().getY(), info.pos().getZ());
 									ModelData modelData = ModelData.EMPTY;
 									BlockEntity te = this.templateWorld.getBlockEntity(info.pos());
 									if(te != null){
 										modelData = te.getModelData();
 									}
-									blockRender.renderSingleBlock(info.state(), guiGraphics.pose(), IPRenderTypes.disableLighting(buffer), LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, modelData, null);
+									blockRender.renderSingleBlock(info.state(), transform, buffer, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, modelData, null);
 								}
-								guiGraphics.pose().popPose();
+								transform.popPose();
 							}
 						}
 					}
 				}
-				guiGraphics.pose().popPose();
+				transform.popPose();
 			}catch(Exception e){
 				e.printStackTrace();
 			}

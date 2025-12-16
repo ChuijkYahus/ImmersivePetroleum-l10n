@@ -1,8 +1,8 @@
 package flaxbeard.immersivepetroleum.client.model;
 
 import flaxbeard.immersivepetroleum.ImmersivePetroleum;
-import flaxbeard.immersivepetroleum.client.render.multiblock.MultiblockDerrickRenderer;
 import flaxbeard.immersivepetroleum.client.render.BlockSeismicSurveyBarrelRenderer;
+import flaxbeard.immersivepetroleum.client.render.multiblock.MultiblockDerrickRenderer;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;

@@ -23,6 +23,6 @@ public class CokerUnitMultiblock extends IPTemplateMultiblock{
 	
 	@Override
 	public void initializeClient(Consumer<ClientMultiblocks.MultiblockManualData> consumer){
-		consumer.accept(new IPClientMultiblockProperties(this, 4.5, 0.5, 2.5));
+		consumer.accept(new IPMultiblockProperties(this, 4.5, 0.5, 2.5));
 	}
 }

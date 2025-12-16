@@ -21,7 +21,7 @@ public class PumpjackMultiblock extends IPTemplateMultiblock{
 	
 	@Override
 	public void initializeClient(Consumer<ClientMultiblocks.MultiblockManualData> consumer){
-		consumer.accept(new IPClientMultiblockProperties(this, 1.5, 0.5, 0.5));
+		consumer.accept(new IPMultiblockProperties(this, 1.5, 0.5, 0.5));
 	}
 	
 	/*

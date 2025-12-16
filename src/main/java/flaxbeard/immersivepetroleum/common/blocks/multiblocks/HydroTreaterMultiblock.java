@@ -23,6 +23,6 @@ public class HydroTreaterMultiblock extends IPTemplateMultiblock{
 	
 	@Override
 	public void initializeClient(Consumer<ClientMultiblocks.MultiblockManualData> consumer){
-		consumer.accept(new IPClientMultiblockProperties(this, 1.5, 0.5, 2.5));
+		consumer.accept(new IPMultiblockProperties(this, 1.5, 0.5, 2.5));
 	}
 }

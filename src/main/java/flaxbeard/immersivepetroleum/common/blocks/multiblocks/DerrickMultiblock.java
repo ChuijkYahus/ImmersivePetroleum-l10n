@@ -43,7 +43,7 @@ public class DerrickMultiblock extends IPTemplateMultiblock{
 		consumer.accept(new DerrickMultiblockProperties());
 	}
 	
-	public static class DerrickMultiblockProperties extends IPClientMultiblockProperties{
+	public static class DerrickMultiblockProperties extends IPMultiblockProperties{
 		public DerrickMultiblockProperties(){
 			super(INSTANCE, 2.5, 0.5, 2.5);
 		}
