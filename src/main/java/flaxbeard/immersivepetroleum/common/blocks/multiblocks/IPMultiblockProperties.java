@@ -1,6 +1,5 @@
 package flaxbeard.immersivepetroleum.common.blocks.multiblocks;
 
-import blusunrize.immersiveengineering.api.ApiUtils;
 import blusunrize.immersiveengineering.api.multiblocks.ClientMultiblocks;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -11,7 +10,6 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
 import net.minecraft.util.RandomSource;
@@ -22,7 +20,6 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.model.data.ModelData;
 import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nonnull;
 import java.util.AbstractCollection;
 import java.util.AbstractList;
 import java.util.HashMap;
@@ -40,7 +37,6 @@ public class IPMultiblockProperties implements ClientMultiblocks.MultiblockManua
 		destination[destination.length - 1] = null;
 		DIRECTIONS = destination;
 	}
-	
 	
 	private final IPTemplateMultiblock multiblock;
 	@Nullable
@@ -109,28 +105,32 @@ public class IPMultiblockProperties implements ClientMultiblocks.MultiblockManua
 			return;
 		}
 		
-		matrix.translate(this.renderOffset.x, this.renderOffset.y, this.renderOffset.z);
 		matrix.pushPose();
 		{
-			matrix.translate(-0.5, -0.5, -0.5);
-			PoseStack.Pose last = matrix.last();
+			matrix.translate(this.renderOffset.x - 0.5, this.renderOffset.y - 0.5, this.renderOffset.z - 0.5);
 			
-			BakedModel bakedmodel = MCUtil.getItemRenderer().getModel(this.renderStack, null, null, 0);
-			
-			VertexConsumer vertexConsumer = buffer.getBuffer(RenderType.cutout());
-			for(Direction direction: DIRECTIONS){
-				RANDOM_SOURCE.setSeed(42L);
-				List<BakedQuad> quads = bakedmodel.getQuads(null, direction, RANDOM_SOURCE, ModelData.EMPTY, null);
-				for(BakedQuad quad: quads){
-					vertexConsumer.putBulkData(last, quad, 1.0F, 1.0F, 1.0F, 1.0F, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
+			matrix.pushPose();
+			{
+				PoseStack.Pose last = matrix.last();
+				
+				BakedModel bakedmodel = MCUtil.getItemRenderer().getModel(this.renderStack, null, null, 0);
+				
+				VertexConsumer vertexConsumer = buffer.getBuffer(RenderType.cutout());
+				for(Direction direction: DIRECTIONS){
+					RANDOM_SOURCE.setSeed(42L);
+					List<BakedQuad> quads = bakedmodel.getQuads(null, direction, RANDOM_SOURCE, ModelData.EMPTY, null);
+					for(BakedQuad quad: quads){
+						vertexConsumer.putBulkData(last, quad, 1.0F, 1.0F, 1.0F, 1.0F, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
+					}
 				}
 			}
-		}
-		matrix.popPose();
-		
-		matrix.pushPose();
-		{
-			renderExtras(matrix, buffer);
+			matrix.popPose();
+			
+			matrix.pushPose();
+			{
+				renderExtras(matrix, buffer);
+			}
+			matrix.popPose();
 		}
 		matrix.popPose();
 	}

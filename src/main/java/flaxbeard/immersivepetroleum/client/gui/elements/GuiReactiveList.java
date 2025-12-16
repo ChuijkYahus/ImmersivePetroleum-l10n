@@ -52,7 +52,7 @@ public class GuiReactiveList<E> extends Button{
 	private int maxOffset;
 	
 	private int targetEntry = -1;
-	private float hoverTimer = 0;
+	private HoverTimer hoverTimer = new HoverTimer();
 	
 	public GuiReactiveList(int x, int y, int w, int h, Consumer<GuiReactiveList<E>> handler, Supplier<List<E>> entries, Function<E, String> toStringFunction){
 		super(x, y, w, h, Component.empty(), s -> {
@@ -136,9 +136,8 @@ public class GuiReactiveList<E> extends Button{
 				hasTarget = true;
 				if(targetEntry != j){
 					targetEntry = j;
-					hoverTimer = 0;
-				}else
-					hoverTimer += 0.5F * partialTicks;
+					hoverTimer.start();
+				}
 				col = this.textColorHovered;
 			}
 			if(j > entries.size() - 1)
@@ -147,8 +146,8 @@ public class GuiReactiveList<E> extends Button{
 			int overLength = s.length() - fr.plainSubstrByWidth(s, strWidth).length();
 			if(overLength > 0)//String is too long
 			{
-				if(selectionHover && hoverTimer > 20){
-					int textOffset = (int) ((hoverTimer / 10) % (s.length()));
+				if(selectionHover && hoverTimer.timePassedMillis() >= 1000L){
+					int textOffset = (int) (((hoverTimer.timePassedMillis() - 1000L) / 150L) % (s.length()));
 					s = s.substring(textOffset) + " " + s.substring(0, textOffset);
 				}
 				s = fr.plainSubstrByWidth(s, strWidth);
@@ -162,7 +161,6 @@ public class GuiReactiveList<E> extends Button{
 		graphics.pose().scale(1 / textScale, 1 / textScale, 1);
 		if(!hasTarget){
 			targetEntry = -1;
-			hoverTimer = 0;
 		}
 	}
 	
@@ -198,5 +196,24 @@ public class GuiReactiveList<E> extends Button{
 			}
 		super.mouseClicked(mx, my, key);
 		return selectedOption != -1;
+	}
+	
+	private static class HoverTimer{
+		private long start = -1L;
+		private HoverTimer(){}
+		
+		public void start()
+		{
+			this.start = System.currentTimeMillis();
+		}
+		
+		/** Time passed since {@link #start()} was called */
+		public long timePassedMillis()
+		{
+			if(this.start == -1L)
+				return 0L;
+			
+			return System.currentTimeMillis() - this.start;
+		}
 	}
 }
