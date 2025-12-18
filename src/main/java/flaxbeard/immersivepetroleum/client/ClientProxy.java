@@ -238,20 +238,19 @@ public class ClientProxy extends CommonProxy{
 		final SoundEvent sound = soundEvent.value();
 		
 		IPWorldSound worldSound = this.worldSoundMap.get(blockPos);
-		if(worldSound == null || (!sound.getLocation().equals(worldSound.getLocation()) && active)){
-			stopSound(worldSound);
+		if(worldSound == null && active){
 			if(te instanceof IPlaySound soundPlayer && MCUtil.getPlayer().distanceToSqr(Vec3.atCenterOf(blockPos)) > soundPlayer.soundRadiusSqr())
 				return;
 			
 			worldSound = new IPWorldSound(blockPos, sound, volume, pitch);
-			MCUtil.getSoundManager().play(worldSound);
 			this.worldSoundMap.put(blockPos, worldSound);
+			MCUtil.getSoundManager().play(worldSound);
 			
 		}else if(worldSound != null){
-			if(worldSound.isStopped() || !active){
+			if(worldSound.isStopped() || !active || (!sound.getLocation().equals(worldSound.getLocation()))){
 				stopSound(worldSound);
 				
-			}else if(active && MCUtil.getPlayer().tickCount % 40 == 0){
+			}else if(!worldSound.isStopped() && MCUtil.getPlayer().tickCount % 20 == 0){
 				WeighedSoundEvents weighedSoundEvents = worldSound.resolve(MCUtil.getSoundManager());
 				
 				if(weighedSoundEvents != null){
