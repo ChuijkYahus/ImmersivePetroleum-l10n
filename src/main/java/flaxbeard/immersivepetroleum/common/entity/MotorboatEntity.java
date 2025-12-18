@@ -495,10 +495,10 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 				float moving = (this.isForwardDown() || this.isReverseDown()) ? (this.isBoosting ? .9F : .7F) : 0.5F;
 				if(this.lastMoving != moving){
 					this.lastMoving = moving;
-					ImmersivePetroleum.proxy.handleEntitySound(IESounds.dieselGenerator.value(), this, false, .5f, 0.5F);
+					ImmersivePetroleum.proxy.handleEntitySound(IESounds.dieselGenerator, this, false, .5f, 0.5F);
 				}
 				FluidStack fs = this.getTank().getFluid();
-				ImmersivePetroleum.proxy.handleEntitySound(IESounds.dieselGenerator.value(), this, this.isVehicle() && fs != FluidStack.EMPTY && fs.getAmount() > 0, this.isForwardDown() || this.isReverseDown() ? .5f : .3f, moving);
+				ImmersivePetroleum.proxy.handleEntitySound(IESounds.dieselGenerator, this, this.isVehicle() && fs != FluidStack.EMPTY && fs.getAmount() > 0, this.isForwardDown() || this.isReverseDown() ? .5f : .3f, moving);
 				
 				if(this.isForwardDown() && this.level().random.nextInt(2) == 0){
 					if(isInLava()){

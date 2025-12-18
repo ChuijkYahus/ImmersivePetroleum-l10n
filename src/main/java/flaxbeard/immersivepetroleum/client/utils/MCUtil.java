@@ -18,6 +18,7 @@ import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelManager;
 import net.minecraft.client.resources.model.ModelResourceLocation;
+import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.phys.HitResult;
@@ -121,5 +122,10 @@ public class MCUtil{
 	public static GuiSpriteManager getGuiSpriteManager(){
 		Minecraft mc = Minecraft.getInstance();
 		return mc.getGuiSprites();
+	}
+	
+	public static SoundManager getSoundManager(){
+		Minecraft mc = Minecraft.getInstance();
+		return mc.getSoundManager();
 	}
 }

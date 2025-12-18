@@ -295,6 +295,8 @@
 	
 	"subtitle.immersivepetroleum.projector": "Projector whirring",
 	"subtitle.immersivepetroleum.flarestack_fire": "Flarestack fire whooshing",
+	"subtitle.immersivepetroleum.gas_generator": "Portable Generator rattling",
+	"subtitle.immersivepetroleum.motorboat_engine": "Speedboat blubbering?",
 	
 	"_comment": "##################### JEI #####################",
 	"desc.immersivepetroleum.compat.jei.distillation.byproduct": "Secondary Output"

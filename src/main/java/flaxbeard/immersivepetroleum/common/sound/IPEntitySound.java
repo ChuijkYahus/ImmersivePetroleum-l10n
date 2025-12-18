@@ -1,156 +1,29 @@
 package flaxbeard.immersivepetroleum.common.sound;
 
+import blusunrize.immersiveengineering.common.items.EarmuffsItem;
+import blusunrize.immersiveengineering.common.items.components.AttachedItem;
+import blusunrize.immersiveengineering.common.register.IEDataComponents;
 import flaxbeard.immersivepetroleum.client.utils.MCUtil;
-import flaxbeard.immersivepetroleum.common.util.RegistryUtils;
-import net.minecraft.client.resources.sounds.Sound;
-import net.minecraft.client.resources.sounds.TickableSoundInstance;
-import net.minecraft.client.sounds.SoundManager;
-import net.minecraft.client.sounds.WeighedSoundEvents;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
-// TODO Was this class actually ever used?
-@OnlyIn(Dist.CLIENT)
-public class IPEntitySound implements TickableSoundInstance{
-	protected Sound sound;
-	private WeighedSoundEvents soundEvent;
-	private SoundSource category;
-	public Attenuation attenuation;
-	public final ResourceLocation resource;
-	public float volume;
-	public float pitch;
-	
+public class IPEntitySound extends IPTickableSound{
 	public Entity entity;
 	public boolean canRepeat;
 	public int repeatDelay;
 	public float volumeAjustment = 1;
 	
-	public IPEntitySound(SoundEvent event, float volume, float pitch, boolean repeat, int repeatDelay, Entity e, Attenuation attenuation, SoundSource category){
-		this(RegistryUtils.getRegistryNameOf(event), volume, pitch, repeat, repeatDelay, e, attenuation, category);
-	}
-	
-	public IPEntitySound(ResourceLocation sound, float volume, float pitch, boolean repeat, int repeatDelay, Entity e, Attenuation attenuation, SoundSource category){
-		this.attenuation = attenuation;
-		this.resource = sound;
-		this.volume = volume;
-		this.pitch = pitch;
-		this.entity = e;
-		this.canRepeat = repeat;
-		this.repeatDelay = repeatDelay;
-		this.category = category;
-	}
-	
-	@Override
-	@Nonnull
-	public Attenuation getAttenuation(){
-		return attenuation;
-	}
-	
-	@Override
-	@Nonnull
-	public ResourceLocation getLocation(){
-		return resource;
-	}
-	
-	@Nullable
-	@Override
-	public WeighedSoundEvents resolve(SoundManager handler){
-		this.soundEvent = handler.getSoundEvent(this.resource);
-		if(this.soundEvent == null)
-			this.sound = SoundManager.EMPTY_SOUND;
-		else
-			this.sound = this.soundEvent.getSound(RandomSource.create());
-		return this.soundEvent;
-	}
-	
-	@Override
-	@Nonnull
-	public Sound getSound(){
-		return sound;
-	}
-	
-	@Override
-	@Nonnull
-	public SoundSource getSource(){
-		return category;
-	}
-	
-	@Override
-	public float getVolume(){
-		return volume * volumeAjustment;
-	}
-	
-	@Override
-	public float getPitch(){
-		return pitch;
-	}
-	
-	@Override
-	public double getX(){
-		return (float) entity.getX();
-	}
-	
-	@Override
-	public double getY(){
-		return (float) entity.getY();
-	}
-	
-	@Override
-	public double getZ(){
-		return (float) entity.getZ();
-	}
-	
-	@Override
-	public boolean isLooping(){
-		return canRepeat;
-	}
-	
-	@Override
-	public int getDelay(){
-		return repeatDelay;
-	}
-	
-	public void evaluateVolume(){
-		volumeAjustment = 1f;
-		
-		/* // TODO
-		if(MCUtil.getPlayer() != null && !MCUtil.getPlayer().getItemBySlot(EquipmentSlot.HEAD).isEmpty()){
-			ItemStack stack = MCUtil.getPlayer().getItemBySlot(EquipmentSlot.HEAD);
-			if(ItemNBTHelper.hasKey(stack, "IE:Earmuffs"))
-				stack = ItemNBTHelper.getItemStack(stack, "IE:Earmuffs");
-			if(stack != null && IEItems.Misc.EARMUFFS.asItem().equals(stack.getItem()))
-				volumeAjustment = EarmuffsItem.getVolumeMod(stack);
-		}
-		*/
-		
-		if(volumeAjustment > .1f)
-			for(int dx = (int) Math.floor(entity.getX() - 8) >> 4;dx <= (int) Math.floor(entity.getX() + 8) >> 4;dx++){
-				for(int dz = (int) Math.floor(entity.getZ() - 8) >> 4;dz <= (int) Math.floor(entity.getZ() + 8) >> 4;dz++){
-					for(BlockEntity tile:MCUtil.getPlayer().level().getChunk(dx, dz).getBlockEntities().values()){
-						if(tile != null && tile.getClass().getName().contains("SoundMuffler")){
-							BlockPos tPos = tile.getBlockPos();
-							double d = entity.position().distanceTo(new Vec3(tPos.getX() + .5, tPos.getY() + .5, tPos.getZ() + .5));
-							if(d <= 64 && d > 0){
-								volumeAjustment = .1f;
-							}
-						}
-					}
-				}
-			}
-		
-		if(!entity.isAlive())
-			donePlaying = true;
+	public IPEntitySound(Entity entity, SoundEvent sound, float volume, float pitch){
+		super(sound, volume, pitch);
+		this.entity = entity;
 	}
 	
 	@Override
@@ -159,11 +32,75 @@ public class IPEntitySound implements TickableSoundInstance{
 			evaluateVolume();
 	}
 	
-	public boolean donePlaying = false;
+	public void evaluateVolume(){
+		this.volumeAjustment = 1.0F;
+		
+		if(MCUtil.getPlayer() != null && !MCUtil.getPlayer().getItemBySlot(EquipmentSlot.HEAD).isEmpty()){
+			ItemStack stack = MCUtil.getPlayer().getItemBySlot(EquipmentSlot.HEAD);
+			
+			AttachedItem attachedItem = stack.get(IEDataComponents.CONTAINED_EARMUFF);
+			if(attachedItem != null){
+				stack = attachedItem.attached();
+			}
+			if(!stack.isEmpty() && stack.getItem() instanceof EarmuffsItem){
+				this.volumeAjustment = EarmuffsItem.getVolumeMod(stack);
+			}
+		}
+		
+		if(this.volumeAjustment > 0.1F){
+			int xMin = (int) Math.floor(this.entity.getX() - 8) >> 4;
+			int zMin = (int) Math.floor(this.entity.getZ() - 8) >> 4;
+			int xMax = (int) Math.floor(this.entity.getX() + 8) >> 4;
+			int zMax = (int) Math.floor(this.entity.getZ() + 8) >> 4;
+			
+			for(int dx = xMin;dx <= xMax;dx++){
+				for(int dz = zMin;dz <= zMax;dz++){
+					for(BlockEntity tile: MCUtil.getPlayer().level().getChunk(dx, dz).getBlockEntities().values()){
+						if(tile != null && tile.getClass().getName().contains("SoundMuffler")){
+							BlockPos tPos = tile.getBlockPos();
+							double d = this.entity.position().distanceTo(new Vec3(tPos.getX() + 0.5, tPos.getY() + 0.5, tPos.getZ() + 0.5));
+							if(d <= 64 && d > 0){
+								this.volumeAjustment = 0.1F;
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		if(!this.entity.isAlive())
+			stop();
+	}
+	
+	@Nonnull
+	@Override
+	public SoundSource getSource(){
+		return SoundSource.NEUTRAL;
+	}
 	
 	@Override
-	public boolean isStopped(){
-		return donePlaying;
+	public float getVolume(){
+		return super.getVolume() * this.volumeAjustment;
+	}
+	
+	@Override
+	public double getX(){
+		return this.entity.getX();
+	}
+	
+	@Override
+	public double getY(){
+		return this.entity.getY();
+	}
+	
+	@Override
+	public double getZ(){
+		return this.entity.getZ();
+	}
+	
+	@Override
+	public boolean isLooping(){
+		return this.canRepeat;
 	}
 	
 	@Override

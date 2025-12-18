@@ -1,6 +1,5 @@
 package flaxbeard.immersivepetroleum.common.blocks.tileentities;
 
-import blusunrize.immersiveengineering.ImmersiveEngineering;
 import blusunrize.immersiveengineering.api.Lib;
 import blusunrize.immersiveengineering.api.TargetingInfo;
 import blusunrize.immersiveengineering.api.energy.MutableEnergyStorage;
@@ -16,6 +15,7 @@ import blusunrize.immersiveengineering.common.blocks.PlacementLimitation;
 import blusunrize.immersiveengineering.common.config.IEServerConfig;
 import blusunrize.immersiveengineering.common.util.IESounds;
 import com.google.common.collect.ImmutableList;
+import flaxbeard.immersivepetroleum.ImmersivePetroleum;
 import flaxbeard.immersivepetroleum.api.energy.FuelHandler;
 import flaxbeard.immersivepetroleum.common.IPCapabilityRegistry;
 import flaxbeard.immersivepetroleum.common.IPDataComponents;
@@ -24,6 +24,7 @@ import flaxbeard.immersivepetroleum.common.blocks.interfaces.IBlockEntityDrop;
 import flaxbeard.immersivepetroleum.common.blocks.interfaces.IPlacementReader;
 import flaxbeard.immersivepetroleum.common.blocks.interfaces.IPlayerInteraction;
 import flaxbeard.immersivepetroleum.common.blocks.ticking.IPCommonTickableTile;
+import flaxbeard.immersivepetroleum.common.sound.IPlaySound;
 import flaxbeard.immersivepetroleum.common.util.Utils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -31,7 +32,6 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -61,7 +61,7 @@ import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.List;
 
-public class GasGeneratorTileEntity extends ImmersiveConnectableBlockEntity implements IPCommonTickableTile, IPCapabilityRegistry.IHasMultiCapability, IPlacementReader, IPlayerInteraction, IBlockEntityDrop, IEBlockInterfaces.IDirectionalBE, IEBlockInterfaces.IBlockOverlayText, IEBlockInterfaces.ISoundBE, EnergyTransferHandler.EnergyConnector{
+public class GasGeneratorTileEntity extends ImmersiveConnectableBlockEntity implements IPCommonTickableTile, IPCapabilityRegistry.IHasMultiCapability, IPlacementReader, IPlayerInteraction, IBlockEntityDrop, IPlaySound, IEBlockInterfaces.IDirectionalBE, IEBlockInterfaces.IBlockOverlayText, EnergyTransferHandler.EnergyConnector{
 	public static final int FUEL_CAPACITY = 8000;
 	
 	protected WireType wireType;
@@ -153,8 +153,8 @@ public class GasGeneratorTileEntity extends ImmersiveConnectableBlockEntity impl
 	}
 	
 	@Override
-	public boolean shouldPlaySound(@Nonnull String sound){
-		return this.isActive;
+	public boolean soundShouldStop(ResourceLocation soundLocation){
+		return !this.isActive;
 	}
 	
 	@Override
@@ -267,7 +267,7 @@ public class GasGeneratorTileEntity extends ImmersiveConnectableBlockEntity impl
 	
 	@Override
 	public void tickClient(){
-		ImmersiveEngineering.proxy.handleTileSound(IESounds.dieselGenerator, this, this.isActive, .3f, .75f);
+		ImmersivePetroleum.proxy.handleTileSound(IESounds.dieselGenerator, this, this.isActive, .3f, .75f);
 		if(this.isActive && this.level.getGameTime() % 4 == 0){
 			Direction fl = this.facing;
 			Direction fw = this.facing.getClockWise();

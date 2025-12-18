@@ -3,6 +3,7 @@ package flaxbeard.immersivepetroleum.common;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.core.Holder;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -27,10 +28,10 @@ public class CommonProxy{
 	public void renderTile(BlockEntity te, VertexConsumer iVertexBuilder, PoseStack transform, MultiBufferSource buffer){
 	}
 	
-	public void handleEntitySound(SoundEvent soundEvent, Entity entity, boolean active, float volume, float pitch){
+	public void handleEntitySound(Holder<SoundEvent> soundEvent, Entity entity, boolean active, float volume, float pitch){
 	}
 	
-	public void handleTileSound(SoundEvent soundEvent, BlockEntity te, boolean active, float volume, float pitch){
+	public void handleTileSound(Holder<SoundEvent> soundEvent, BlockEntity te, boolean active, float volume, float pitch){
 	}
 	
 	public void drawUpperHalfSlab(PoseStack transform, ItemStack stack){

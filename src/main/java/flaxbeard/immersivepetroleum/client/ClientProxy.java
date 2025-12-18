@@ -5,6 +5,7 @@ import blusunrize.immersiveengineering.api.multiblocks.blocks.env.IMultiblockBEH
 import blusunrize.immersiveengineering.api.multiblocks.blocks.logic.IMultiblockBE;
 import blusunrize.immersiveengineering.common.blocks.metal.MetalScaffoldingType;
 import blusunrize.immersiveengineering.common.register.IEBlocks;
+import blusunrize.immersiveengineering.mixin.accessors.client.GuiSubtitleOverlayAccess;
 import blusunrize.lib.manual.ManualElementItem;
 import blusunrize.lib.manual.ManualElementTable;
 import blusunrize.lib.manual.ManualEntry;
@@ -35,10 +36,13 @@ import flaxbeard.immersivepetroleum.common.IPMenuTypes;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.PumpjackLogic;
 import flaxbeard.immersivepetroleum.common.cfg.IPServerConfig;
 import flaxbeard.immersivepetroleum.common.crafting.RecipeReloadListener;
+import flaxbeard.immersivepetroleum.common.sound.IPWorldSound;
+import flaxbeard.immersivepetroleum.common.sound.IPlaySound;
 import flaxbeard.immersivepetroleum.common.util.RegistryUtils;
 import flaxbeard.immersivepetroleum.common.util.ResourceUtils;
 import flaxbeard.immersivepetroleum.common.util.Utils;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.SubtitleOverlay;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
@@ -46,7 +50,9 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.sounds.WeighedSoundEvents;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -63,6 +69,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -73,7 +80,9 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.fluids.FluidStack;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ClientProxy extends CommonProxy{
 	
@@ -135,6 +144,7 @@ public class ClientProxy extends CommonProxy{
 		setupManualPages();
 	}
 	
+	// TODO I think this can technically be retired
 	@Override
 	public void renderTile(BlockEntity te, VertexConsumer iVertexBuilder, PoseStack transform, MultiBufferSource buffer){
 		BlockEntityRenderer<BlockEntity> tesr = Minecraft.getInstance().getBlockEntityRenderDispatcher().getRenderer(te);
@@ -145,15 +155,14 @@ public class ClientProxy extends CommonProxy{
 		
 		if(te instanceof IMultiblockBE<?> multiblockBE && multiblockBE.getHelper().getContext() != null && multiblockBE.getHelper().getContext().getState() instanceof PumpjackLogic.State){
 			IMultiblockBEHelper<PumpjackLogic.State> helper = multiblockBE.getHelper().asType(IPContent.Multiblock.PUMPJACK);
-			PumpjackLogic.State state = helper.getState();
 			
 			transform.pushPose();
 			transform.mulPose(Axis.YN.rotationDegrees(90));
 			transform.translate(1, 1, -2);
 			
 			float pt = 0;
-			if(MCUtil.getPlayer() != null){
-				state.activeTicks = MCUtil.getPlayer().tickCount;
+			if(MCUtil.getPlayer() != null && helper != null && helper.getState() != null){
+				helper.getState().activeTicks = MCUtil.getPlayer().tickCount;
 				pt = Minecraft.getInstance().getTimer().getGameTimeDeltaTicks(); // TODO Make sure this is correct
 			}
 			
@@ -218,13 +227,51 @@ public class ClientProxy extends CommonProxy{
 	}
 	
 	@Override
-	public void handleEntitySound(SoundEvent soundEvent, Entity entity, boolean active, float volume, float pitch){
+	public void handleEntitySound(Holder<SoundEvent> soundEvent, Entity entity, boolean active, float volume, float pitch){
 		// TODO Sound: Restore motorboat audio
 	}
 	
+	private final Map<BlockPos, IPWorldSound> worldSoundMap = new HashMap<>();
 	@Override
-	public void handleTileSound(SoundEvent soundEvent, BlockEntity te, boolean active, float volume, float pitch){
-		// TODO Sound: Perhaps give some MBs some audio
+	public void handleTileSound(Holder<SoundEvent> soundEvent, BlockEntity te, boolean active, float volume, float pitch){
+		final BlockPos blockPos = te.getBlockPos();
+		final SoundEvent sound = soundEvent.value();
+		
+		IPWorldSound worldSound = this.worldSoundMap.get(blockPos);
+		if(worldSound == null || (!sound.getLocation().equals(worldSound.getLocation()) && active)){
+			stopSound(worldSound);
+			if(te instanceof IPlaySound soundPlayer && MCUtil.getPlayer().distanceToSqr(Vec3.atCenterOf(blockPos)) > soundPlayer.soundRadiusSqr())
+				return;
+			
+			worldSound = new IPWorldSound(blockPos, sound, volume, pitch);
+			MCUtil.getSoundManager().play(worldSound);
+			this.worldSoundMap.put(blockPos, worldSound);
+			
+		}else if(worldSound != null){
+			if(worldSound.isStopped() || !active){
+				stopSound(worldSound);
+				
+			}else if(active && MCUtil.getPlayer().tickCount % 40 == 0){
+				WeighedSoundEvents weighedSoundEvents = worldSound.resolve(MCUtil.getSoundManager());
+				
+				if(weighedSoundEvents != null){
+					getSubtitleOverlay().onPlaySound(worldSound, weighedSoundEvents, 16);
+				}
+			}
+		}
+	}
+	
+	private void stopSound(IPWorldSound worldSound){
+		if(worldSound == null)
+			return;
+		
+		worldSound.stop();
+		MCUtil.getSoundManager().stop(worldSound);
+		this.worldSoundMap.remove(worldSound.getPosition());
+	}
+	
+	private SubtitleOverlay getSubtitleOverlay(){
+		return ((GuiSubtitleOverlayAccess) Minecraft.getInstance().gui).getSubtitleOverlay();
 	}
 	
 	public void setupManualPages(){
