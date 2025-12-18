@@ -112,7 +112,16 @@ public class DebugRenderHandler{
 								BlockEntity te = world.getBlockEntity(hitPos);
 								
 								if(te instanceof GasGeneratorTileEntity gas){
-									debugText.translated(te.getBlockState().getBlock().getDescriptionId(), ChatFormatting.GOLD);
+									MutableComponent name = Component.translatable(te.getBlockState().getBlock().getDescriptionId()).withStyle(ChatFormatting.GOLD);
+									
+									boolean isActive = !gas.soundShouldStop(null);
+									name.append(Component.literal(isActive ? " (Active)" : " (Inactive)").withStyle(isActive ? ChatFormatting.GREEN : ChatFormatting.RED));
+									
+									if(world.hasNeighborSignal(gas.getPosition())){
+										name.append(Component.literal(" (Redstoned)").withStyle(ChatFormatting.RED));
+									}
+									
+									debugText.add(name);
 									
 									debugText.addEnergyText(gas.getCapability(Capabilities.EnergyStorage.BLOCK, null));
 									debugText.addTankText(gas.getCapability(Capabilities.FluidHandler.BLOCK, null));
