@@ -41,6 +41,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -60,6 +61,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 public class GasGeneratorTileEntity extends ImmersiveConnectableBlockEntity implements IPCommonTickableTile, IPCapabilityRegistry.IHasMultiCapability, IPlacementReader, IPlayerInteraction, IBlockEntityDrop, IPlaySound, IEBlockInterfaces.IDirectionalBE, IEBlockInterfaces.IBlockOverlayText, EnergyTransferHandler.EnergyConnector{
 	public static final int FUEL_CAPACITY = 8000;
@@ -113,23 +115,28 @@ public class GasGeneratorTileEntity extends ImmersiveConnectableBlockEntity impl
 	
 	@Override
 	public ClientboundBlockEntityDataPacket getUpdatePacket(){
-		return ClientboundBlockEntityDataPacket.create(this, this::getUpdateTag);
+		return ClientboundBlockEntityDataPacket.create(this, (b, p) -> getUpdateTag(p));
 	}
 	
 	@Nonnull
-	public CompoundTag getUpdateTag(BlockEntity blockEntity, HolderLookup.Provider provider){
+	public CompoundTag getUpdateTag(HolderLookup.Provider provider){
 		CompoundTag nbt = new CompoundTag();
 		saveAdditional(nbt, provider);
 		return nbt;
+	}
+	
+	@Nonnull
+	public Level getNonnullLevel(){
+		return Objects.requireNonNull(this.level);
 	}
 	
 	@Override
 	public void setChanged(){
 		super.setChanged();
 		
-		BlockState state = level.getBlockState(worldPosition);
-		level.sendBlockUpdated(worldPosition, state, state, 3);
-		level.updateNeighborsAt(worldPosition, state.getBlock());
+		BlockState state = getNonnullLevel().getBlockState(this.worldPosition);
+		getNonnullLevel().sendBlockUpdated(this.worldPosition, state, state, 3);
+		getNonnullLevel().updateNeighborsAt(this.worldPosition, state.getBlock());
 	}
 	
 	@Override
@@ -201,7 +208,7 @@ public class GasGeneratorTileEntity extends ImmersiveConnectableBlockEntity impl
 			}
 			
 			if(added)
-				this.level.setBlockAndUpdate(this.worldPosition, Blocks.AIR.defaultBlockState());
+				getNonnullLevel().setBlockAndUpdate(this.worldPosition, Blocks.AIR.defaultBlockState());
 			
 			return InteractionResult.SUCCESS;
 		}
@@ -267,8 +274,8 @@ public class GasGeneratorTileEntity extends ImmersiveConnectableBlockEntity impl
 	
 	@Override
 	public void tickClient(){
-		ImmersivePetroleum.proxy.handleTileSound(IESounds.dieselGenerator, this, this.isActive, .3f, .75f);
-		if(this.isActive && this.level.getGameTime() % 4 == 0){
+		ImmersivePetroleum.proxy.handleTileSound(IESounds.dieselGenerator, this, this.isActive, .3f, 1.25f);
+		if(this.isActive && getNonnullLevel().getGameTime() % 4 == 0){
 			Direction fl = this.facing;
 			Direction fw = this.facing.getClockWise();
 			
@@ -278,7 +285,7 @@ public class GasGeneratorTileEntity extends ImmersiveConnectableBlockEntity impl
 			double y = this.worldPosition.getY() + .4;
 			double z = this.worldPosition.getZ() + .5 + (fl.getStepZ() * 2 / 16F) + (-fw.getStepZ() * .6125f);
 			
-			this.level.addParticle(this.level.random.nextInt(10) == 0 ? ParticleTypes.LARGE_SMOKE : ParticleTypes.SMOKE, x, y, z, vec.getX() * 0.025, 0, vec.getZ() * 0.025);
+			getNonnullLevel().addParticle(getNonnullLevel().random.nextInt(10) == 0 ? ParticleTypes.LARGE_SMOKE : ParticleTypes.SMOKE, x, y, z, vec.getX() * 0.025, 0, vec.getZ() * 0.025);
 		}
 	}
 	
@@ -286,27 +293,29 @@ public class GasGeneratorTileEntity extends ImmersiveConnectableBlockEntity impl
 	public void tickServer(){
 		boolean lastActive = this.isActive;
 		this.isActive = false;
-		if(!this.level.hasNeighborSignal(this.worldPosition)){
-			if(fluidTick == 0){
-				Fluid fluid = this.tank.getFluid().getFluid();
-				int amount = FuelHandler.getGeneratorFuelUse(fluid);
-				if(amount > 0 && this.tank.getFluidAmount() >= amount){
-					this.tank.drain(new FluidStack(fluid, amount), FluidAction.EXECUTE);
-					currentFlux = FuelHandler.getFluxGeneratedPerTick(fluid);
-					fluidTick = 20;
+		
+		if(!getNonnullLevel().hasNeighborSignal(this.worldPosition)){
+			if(this.fluidTick == 0){
+				FluidStack fStack = this.tank.getFluid();
+				fStack = fStack.copyWithAmount(FuelHandler.getGeneratorFuelUse(fStack.getFluid()));
+				
+				if(fStack.getAmount() > 0 && this.tank.getFluidAmount() >= fStack.getAmount()){
+					this.tank.drain(fStack, FluidAction.EXECUTE);
+					this.currentFlux = FuelHandler.getFluxGeneratedPerTick(fStack.getFluid());
+					this.fluidTick = 20;
 				}
 			}
 			
-			if(fluidTick > 0){
-				if(this.energyStorage.receiveEnergy(currentFlux, true) >= currentFlux){
-					this.energyStorage.receiveEnergy(currentFlux, false);
+			if(this.fluidTick > 0){
+				if(this.energyStorage.receiveEnergy(this.currentFlux, true) >= this.currentFlux){
+					this.energyStorage.receiveEnergy(this.currentFlux, false);
 					this.isActive = true;
-					fluidTick--;
+					this.fluidTick--;
 				}
 			}
 		}
 		
-		if(lastActive != this.isActive || (!this.level.isClientSide && this.isActive))
+		if(lastActive != this.isActive || this.isActive)
 			setChanged();
 		
 	}
@@ -330,7 +339,7 @@ public class GasGeneratorTileEntity extends ImmersiveConnectableBlockEntity impl
 	
 	@Override
 	public boolean canConnectCable(WireType cableType, ConnectionPoint target, Vec3i offset){
-		if(level.getBlockState(target.position()).getBlock() != level.getBlockState(getBlockPos()).getBlock())
+		if(getNonnullLevel().getBlockState(target.position()).getBlock() != getNonnullLevel().getBlockState(getBlockPos()).getBlock())
 			return false;
 		
 		return this.wireType == null && (cableType.getCategory().equals(WireType.LV_CATEGORY) || cableType.getCategory().equals(WireType.MV_CATEGORY));
@@ -338,28 +347,28 @@ public class GasGeneratorTileEntity extends ImmersiveConnectableBlockEntity impl
 	
 	@Override
 	public BlockPos getConnectionMaster(@Nullable WireType cableType, TargetingInfo target){
-		return worldPosition;
+		return this.worldPosition;
 	}
 	
 	@Override
 	public ConnectionPoint getTargetedPoint(TargetingInfo info, Vec3i offset){
-		return new ConnectionPoint(worldPosition, 0);
+		return new ConnectionPoint(this.worldPosition, 0);
 	}
 	
 	@Override
 	public Collection<ConnectionPoint> getConnectionPoints(){
-		return List.of(new ConnectionPoint(worldPosition, 0));
+		return List.of(new ConnectionPoint(this.worldPosition, 0));
 	}
 	
 	@Override
 	public BlockPos getPosition(){
-		return worldPosition;
+		return this.worldPosition;
 	}
 	
 	@Override
 	public Vec3 getConnectionOffset(ConnectionPoint here, ConnectionPoint other, WireType type){
-		float xo = facing.getNormal().getX() * .5f + .5f;
-		float zo = facing.getNormal().getZ() * .5f + .5f;
+		float xo = this.facing.getNormal().getX() * .5f + .5f;
+		float zo = this.facing.getNormal().getZ() * .5f + .5f;
 		return new Vec3(xo, .5f, zo);
 	}
 	
