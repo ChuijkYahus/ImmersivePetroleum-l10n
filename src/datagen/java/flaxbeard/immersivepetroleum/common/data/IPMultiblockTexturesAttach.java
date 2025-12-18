@@ -20,15 +20,23 @@ public class IPMultiblockTexturesAttach extends SpriteSourceProvider{
 	protected void gather(){
 		final SourceList blockAtlas = atlas(SpriteSourceProvider.BLOCKS_ATLAS);
 		
-		blockAtlas.addSource(new SingleFile(ResourceUtils.ip("multiblock/cokerunit"), Optional.empty()));
-		blockAtlas.addSource(new SingleFile(ResourceUtils.ip("multiblock/derrick"), Optional.empty()));
-		blockAtlas.addSource(new SingleFile(ResourceUtils.ip("multiblock/distillation_tower"), Optional.empty()));
-		blockAtlas.addSource(new SingleFile(ResourceUtils.ip("multiblock/distillation_tower_active"), Optional.empty()));
-		blockAtlas.addSource(new SingleFile(ResourceUtils.ip("multiblock/hydrotreater"), Optional.empty()));
-		blockAtlas.addSource(new SingleFile(ResourceUtils.ip("multiblock/oiltank"), Optional.empty()));
-		blockAtlas.addSource(new SingleFile(ResourceUtils.ip("multiblock/pumpjack_base"), Optional.empty()));
-		blockAtlas.addSource(new SingleFile(ResourceUtils.ip("models/lubricator"), Optional.empty()));
-		blockAtlas.addSource(new SingleFile(ResourceUtils.ip("models/pumpjack_armature"), Optional.empty()));
-		blockAtlas.addSource(new SingleFile(ResourceUtils.ip("projectors/projector"), Optional.empty()));
+		addSingle(blockAtlas, "multiblock/cokerunit");
+		addSingle(blockAtlas, "multiblock/derrick");
+		addSingle(blockAtlas, "multiblock/distillation_tower");
+		addSingle(blockAtlas, "multiblock/hydrotreater");
+		addSingle(blockAtlas, "multiblock/oiltank");
+		addSingle(blockAtlas, "multiblock/pumpjack_base");
+		
+		addSingle(blockAtlas, "multiblock/overlay/distillation_tower_active");
+		addSingle(blockAtlas, "multiblock/overlay/hydrotreater_active");
+		
+		addSingle(blockAtlas, "models/lubricator");
+		addSingle(blockAtlas, "models/pumpjack_armature");
+		
+		addSingle(blockAtlas, "projectors/projector");
+	}
+	
+	private void addSingle(SourceList atlas, String path){
+		atlas.addSource(new SingleFile(ResourceUtils.ip(path), Optional.empty()));
 	}
 }
