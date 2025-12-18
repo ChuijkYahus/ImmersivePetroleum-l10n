@@ -22,6 +22,7 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
+import javax.annotation.Nonnull;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -30,14 +31,6 @@ public class MolotovItemEntity extends ThrowableItemProjectile{
 	
 	public MolotovItemEntity(Level world, LivingEntity living){
 		this(IPEntityTypes.MOLOTOV.get(), world, living);
-	}
-	
-	public MolotovItemEntity(Level world, LivingEntity living, double x, double y, double z){
-		this(IPEntityTypes.MOLOTOV.get(), world, living);
-		setPos(x, y, z);
-		this.xo = x;
-		this.yo = y;
-		this.zo = z;
 	}
 	
 	public MolotovItemEntity(EntityType<MolotovItemEntity> type, Level world){
@@ -50,6 +43,7 @@ public class MolotovItemEntity extends ThrowableItemProjectile{
 		this.blocksBuilding = true;
 	}
 	
+	@Nonnull
 	@Override
 	protected Item getDefaultItem(){
 		return IPContent.Items.MOLOTOV_LIT.get();
@@ -69,7 +63,7 @@ public class MolotovItemEntity extends ThrowableItemProjectile{
 	}
 	
 	@Override
-	protected void onHit(HitResult pResult){
+	protected void onHit(@Nonnull HitResult pResult){
 		super.onHit(pResult);
 		if(!this.level().isClientSide){
 			this.level().broadcastEntityEvent(this, (byte) 3);
@@ -78,7 +72,7 @@ public class MolotovItemEntity extends ThrowableItemProjectile{
 	}
 	
 	@Override
-	protected void onHitEntity(EntityHitResult pResult){
+	protected void onHitEntity(@Nonnull EntityHitResult pResult){
 		super.onHitEntity(pResult);
 		
 		if(!this.level().isClientSide){
@@ -87,7 +81,7 @@ public class MolotovItemEntity extends ThrowableItemProjectile{
 	}
 	
 	@Override
-	protected void onHitBlock(BlockHitResult hitResult){
+	protected void onHitBlock(@Nonnull BlockHitResult hitResult){
 		super.onHitBlock(hitResult);
 		
 		if(!this.level().isClientSide){
@@ -122,7 +116,7 @@ public class MolotovItemEntity extends ThrowableItemProjectile{
 		}
 		
 		if(getOwner() instanceof LivingEntity living){
-			living.setLastHurtMob(list.get(list.size() - 1));
+			living.setLastHurtMob(list.getLast());
 		}
 	}
 	
@@ -151,11 +145,6 @@ public class MolotovItemEntity extends ThrowableItemProjectile{
 		
 		BlockState fire = Blocks.FIRE.defaultBlockState();
 		
-		boolean up = false;
-		boolean north = false;
-		boolean east = false;
-		boolean south = false;
-		boolean west = false;
 		if(this.level().getBlockState(pos.below()).isAir()){
 			BlockPos abovePos = pos.above();
 			BlockPos northPos = pos.north();
@@ -163,11 +152,11 @@ public class MolotovItemEntity extends ThrowableItemProjectile{
 			BlockPos southPos = pos.south();
 			BlockPos westPos = pos.west();
 			
-			up = this.level().getBlockState(abovePos).isFlammable(this.level(), abovePos, Direction.DOWN);
-			north = this.level().getBlockState(northPos).isFlammable(this.level(), northPos, Direction.SOUTH);
-			east = this.level().getBlockState(eastPos).isFlammable(this.level(), eastPos, Direction.WEST);
-			south = this.level().getBlockState(southPos).isFlammable(this.level(), southPos, Direction.NORTH);
-			west = this.level().getBlockState(westPos).isFlammable(this.level(), westPos, Direction.EAST);
+			boolean up = this.level().getBlockState(abovePos).isFlammable(this.level(), abovePos, Direction.DOWN);
+			boolean north = this.level().getBlockState(northPos).isFlammable(this.level(), northPos, Direction.SOUTH);
+			boolean east = this.level().getBlockState(eastPos).isFlammable(this.level(), eastPos, Direction.WEST);
+			boolean south = this.level().getBlockState(southPos).isFlammable(this.level(), southPos, Direction.NORTH);
+			boolean west = this.level().getBlockState(westPos).isFlammable(this.level(), westPos, Direction.EAST);
 			
 			fire = fire.setValue(FireBlock.UP, up).setValue(FireBlock.NORTH, north).setValue(FireBlock.EAST, east).setValue(FireBlock.SOUTH, south).setValue(FireBlock.WEST, west);
 		}
