@@ -277,13 +277,13 @@ public class GasGeneratorTileEntity extends ImmersiveConnectableBlockEntity impl
 		ImmersivePetroleum.proxy.handleTileSound(IESounds.dieselGenerator, this, this.isActive, .3f, 1.25f);
 		if(this.isActive && getNonnullLevel().getGameTime() % 4 == 0){
 			Direction fl = this.facing;
-			Direction fw = this.facing.getClockWise();
+			Direction fw = this.facing.getCounterClockWise();
 			
 			Vec3i vec = fw.getOpposite().getNormal();
 			
-			double x = this.worldPosition.getX() + .5 + (fl.getStepX() * 2 / 16F) + (-fw.getStepX() * .6125f);
+			double x = this.worldPosition.getX() + .5 + (fl.getStepX() * -2 / 6F) + (-fw.getStepX() * .6125f);
 			double y = this.worldPosition.getY() + .4;
-			double z = this.worldPosition.getZ() + .5 + (fl.getStepZ() * 2 / 16F) + (-fw.getStepZ() * .6125f);
+			double z = this.worldPosition.getZ() + .5 + (fl.getStepZ() * -2 / 6F) + (-fw.getStepZ() * .6125f);
 			
 			getNonnullLevel().addParticle(getNonnullLevel().random.nextInt(10) == 0 ? ParticleTypes.LARGE_SMOKE : ParticleTypes.SMOKE, x, y, z, vec.getX() * 0.025, 0, vec.getZ() * 0.025);
 		}
