@@ -240,6 +240,14 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 		return this.tank.getInternalTank();
 	}
 	
+	public boolean isClient(){
+		return this.level().isClientSide;
+	}
+	
+	public boolean isServer(){
+		return !this.level().isClientSide;
+	}
+	
 	@Override
 	public float getSinglePassengerXOffset(){
 		return 0.05F;
@@ -282,7 +290,7 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 	public boolean hurt(@Nonnull DamageSource source, float amount){
 		if(isInvulnerableTo(source) || (this.isFireproof && source.is(DamageTypeTags.IS_FIRE))){
 			return false;
-		}else if(!this.level().isClientSide && isAlive()){
+		}else if(isServer() && isAlive()){
 			if(!source.isDirect() && source.getDirectEntity() != null && hasPassenger(source.getDirectEntity())){
 				return false;
 			}else{
@@ -344,35 +352,35 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 		}
 		
 		if(Utils.isFluidRelatedItemStack(stack)){
-			FluidStack fstack = FluidUtil.getFluidContained(stack).orElse(null);
+			FluidStack fStack = FluidUtil.getFluidContained(stack).orElse(null);
 			
-			if(fstack != null && FluidUtil.interactWithFluidHandler(player, hand, this.tank.getHandler())){
+			if(fStack != null && FluidUtil.interactWithFluidHandler(player, hand, this.tank.getHandler())){
 				IFluidTank tank = getInternalTank();
 				
 				setContainedFluid(tank.getFluid());
-				advancement(tank, fstack, player);
+				advancement(tank, fStack, player);
 			}
 			
 			return InteractionResult.SUCCESS;
 		}
 		
-		if(stack.getItem() instanceof GasolineBottleItem gasbottle){
+		if(stack.getItem() instanceof GasolineBottleItem gasolineBottle){
 			IFluidTank tank = getInternalTank();
-			FluidStack fstack = new FluidStack(IPContent.Fluids.GASOLINE.get(), GasolineBottleItem.FILLED_AMOUNT);
+			FluidStack fStack = new FluidStack(IPContent.Fluids.GASOLINE.get(), GasolineBottleItem.FILLED_AMOUNT);
 			
-			if(tank.fill(fstack, FluidAction.SIMULATE) >= GasolineBottleItem.FILLED_AMOUNT){
-				tank.fill(fstack, FluidAction.EXECUTE);
+			if(tank.fill(fStack, FluidAction.SIMULATE) >= GasolineBottleItem.FILLED_AMOUNT){
+				tank.fill(fStack, FluidAction.EXECUTE);
 				
-				gasbottle.toEmptyBottle(player, stack);
+				gasolineBottle.toEmptyBottle(player, stack);
 				
 				setContainedFluid(tank.getFluid());
-				advancement(tank, fstack, player);
+				advancement(tank, fStack, player);
 			}
 			
 			return InteractionResult.SUCCESS;
 		}
 		
-		if(!this.level().isClientSide && !player.isShiftKeyDown() && this.outOfControlTicks < 60.0F && !player.isPassengerOfSameVehicle(this)){
+		if(isServer() && !player.isShiftKeyDown() && this.outOfControlTicks < 60.0F && !player.isPassengerOfSameVehicle(this)){
 			player.startRiding(this);
 			if(this.level().dimension().equals(Level.NETHER) && this.isFireproof){
 				Utils.unlockIPAdvancement(player, "main/reinforced_hull");
@@ -412,32 +420,28 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 		return this.fastEnough;
 	}
 	
+	private void updateAdvancementConditions(){
+		if(isClient())
+			return;
+		
+		// Spin
+		this.fastEnough = Math.abs(this.getYRot() - this.oYRot) >= 5.0F;
+		this.oYRot = this.getYRot();
+		
+		// Fuel
+		int current = this.getTank().getFluidAmount();
+		if((current - this.oFuelAmount) != 0 && current == 0){
+			if(this.getFirstPassenger() instanceof Player player && this.hasPaddles){
+				Utils.unlockIPAdvancement(player, "main/paddles");
+			}
+		}
+		this.oFuelAmount = current;
+	}
+	
 	@SuppressWarnings("deprecation")
 	@Override
 	public void tick(){
-		// Advancement Stuff
-		
-		if(!this.level().isClientSide){
-			// Spin
-			{
-				float diff = this.getYRot() - this.oYRot;
-				this.fastEnough = Math.abs(diff) >= 5.0F;
-				this.oYRot = this.getYRot();
-			}
-			// Fuel
-			{
-				int current = this.getTank().getFluidAmount();
-				int diff = current - this.oFuelAmount;
-				if(diff != 0 && current == 0){
-					if(this.getFirstPassenger() instanceof Player player && this.hasPaddles){
-						Utils.unlockIPAdvancement(player, "main/paddles");
-					}
-				}
-				this.oFuelAmount = current;
-			}
-		}
-		
-		// -----------------------------------------------------
+		updateAdvancementConditions();
 		
 		this.propellerAssemblyRotation.update();
 		this.propellerRotation.update();
@@ -450,7 +454,7 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 			++this.outOfControlTicks;
 		}
 		
-		if(!this.level().isClientSide && this.outOfControlTicks >= 60.0F){
+		if(isServer() && this.outOfControlTicks >= 60.0F){
 			this.ejectPassengers();
 		}
 		
@@ -478,7 +482,7 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 			}
 			
 			this.floatBoat();
-			if(this.level().isClientSide){
+			if(isClient()){
 				this.controlBoat();
 				this.level().sendPacketToServer(new ServerboundPaddleBoatPacket(this.getPaddleState(0), this.getPaddleState(1)));
 			}
@@ -490,7 +494,7 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 		
 		this.tickBubbleColumn();
 		
-		if(this.level().isClientSide){
+		if(isClient()){
 			if(!isEmergency()){
 				float moving = (this.isForwardDown() || this.isReverseDown()) ? (this.isBoosting ? .9F : .7F) : 0.5F;
 				if(this.lastMoving != moving){
@@ -557,7 +561,7 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 		Vector3f vec = new Vector3f(xO, zO, 0.0F);
 		vec.normalize();
 		
-		if(!this.level().isClientSide && this.hasIcebreaker && !isEmergency()){
+		if(isServer() && this.hasIcebreaker && !isEmergency()){
 			AABB bb = getBoundingBox().inflate(0.1);
 			BlockPos.MutableBlockPos mutableBlockPos0 = new BlockPos.MutableBlockPos(bb.minX + 0.001D, bb.minY + 0.001D, bb.minZ + 0.001D);
 			BlockPos.MutableBlockPos mutableBlockPos1 = new BlockPos.MutableBlockPos(bb.maxX - 0.001D, bb.maxY - 0.001D, bb.maxZ - 0.001D);
@@ -592,7 +596,7 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 		
 		this.checkInsideBlocks();
 		
-		if(!this.level().isClientSide){
+		if(isServer()){
 			List<Entity> list = this.level().getEntities(this, this.getBoundingBox().inflate(0.2F, -0.01F, 0.2F), EntitySelector.pushableBy(this));
 			if(!list.isEmpty()){
 				boolean flag = !(this.getControllingPassenger() instanceof Player);
@@ -692,7 +696,6 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 				fluid.setAmount(Math.max(0, fluid.getAmount() - toConsume));
 				setContainedFluid(fluid);
 				
-				// TODO This should probably go the other way?
 				IPPacketHandler.sendToServer(new MessageConsumeBoatFuel(toConsume));
 				
 				setPaddleState(this.isForwardDown(), this.isReverseDown());
@@ -730,42 +733,6 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 		}
 		
 		this.setPaddleState(this.isRightDown() && !this.isLeftDown() || this.isForwardDown(), this.isLeftDown() && !this.isRightDown() || this.isForwardDown());
-	}
-	
-	public static class InterpolatableFloat{
-		private float _new, _old;
-		InterpolatableFloat(){
-			this._old = this._new = 0.0F;
-		}
-		
-		public void set(float value){
-			this._new = value;
-		}
-		
-		public void setClamped(float value, float min, float max){
-			this._new = Math.clamp(value, min, max);
-		}
-		
-		/** Has to be called <u>BEFORE</u> any change. */
-		public void update(){
-			this._old = this._new;
-		}
-		
-		public float lerp(float v){
-			return Mth.lerp(v, this._old, this._new);
-		}
-		
-		public float rotLerp(float v){
-			return Mth.rotLerp(v, this._old, this._new);
-		}
-		
-		public float get(){
-			return this._new;
-		}
-		
-		public float getOld(){
-			return this._old;
-		}
 	}
 	
 	private Vec3 addMovement(float magnitude){
@@ -974,6 +941,42 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 			}
 			
 			return stack;
+		}
+	}
+	
+	public static class InterpolatableFloat{
+		private float _new, _old;
+		InterpolatableFloat(){
+			this._old = this._new = 0.0F;
+		}
+		
+		public void set(float value){
+			this._new = value;
+		}
+		
+		public void setClamped(float value, float min, float max){
+			this._new = Math.clamp(value, min, max);
+		}
+		
+		/** Has to be called <u>BEFORE</u> any change. */
+		public void update(){
+			this._old = this._new;
+		}
+		
+		public float lerp(float v){
+			return Mth.lerp(v, this._old, this._new);
+		}
+		
+		public float rotLerp(float v){
+			return Mth.rotLerp(v, this._old, this._new);
+		}
+		
+		public float get(){
+			return this._new;
+		}
+		
+		public float getOld(){
+			return this._old;
 		}
 	}
 }
