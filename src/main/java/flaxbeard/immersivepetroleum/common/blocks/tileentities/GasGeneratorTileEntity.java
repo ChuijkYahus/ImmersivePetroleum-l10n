@@ -315,7 +315,7 @@ public class GasGeneratorTileEntity extends ImmersiveConnectableBlockEntity impl
 			}
 		}
 		
-		if(lastActive != this.isActive || this.isActive)
+		if(lastActive != this.isActive || this.isActive || this.wireType != null)
 			setChanged();
 		
 	}
