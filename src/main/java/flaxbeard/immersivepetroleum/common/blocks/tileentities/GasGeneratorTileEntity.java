@@ -160,7 +160,7 @@ public class GasGeneratorTileEntity extends ImmersiveConnectableBlockEntity impl
 	}
 	
 	@Override
-	public boolean soundShouldStop(ResourceLocation soundLocation){
+	public boolean stopSound(ResourceLocation soundLocation){
 		return !this.isActive;
 	}
 	

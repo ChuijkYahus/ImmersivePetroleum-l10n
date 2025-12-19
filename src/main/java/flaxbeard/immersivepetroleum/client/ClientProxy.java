@@ -36,6 +36,8 @@ import flaxbeard.immersivepetroleum.common.IPMenuTypes;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.PumpjackLogic;
 import flaxbeard.immersivepetroleum.common.cfg.IPServerConfig;
 import flaxbeard.immersivepetroleum.common.crafting.RecipeReloadListener;
+import flaxbeard.immersivepetroleum.common.sound.IPEntitySound;
+import flaxbeard.immersivepetroleum.common.sound.IPTickableSound;
 import flaxbeard.immersivepetroleum.common.sound.IPWorldSound;
 import flaxbeard.immersivepetroleum.common.sound.IPlaySound;
 import flaxbeard.immersivepetroleum.common.util.RegistryUtils;
@@ -83,6 +85,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public class ClientProxy extends CommonProxy{
 	
@@ -226,47 +229,70 @@ public class ClientProxy extends CommonProxy{
 		return MCUtil.getPlayer();
 	}
 	
-	@Override
-	public void handleEntitySound(Holder<SoundEvent> soundEvent, Entity entity, boolean active, float volume, float pitch){
-		// TODO Sound: Restore motorboat audio
-	}
-	
 	private final Map<BlockPos, IPWorldSound> worldSoundMap = new HashMap<>();
+	private final Map<UUID, IPEntitySound> entitySoundMap = new HashMap<>();
+	private static final int SUBTITLE_RANGE = 16;
+	
 	@Override
 	public void handleTileSound(Holder<SoundEvent> soundEvent, BlockEntity te, boolean active, float volume, float pitch){
-		final BlockPos blockPos = te.getBlockPos();
-		final SoundEvent sound = soundEvent.value();
+		final BlockPos pos = te.getBlockPos();
 		
-		IPWorldSound worldSound = this.worldSoundMap.get(blockPos);
+		IPWorldSound worldSound = this.worldSoundMap.get(pos);
 		if(worldSound == null && active){
-			if(te instanceof IPlaySound soundPlayer && MCUtil.getPlayer().distanceToSqr(Vec3.atCenterOf(blockPos)) > soundPlayer.soundRadiusSqr())
+			if(te instanceof IPlaySound soundPlayer && MCUtil.getPlayer().distanceToSqr(Vec3.atCenterOf(pos)) > soundPlayer.soundRadiusSqr())
 				return;
 			
-			worldSound = new IPWorldSound(blockPos, sound, volume, pitch);
-			this.worldSoundMap.put(blockPos, worldSound);
-			MCUtil.getSoundManager().play(worldSound);
+			playSound(this.worldSoundMap, new IPWorldSound(pos, soundEvent.value(), volume, pitch), pos);
 			
 		}else if(worldSound != null){
-			if(worldSound.isStopped() || !active || (!sound.getLocation().equals(worldSound.getLocation()))){
-				stopSound(worldSound);
+			if(worldSound.isStopped() || !active || (!soundEvent.value().getLocation().equals(worldSound.getLocation()))){
+				stopSound(this.worldSoundMap, worldSound, pos);
 				
 			}else if(!worldSound.isStopped() && MCUtil.getPlayer().tickCount % 20 == 0){
 				WeighedSoundEvents weighedSoundEvents = worldSound.resolve(MCUtil.getSoundManager());
 				
 				if(weighedSoundEvents != null){
-					getSubtitleOverlay().onPlaySound(worldSound, weighedSoundEvents, 16);
+					getSubtitleOverlay().onPlaySound(worldSound, weighedSoundEvents, SUBTITLE_RANGE);
 				}
 			}
 		}
 	}
 	
-	private void stopSound(IPWorldSound worldSound){
-		if(worldSound == null)
+	@Override
+	public void handleEntitySound(Holder<SoundEvent> soundEvent, Entity entity, boolean active, float volume, float pitch){
+		IPEntitySound entitySound = this.entitySoundMap.get(entity.getUUID());
+		if(entitySound == null && active){
+			if(entity instanceof IPlaySound soundPlayer && MCUtil.getPlayer().distanceToSqr(entity) > soundPlayer.soundRadiusSqr())
+				return;
+			
+			playSound(this.entitySoundMap, new IPEntitySound(entity, soundEvent.value(), volume, pitch), entity.getUUID());
+			
+		}else if(entitySound != null){
+			if(entitySound.isStopped() || !active || (!soundEvent.value().getLocation().equals(entitySound.getLocation()))){
+				stopSound(this.entitySoundMap, entitySound, entity.getUUID());
+				
+			}else if(!entitySound.isStopped() && MCUtil.getPlayer().tickCount % 20 == 0){
+				WeighedSoundEvents weighedSoundEvents = entitySound.resolve(MCUtil.getSoundManager());
+				
+				if(weighedSoundEvents != null){
+					getSubtitleOverlay().onPlaySound(entitySound, weighedSoundEvents, SUBTITLE_RANGE);
+				}
+			}
+		}
+	}
+	
+	private <Key, Sound extends IPTickableSound, M extends Map<Key, Sound>> void playSound(M map, Sound sound, Key key){
+		map.put(key, sound);
+		MCUtil.getSoundManager().play(sound);
+	}
+	
+	private <Key, Sound extends IPTickableSound, M extends Map<Key, Sound>> void stopSound(M map, Sound sound, Key key){
+		if(sound == null)
 			return;
 		
-		worldSound.stop();
-		MCUtil.getSoundManager().stop(worldSound);
-		this.worldSoundMap.remove(worldSound.getPosition());
+		sound.stop();
+		MCUtil.getSoundManager().stop(sound);
+		map.remove(key);
 	}
 	
 	private SubtitleOverlay getSubtitleOverlay(){

@@ -114,7 +114,7 @@ public class DebugRenderHandler{
 								if(te instanceof GasGeneratorTileEntity gas){
 									MutableComponent name = Component.translatable(te.getBlockState().getBlock().getDescriptionId()).withStyle(ChatFormatting.GOLD);
 									
-									boolean isActive = !gas.soundShouldStop(null);
+									boolean isActive = !gas.stopSound(null);
 									name.append(Component.literal(isActive ? " (Active)" : " (Inactive)").withStyle(isActive ? ChatFormatting.GREEN : ChatFormatting.RED));
 									
 									if(world.hasNeighborSignal(gas.getPosition())){
@@ -194,15 +194,17 @@ public class DebugRenderHandler{
 							EntityHitResult result = (EntityHitResult) rt;
 							
 							if(result.getEntity() instanceof MotorboatEntity boat){
+								MutableComponent name = Component.translatable("item.immersivepetroleum.speedboat")
+									.withStyle(ChatFormatting.GOLD)
+									.append(" (" + boat.getStringUUID() + ")");
+								debugText.add(name);
 								
-								debugText.translated("item.immersivepetroleum.speedboat", ChatFormatting.GOLD);
-								
-								FluidStack fluid = boat.getTank().getFluid();
-								if(fluid == FluidStack.EMPTY){
-									debugText.literal("Tank: Empty");
-								}else{
-									debugText.literal("Tank: " + fluid.getAmount() + "/" + boat.getMaxFuel() + "mB of " + fluid.getHoverName().getString());
+								IFluidTank tank = boat.getTank();
+								MutableComponent literal = Component.literal(String.format("%d/%d mB", tank.getFluidAmount(), tank.getCapacity()));
+								if(!tank.getFluid().isEmpty()){
+									literal.append(" (" + tank.getFluid().getHoverName().getString() + ")");
 								}
+								debugText.add(literal);
 								
 								NonNullList<ItemStack> upgrades = boat.getUpgrades();
 								int i = 0;

@@ -22,7 +22,7 @@ public class IPWorldSound extends IPTickableSound{
 	@Override
 	public void tick(){
 		if(MCUtil.getLevel().getBlockEntity(this.pos) instanceof IPlaySound soundPlayer){
-			this.stop = soundPlayer.soundShouldStop(getLocation());
+			this.stop = soundPlayer.stopSound(getLocation());
 			
 			if(!this.stop && MCUtil.getPlayer() != null){
 				float soundRadiusSqr = soundPlayer.soundRadiusSqr();

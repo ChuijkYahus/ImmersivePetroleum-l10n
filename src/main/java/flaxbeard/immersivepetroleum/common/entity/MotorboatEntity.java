@@ -12,6 +12,7 @@ import flaxbeard.immersivepetroleum.common.items.GasolineBottleItem;
 import flaxbeard.immersivepetroleum.common.items.MotorboatItem;
 import flaxbeard.immersivepetroleum.common.network.IPPacketHandler;
 import flaxbeard.immersivepetroleum.common.network.MessageConsumeBoatFuel;
+import flaxbeard.immersivepetroleum.common.sound.IPlaySound;
 import flaxbeard.immersivepetroleum.common.util.IPItemStackContainerHandler;
 import flaxbeard.immersivepetroleum.common.util.RegistryUtils;
 import flaxbeard.immersivepetroleum.common.util.Utils;
@@ -74,7 +75,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
+public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn, IPlaySound{
 	static final EntityDataAccessor<String> TANK_FLUID = SynchedEntityData.defineId(MotorboatEntity.class, EntityDataSerializers.STRING);
 	static final EntityDataAccessor<Integer> TANK_AMOUNT = SynchedEntityData.defineId(MotorboatEntity.class, EntityDataSerializers.INT);
 	
@@ -176,24 +177,24 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 		}
 	}
 	
-	/** Basically: is the A-Key down? */
-	public boolean isLeftDown(){
-		return this.inputLeft;
-	}
-	
-	/** Basically: is the D-Key down? */
-	public boolean isRightDown(){
-		return this.inputRight;
-	}
-	
 	/** Basically: is the W-Key down? */
 	public boolean isForwardDown(){
 		return this.inputUp;
 	}
 	
+	/** Basically: is the A-Key down? */
+	public boolean isLeftDown(){
+		return this.inputLeft;
+	}
+	
 	/** Basically: is the S-Key down? */
 	public boolean isReverseDown(){
 		return this.inputDown;
+	}
+	
+	/** Basically: is the D-Key down? */
+	public boolean isRightDown(){
+		return this.inputRight;
 	}
 	
 	@Override
@@ -207,7 +208,7 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 			
 			NonNullList<ItemStack> upgrades = getUpgrades();
 			for(ItemStack upgrade: upgrades){
-				if(upgrade != null && upgrade != ItemStack.EMPTY){
+				if(upgrade != null && !upgrade.isEmpty()){
 					Item item = upgrade.getItem();
 					
 					if(item == BoatUpgrades.REINFORCED_HULL.get()){
@@ -496,15 +497,15 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 		
 		if(isClient()){
 			if(!isEmergency()){
-				float moving = (this.isForwardDown() || this.isReverseDown()) ? (this.isBoosting ? .9F : .7F) : 0.5F;
+				float moving = (isForwardDown() || isReverseDown()) ? (this.isBoosting ? .9F : .7F) : 0.5F;
 				if(this.lastMoving != moving){
 					this.lastMoving = moving;
 					ImmersivePetroleum.proxy.handleEntitySound(IESounds.dieselGenerator, this, false, .5f, 0.5F);
 				}
 				FluidStack fs = this.getTank().getFluid();
-				ImmersivePetroleum.proxy.handleEntitySound(IESounds.dieselGenerator, this, this.isVehicle() && fs != FluidStack.EMPTY && fs.getAmount() > 0, this.isForwardDown() || this.isReverseDown() ? .5f : .3f, moving);
+				ImmersivePetroleum.proxy.handleEntitySound(IESounds.dieselGenerator, this, (this.isVehicle() && fs != FluidStack.EMPTY && fs.getAmount() > 0), (isForwardDown() || isReverseDown() ? .5f : .3f), moving);
 				
-				if(this.isForwardDown() && this.level().random.nextInt(2) == 0){
+				if(isForwardDown() && this.level().random.nextInt(2) == 0){
 					if(isInLava()){
 						if(this.level().random.nextInt(3) == 0){
 							float xO = Mth.sin(-this.getYRot() * 0.017453292F) + (this.level().random.nextFloat() - .5F) * .3F;
@@ -652,16 +653,16 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 				++this.deltaRotation;
 			}
 			
-			if(this.isRightDown() != this.isLeftDown() && !this.isForwardDown() && !this.isReverseDown()){
+			if(isRightDown() != isLeftDown() && !isForwardDown() && !isReverseDown()){
 				movMagnitude += 0.005F;
 			}
 			
 			this.setYRot(this.getYRot() + this.deltaRotation);
-			if(this.isForwardDown()){
+			if(isForwardDown()){
 				movMagnitude += 0.04F;
 			}
 			
-			if(this.isReverseDown()){
+			if(isReverseDown()){
 				movMagnitude -= 0.005F;
 			}
 			
@@ -673,9 +674,9 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 				consumeAmount = FuelHandler.getBoatFuelUse(fluid.getFluid());
 			}
 			
-			if(fluid != FluidStack.EMPTY && fluid.getAmount() >= consumeAmount && (this.isForwardDown() || this.isReverseDown())){
+			if(fluid != FluidStack.EMPTY && fluid.getAmount() >= consumeAmount && (isForwardDown() || isReverseDown())){
 				int toConsume = consumeAmount;
-				if(this.isForwardDown()){
+				if(isForwardDown()){
 					movMagnitude += 0.05F;
 					if(this.isBoosting && fluid.getAmount() >= 3 * consumeAmount){
 						movMagnitude *= 1.6F;
@@ -683,13 +684,13 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 					}
 				}
 				
-				if(this.isReverseDown()){
+				if(isReverseDown()){
 					movMagnitude -= 0.01F;
 				}
 				
-				if(this.isForwardDown()){
+				if(isForwardDown()){
 					this.propellerRotationSpeed += this.isBoosting ? 10.0F : 5.5F;
-				}else if(this.isReverseDown()){
+				}else if(isReverseDown()){
 					this.propellerRotationSpeed -= 5.5F;
 				}
 				
@@ -698,17 +699,17 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 				
 				IPPacketHandler.sendToServer(new MessageConsumeBoatFuel(toConsume));
 				
-				setPaddleState(this.isForwardDown(), this.isReverseDown());
+				setPaddleState(isForwardDown(), isReverseDown());
 			}else{
 				setPaddleState(false, false);
 			}
 			
 			Vec3 motion = addMovement(movMagnitude);
 			
-			if(this.isLeftDown() || this.isRightDown()){
+			if(isLeftDown() || this.isRightDown()){
 				float speed = (float) Math.sqrt(motion.x * motion.x + motion.z * motion.z);
 				
-				float delta = 1.1F * speed * (this.hasRudders ? 1.5F : 1F) * (this.isBoosting ? 0.5F : 1) * (this.isReverseDown() && !this.isForwardDown() ? 2F : 1F);
+				float delta = 1.1F * speed * (this.hasRudders ? 1.5F : 1F) * (this.isBoosting ? 0.5F : 1) * (isReverseDown() && !isForwardDown() ? 2F : 1F);
 				
 				if(this.isRightDown()){
 					this.deltaRotation += delta;
@@ -723,7 +724,7 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 				}
 			}
 			
-			if(!(this.isLeftDown() || this.isRightDown()) && this.propellerAssemblyRotation.get() != 0.0F){
+			if(!(isLeftDown() || this.isRightDown()) && this.propellerAssemblyRotation.get() != 0.0F){
 				this.propellerAssemblyRotation.set(this.propellerAssemblyRotation.get() * 0.7F);
 				if(Math.abs(this.propellerAssemblyRotation.get()) < 1.0E-2F)
 					this.propellerAssemblyRotation.set(0.0F);
@@ -732,7 +733,7 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 			this.setYRot(this.getYRot() + this.deltaRotation);
 		}
 		
-		this.setPaddleState(this.isRightDown() && !this.isLeftDown() || this.isForwardDown(), this.isLeftDown() && !this.isRightDown() || this.isForwardDown());
+		this.setPaddleState(isRightDown() && !isLeftDown() || isForwardDown(), isLeftDown() && !isRightDown() || isForwardDown());
 	}
 	
 	private Vec3 addMovement(float magnitude){
@@ -850,6 +851,11 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn{
 		
 		for(int i = 0;i < MotorboatItem.UPGRADE_SLOT_COUNT;i++)
 			this.entityData.set(UPGRADES[i], array[i]);
+	}
+	
+	@Override
+	public boolean stopSound(ResourceLocation soundLocation){
+		return isEmergency();
 	}
 	
 	public static class BoatTank{
