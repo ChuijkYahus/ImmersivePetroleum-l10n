@@ -495,38 +495,36 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn, IP
 		
 		this.tickBubbleColumn();
 		
-		if(isClient()){
-			if(!isEmergency()){
-				float moving = (isForwardDown() || isReverseDown()) ? (this.isBoosting ? .9F : .7F) : 0.5F;
-				if(this.lastMoving != moving){
-					this.lastMoving = moving;
-					ImmersivePetroleum.proxy.handleEntitySound(IESounds.dieselGenerator, this, false, .5f, 0.5F);
-				}
-				FluidStack fs = this.getTank().getFluid();
-				ImmersivePetroleum.proxy.handleEntitySound(IESounds.dieselGenerator, this, (this.isVehicle() && fs != FluidStack.EMPTY && fs.getAmount() > 0), (isForwardDown() || isReverseDown() ? .5f : .3f), moving);
+		if(isClient() && !isEmergency()){
+			float moving = (isForwardDown() || isReverseDown()) ? (this.isBoosting ? .9F : .7F) : 0.5F;
+			if(this.lastMoving != moving){
+				this.lastMoving = moving;
+				ImmersivePetroleum.proxy.handleEntitySound(IESounds.dieselGenerator, this, false, 0, 0);
+			}
+			FluidStack fs = this.getTank().getFluid();
+			ImmersivePetroleum.proxy.handleEntitySound(IESounds.dieselGenerator, this, (this.isVehicle() && fs != FluidStack.EMPTY && fs.getAmount() > 0), (isForwardDown() || isReverseDown() ? .5f : .3f), moving);
+			
+			if(isForwardDown()){
+				float xO = Mth.sin(-this.getYRot() * 0.017453292F) + (this.level().random.nextFloat() - .5F) * .3F;
+				float zO = Mth.cos(this.getYRot() * 0.017453292F) + (this.level().random.nextFloat() - .5F) * .3F;
 				
-				if(isForwardDown() && this.level().random.nextInt(2) == 0){
-					if(isInLava()){
-						if(this.level().random.nextInt(3) == 0){
-							float xO = Mth.sin(-this.getYRot() * 0.017453292F) + (this.level().random.nextFloat() - .5F) * .3F;
-							float zO = Mth.cos(this.getYRot() * 0.017453292F) + (this.level().random.nextFloat() - .5F) * .3F;
-							float yO = .4F + (this.level().random.nextFloat() - .5F) * .3F;
-							Vec3 motion = getDeltaMovement();
-							this.level().addParticle(ParticleTypes.LAVA, getX() - xO * 1.5F, getY() + yO, getZ() - zO * 1.5F, -2 * motion.x(), 0, -2 * motion.z());
-						}
-					}else{
-						float xO = Mth.sin(-this.getYRot() * 0.017453292F) + (this.level().random.nextFloat() - .5F) * .3F;
-						float zO = Mth.cos(this.getYRot() * 0.017453292F) + (this.level().random.nextFloat() - .5F) * .3F;
-						float yO = .1F + (this.level().random.nextFloat() - .5F) * .3F;
-						this.level().addParticle(ParticleTypes.BUBBLE, getX() - xO * 1.5F, getY() + yO, getZ() - zO * 1.5F, 0, 0, 0);
+				if(isInLava()){
+					if(this.level().random.nextInt(3) == 0){
+						float yO = .4F + (this.level().random.nextFloat() - .5F) * .3F;
+						Vec3 motion = getDeltaMovement();
+						this.level().addParticle(ParticleTypes.LAVA, getX() - xO * 1.5F, getY() + yO, getZ() - zO * 1.5F, -2 * motion.x(), 0, -2 * motion.z());
 					}
+				}else{
+					float yO = .1F + (this.level().random.nextFloat() - .5F) * .3F;
+					this.level().addParticle(ParticleTypes.BUBBLE, getX() - xO * 1.5F, getY() + yO, getZ() - zO * 1.5F, 0, 0, 0);
 				}
-				if(this.isBoosting && this.level().random.nextInt(2) == 0){
-					float xO = Mth.sin(-this.getYRot() * 0.017453292F) + (this.level().random.nextFloat() - .5F) * .3F;
-					float zO = Mth.cos(this.getYRot() * 0.017453292F) + (this.level().random.nextFloat() - .5F) * .3F;
-					float yO = .8F + (this.level().random.nextFloat() - .5F) * .3F;
-					this.level().addParticle(ParticleTypes.SMOKE, getX() - xO * 1.3F, getY() + yO, getZ() - zO * 1.3F, 0, 0, 0);
-				}
+			}
+			
+			if(this.isBoosting && this.level().random.nextInt(2) == 0){
+				float xO = Mth.sin(-this.getYRot() * 0.017453292F) + (this.level().random.nextFloat() - .5F) * .3F;
+				float zO = Mth.cos(this.getYRot() * 0.017453292F) + (this.level().random.nextFloat() - .5F) * .3F;
+				float yO = .8F + (this.level().random.nextFloat() - .5F) * .3F;
+				this.level().addParticle(ParticleTypes.SMOKE, getX() - xO * 1.3F, getY() + yO, getZ() - zO * 1.3F, 0, 0, 0);
 			}
 		}
 		
