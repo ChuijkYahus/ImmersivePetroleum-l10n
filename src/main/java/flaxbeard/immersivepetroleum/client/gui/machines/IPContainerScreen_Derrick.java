@@ -90,8 +90,7 @@ public class IPContainerScreen_Derrick extends IPContainerScreen<DerrickContaine
 		
 		@Override
 		protected void tooltip(@Nonnull GuiGraphics guiGraphics, int mouseX, int mouseY, List<Component> tooltip){
-			// Maybe?
-			tooltip.add(Component.literal("Derrick Status Console").withStyle(ChatFormatting.GRAY));
+			tooltip.add(Component.translatable("gui.immersivepetroleum.derrick.status_console.desc").withStyle(ChatFormatting.GRAY));
 		}
 		
 		@Override

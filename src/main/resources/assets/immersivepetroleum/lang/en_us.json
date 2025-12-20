@@ -152,7 +152,8 @@
 
 	"gui.immersivepetroleum.hydrotreater.tank.primary": "Primary Tank",
 	"gui.immersivepetroleum.hydrotreater.tank.secondary": "Secondary Tank",
-	
+
+	"gui.immersivepetroleum.derrick.status_console.desc": "Derrick Status Console",
 	"gui.immersivepetroleum.derrick.msg.disabled": "Disabled via Controller",
 	"gui.immersivepetroleum.derrick.msg.drilling": "Drilling... %1$s",
 	"gui.immersivepetroleum.derrick.msg.out_of_pipes": "Out of Pipes",
