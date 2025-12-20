@@ -1,5 +1,7 @@
 package flaxbeard.immersivepetroleum.client.render.debugging;
 
+import blusunrize.immersiveengineering.api.multiblocks.blocks.MultiblockRegistration;
+import blusunrize.immersiveengineering.api.multiblocks.blocks.component.RedstoneControl;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.env.IMultiblockBEHelper;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.env.IMultiblockBEHelperMaster;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.env.IMultiblockLevel;
@@ -149,11 +151,13 @@ public class DebugRenderHandler{
 								}else if(te instanceof IMultiblockBE<?> generic){
 									final IMultiblockBEHelper<?> mbHelper = generic.getHelper();
 									final IMultiblockState mbState = mbHelper.getState();
+									final MultiblockRegistration<?> multiblock = mbHelper.getMultiblock();
+									
 									{
 										BlockPos tPos = mbHelper.getPositionInMB();
 										debugText.literal("Template XYZ: " + tPos.getX() + ", " + tPos.getY() + ", " + tPos.getZ());
 										
-										Block block = mbHelper.getMultiblock().block().get();
+										Block block = multiblock.block().get();
 										MutableComponent name = toTranslation(block.getDescriptionId()).withStyle(ChatFormatting.GOLD);
 										
 										synchronized(LubricatedHandler.lubricatedTiles){
@@ -162,6 +166,11 @@ public class DebugRenderHandler{
 													name.append(toText(" (Lubricated " + info.ticks + ")").withStyle(ChatFormatting.YELLOW));
 												}
 											}
+										}
+										
+										boolean rsState = getRedstoneState(generic);
+										if(rsState){
+											name.append(toText(" (Redstoned)").withStyle(ChatFormatting.RED));
 										}
 										
 										debugText.add(name);
@@ -258,6 +267,28 @@ public class DebugRenderHandler{
 				}
 			}
 		}
+	}
+	
+	/**
+	 * Only works when reloading the world, so... broken?<br>
+	 * Not much I can do since it goes for All multiblock machines, including IE ones.
+	 */
+	private <S extends IMultiblockState> boolean getRedstoneState(IMultiblockBE<S> generic){
+		final IMultiblockBEHelper<S> mbHelper = generic.getHelper();
+		final IMultiblockState mbState = mbHelper.getState();
+		final MultiblockRegistration<S> multiblock = mbHelper.getMultiblock();
+		
+		if(!multiblock.redstoneInputAware())
+			return false;
+		
+		for(MultiblockRegistration.ExtraComponent extraComponent: multiblock.extraComponents()){
+			if(extraComponent.component() instanceof RedstoneControl rsCtrl){
+				RedstoneControl.RSState rsState = rsCtrl.wrapState(mbState);
+				return rsState.isEnabled(mbHelper.getContext());
+			}
+		}
+		
+		return false;
 	}
 	
 	@SubscribeEvent

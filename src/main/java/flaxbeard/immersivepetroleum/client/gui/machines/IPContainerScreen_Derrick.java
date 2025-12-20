@@ -107,15 +107,10 @@ public class IPContainerScreen_Derrick extends IPContainerScreen<DerrickContaine
 					if((context = multiblockBE.getHelper().getContext()) != null && context.getState() instanceof State state){
 						IMultiblockLevel level = context.getLevel();
 						
-						IMultiblockBEHelper<State> derrickType;
-						IMultiblockContext<State> ctx;
-						if((derrickType = multiblockBE.getHelper().asType(IPContent.Multiblock.DERRICK)) != null && (ctx = derrickType.getContext()) != null){
-							if(!state.rsState.isEnabled(ctx)){ // FIXME This is never true?
-								this.console.disabledText();
-								
-							}else{
-								updateStatusConsole(this.console, state, level);
-							}
+						if(state.isRedstoned){
+							this.console.disabledText();
+						}else{
+							updateStatusConsole(this.console, state, level);
 						}
 					}
 				}

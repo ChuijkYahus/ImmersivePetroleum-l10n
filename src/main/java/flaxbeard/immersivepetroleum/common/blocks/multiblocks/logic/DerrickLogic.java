@@ -272,7 +272,13 @@ public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableCom
 			state.fluidSpilled = Fluids.EMPTY;
 		}
 		
-		if(wasActive || lastDrilling != state.drilling || lastSpilling != state.spilling){
+		boolean forceSync = false;
+		if(state.isRedstoned != rsEnabled){
+			state.isRedstoned = rsEnabled;
+			forceSync = true;
+		}
+		
+		if(forceSync || wasActive || lastDrilling != state.drilling || lastSpilling != state.spilling){
 			context.markDirtyAndSync();
 		}
 	}
@@ -552,6 +558,8 @@ public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableCom
 		private Supplier<Level> level;
 		public BlockPos originPos;
 		
+		public boolean isRedstoned;
+		
 		private final IFluidHandler fluidHandler;
 		private final IFluidHandler emptyHandler;
 		private final IItemHandler itemHandler;
@@ -612,11 +620,15 @@ public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableCom
 		@Override
 		public void readSyncNBT(CompoundTag nbt, HolderLookup.Provider provider){
 			readSaveNBT(nbt, provider);
+			
+			this.isRedstoned = nbt.getBoolean("isRedstoned");
 		}
 		
 		@Override
 		public void writeSyncNBT(CompoundTag nbt, HolderLookup.Provider provider){
 			writeSaveNBT(nbt, provider);
+			
+			nbt.putBoolean("isRedstoned", this.isRedstoned);
 		}
 		
 		private int getReservoirFlow(){
