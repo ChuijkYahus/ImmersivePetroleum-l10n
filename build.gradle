@@ -112,12 +112,7 @@ dependencies {
 	compileOnly "mezz.jei:jei-${version_minecraft}-neoforge-api:${version_jei}"
 	compileOnly "mezz.jei:jei-${version_minecraft}-common-api:${version_jei}"
 
-	jarJar(implementation("malte0811:DualCodecs")) {
-		version {
-			strictly "[${version_dualcodecs},1)"
-			prefer "${version_dualcodecs}"
-		}
-	}
+	implementation "malte0811:DualCodecs:${version_dualcodecs}"
 	
 	// Example optional mod dependency with JEI
 	// The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
