@@ -5,7 +5,6 @@ import flaxbeard.immersivepetroleum.client.gui.displays.CokingChamberDisplay;
 import flaxbeard.immersivepetroleum.client.gui.displays.EnergyDisplay;
 import flaxbeard.immersivepetroleum.client.gui.displays.FluidDisplay;
 import flaxbeard.immersivepetroleum.client.gui.displays.parts.FluidParts;
-import flaxbeard.immersivepetroleum.client.gui.displays.parts.ItemParts;
 import flaxbeard.immersivepetroleum.common.gui.CokerUnitContainer;
 import flaxbeard.immersivepetroleum.common.util.ResourceUtils;
 import net.minecraft.ChatFormatting;

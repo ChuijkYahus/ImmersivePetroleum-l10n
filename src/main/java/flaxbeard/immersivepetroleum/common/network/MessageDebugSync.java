@@ -4,7 +4,6 @@ import flaxbeard.immersivepetroleum.common.IPContent;
 import flaxbeard.immersivepetroleum.common.IPDataComponents;
 import flaxbeard.immersivepetroleum.common.items.DebugItem;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;

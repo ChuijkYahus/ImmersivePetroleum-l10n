@@ -2,7 +2,6 @@ package flaxbeard.immersivepetroleum.client.render.multiblock;
 
 import blusunrize.immersiveengineering.api.multiblocks.blocks.registry.MultiblockBlockEntityMaster;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import flaxbeard.immersivepetroleum.client.model.IPModel;
 import flaxbeard.immersivepetroleum.client.model.IPModels;
 import flaxbeard.immersivepetroleum.client.model.ModelPumpjack;

@@ -2,7 +2,6 @@ package flaxbeard.immersivepetroleum.client.gui.displays.parts;
 
 import flaxbeard.immersivepetroleum.client.gui.displays.DisplayTesting;
 import flaxbeard.immersivepetroleum.client.gui.displays.TexCoords;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 

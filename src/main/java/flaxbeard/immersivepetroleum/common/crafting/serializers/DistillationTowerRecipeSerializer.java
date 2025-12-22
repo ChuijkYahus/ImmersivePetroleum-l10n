@@ -2,7 +2,6 @@ package flaxbeard.immersivepetroleum.common.crafting.serializers;
 
 import blusunrize.immersiveengineering.api.crafting.IERecipeSerializer;
 import blusunrize.immersiveengineering.api.crafting.MultiblockRecipe;
-import blusunrize.immersiveengineering.api.crafting.StackWithChance;
 import blusunrize.immersiveengineering.api.utils.codec.IEDualCodecs;
 import flaxbeard.immersivepetroleum.api.crafting.DistillationTowerRecipe;
 import flaxbeard.immersivepetroleum.common.IPContent;
@@ -11,10 +10,7 @@ import malte0811.dualcodecs.DualCompositeMapCodecs;
 import malte0811.dualcodecs.DualMapCodec;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.fluids.FluidStack;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 
 public class DistillationTowerRecipeSerializer extends IERecipeSerializer<DistillationTowerRecipe>{

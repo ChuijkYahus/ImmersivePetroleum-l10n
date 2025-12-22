@@ -16,19 +16,17 @@ import blusunrize.immersiveengineering.api.multiblocks.blocks.util.ShapeType;
 import blusunrize.immersiveengineering.common.blocks.multiblocks.blockimpl.InitialMultiblockContext;
 import blusunrize.immersiveengineering.common.fluids.ArrayFluidHandler;
 import flaxbeard.immersivepetroleum.api.crafting.CokerUnitRecipe;
-import flaxbeard.immersivepetroleum.common.IPContent;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.IReadWriteNBT;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.shapes.CokerShape;
 import flaxbeard.immersivepetroleum.common.util.FluidHelper;
-import flaxbeard.immersivepetroleum.common.util.inventory.FluidTankFiltered;
 import flaxbeard.immersivepetroleum.common.util.inventory.EnumInventory;
+import flaxbeard.immersivepetroleum.common.util.inventory.FluidTankFiltered;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
-import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
@@ -43,7 +41,6 @@ import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
 import java.util.function.Function;
 
 import static flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.coker.CokerUnitLogic.State;

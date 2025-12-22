@@ -15,7 +15,6 @@ import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Function;
 
 public class DebugText{
 	private final List<Component> lines = new ArrayList<>(20);

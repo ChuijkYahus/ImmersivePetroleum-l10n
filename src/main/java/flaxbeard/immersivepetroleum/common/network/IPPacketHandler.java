@@ -1,17 +1,12 @@
 package flaxbeard.immersivepetroleum.common.network;
 
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
-
-import javax.annotation.Nonnull;
-import java.util.function.Function;
 
 public class IPPacketHandler{
 	public static void init(PayloadRegistrar registrar){
