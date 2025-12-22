@@ -87,7 +87,7 @@ public class SurveyResultItem extends IPItemBase{
 		if(info instanceof ReservoirInfo reservoirInfo){
 			int expected = reservoirInfo.expected();
 			long amount = reservoirInfo.amount();
-			byte percentage = reservoirInfo.status();
+			byte percentage = reservoirInfo.percentage();
 			FluidStack fs = reservoirInfo.fluidStack();
 			
 			if(fs == FluidStack.EMPTY){

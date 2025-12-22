@@ -18,13 +18,13 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.Fluid;
 import net.neoforged.neoforge.fluids.FluidStack;
 
-public record ReservoirInfo(int x, int z, byte status, long amount, FluidStack fluidStack, int expected) implements ISurveyInfo{
+public record ReservoirInfo(int x, int z, byte percentage, long amount, FluidStack fluidStack, int expected) implements ISurveyInfo{
 	
 	//@formatter:off
 	public static final Codec<ReservoirInfo> CODEC = RecordCodecBuilder.create(inst -> inst.group(
 		Codec.INT.fieldOf("x").forGetter(s -> s.x),
 		Codec.INT.fieldOf("z").forGetter(s -> s.z),
-		Codec.BYTE.fieldOf("status").forGetter(s -> s.status),
+		Codec.BYTE.fieldOf("percentage").forGetter(s -> s.percentage),
 		Codec.LONG.fieldOf("amount").forGetter(s -> s.amount),
 		FluidStack.CODEC.fieldOf("fluid").forGetter(s -> s.fluidStack),
 		Codec.INT.fieldOf("expected").forGetter(s -> s.expected)
@@ -36,7 +36,7 @@ public record ReservoirInfo(int x, int z, byte status, long amount, FluidStack f
 	private static ReservoirInfo fromNBT(CompoundTag nbt){
 		int x = nbt.getInt("x");
 		int z = nbt.getInt("z");
-		byte status = nbt.getByte("status");
+		byte status = nbt.getByte("percentage");
 		long amount = nbt.getLong("amount");
 		int expected = nbt.getInt("expected");
 		
@@ -95,7 +95,7 @@ public record ReservoirInfo(int x, int z, byte status, long amount, FluidStack f
 		
 		tag.putInt("x", this.x);
 		tag.putInt("z", this.z);
-		tag.putByte("status", this.status);
+		tag.putByte("percentage", this.percentage);
 		tag.putLong("amount", this.amount);
 		tag.putInt("expected", this.expected);
 		
