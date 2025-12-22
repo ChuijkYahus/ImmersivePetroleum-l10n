@@ -34,3 +34,6 @@ license="All rights reserved"
 	versionRange="[${mc_version}]"
 	ordering="NONE"
 	side="BOTH"
+
+[[mixins]]
+	config="immersivepetroleum.mixins.json"
