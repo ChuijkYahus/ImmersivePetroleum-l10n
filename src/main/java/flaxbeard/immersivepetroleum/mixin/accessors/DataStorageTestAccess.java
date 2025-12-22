@@ -9,11 +9,7 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 import java.io.File;
 import java.util.Map;
 
-/**
- * For future use
- *
- * @author TwistedGate
- */
+/** For future use */
 @Mixin(DimensionDataStorage.class)
 public interface DataStorageTestAccess{
 	@Accessor

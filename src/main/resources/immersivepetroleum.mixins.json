@@ -2,6 +2,7 @@
 	"required": true,
 	"package": "flaxbeard.immersivepetroleum.mixin",
 	"mixins": [
+		"accessors.BoatAccess",
 		"accessors.DataStorageTestAccess"
 	],
 	"injectors": {

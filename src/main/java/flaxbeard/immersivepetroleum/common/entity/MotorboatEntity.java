@@ -16,6 +16,7 @@ import flaxbeard.immersivepetroleum.common.sound.IPlaySound;
 import flaxbeard.immersivepetroleum.common.util.IPItemStackContainerHandler;
 import flaxbeard.immersivepetroleum.common.util.RegistryUtils;
 import flaxbeard.immersivepetroleum.common.util.Utils;
+import flaxbeard.immersivepetroleum.mixin.accessors.BoatAccess;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.BlockPos;
@@ -179,22 +180,22 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn, IP
 	
 	/** Basically: is the W-Key down? */
 	public boolean isForwardDown(){
-		return this.inputUp;
+		return access().isInputUp();
 	}
 	
 	/** Basically: is the A-Key down? */
 	public boolean isLeftDown(){
-		return this.inputLeft;
+		return access().isInputLeft();
 	}
 	
 	/** Basically: is the S-Key down? */
 	public boolean isReverseDown(){
-		return this.inputDown;
+		return access().isInputDown();
 	}
 	
 	/** Basically: is the D-Key down? */
 	public boolean isRightDown(){
-		return this.inputRight;
+		return access().isInputRight();
 	}
 	
 	@Override
@@ -381,7 +382,7 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn, IP
 			return InteractionResult.SUCCESS;
 		}
 		
-		if(isServer() && !player.isShiftKeyDown() && this.outOfControlTicks < 60.0F && !player.isPassengerOfSameVehicle(this)){
+		if(isServer() && !player.isShiftKeyDown() && access().getOutOfControlTicks() < 60.0F && !player.isPassengerOfSameVehicle(this)){
 			player.startRiding(this);
 			if(this.level().dimension().equals(Level.NETHER) && this.isFireproof){
 				Utils.unlockIPAdvancement(player, "main/reinforced_hull");
@@ -439,6 +440,11 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn, IP
 		this.oFuelAmount = current;
 	}
 	
+	private void incrementOutOfControlTicks(){
+		final BoatAccess access = access();
+		access.setOutOfControlTicks(access.getOutOfControlTicks() + 1);
+	}
+	
 	@SuppressWarnings("deprecation")
 	@Override
 	public void tick(){
@@ -447,15 +453,19 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn, IP
 		this.propellerAssemblyRotation.update();
 		this.propellerRotation.update();
 		
-		this.oldStatus = this.status;
-		this.status = this.getStatus();
-		if(this.status != Boat.Status.UNDER_WATER && this.status != Boat.Status.UNDER_FLOWING_WATER){
-			this.outOfControlTicks = 0.0F;
+		final BoatAccess boatAccess = access();
+		
+		Status newStatus = boatAccess.invokeGetStatus();
+		
+		boatAccess.oldStatus(boatAccess.status());
+		boatAccess.status(newStatus);
+		if(boatAccess.status() != Boat.Status.UNDER_WATER && boatAccess.status() != Boat.Status.UNDER_FLOWING_WATER){
+			boatAccess.setOutOfControlTicks(0.0F);
 		}else{
-			++this.outOfControlTicks;
+			incrementOutOfControlTicks();
 		}
 		
-		if(isServer() && this.outOfControlTicks >= 60.0F){
+		if(isServer() && boatAccess.getOutOfControlTicks() >= 60.0F){
 			this.ejectPassengers();
 		}
 		
@@ -475,14 +485,14 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn, IP
 			this.baseTick();
 		}
 		
-		this.tickLerp();
+		boatAccess.invokeTickLerp();
 		
 		if(this.isControlledByLocalInstance()){
 			if(!(this.getFirstPassenger() instanceof Player)){
 				this.setPaddleState(false, false);
 			}
 			
-			this.floatBoat();
+			boatAccess.invokeFloatBoat();
 			if(isClient()){
 				this.controlBoat();
 				this.level().sendPacketToServer(new ServerboundPaddleBoatPacket(this.getPaddleState(0), this.getPaddleState(1)));
@@ -493,7 +503,7 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn, IP
 			this.setDeltaMovement(Vec3.ZERO);
 		}
 		
-		this.tickBubbleColumn();
+		boatAccess.invokeTickBubbleColumn();
 		
 		if(isClient() && !isEmergency()){
 			float moving = (isForwardDown() || isReverseDown()) ? (this.isBoosting ? .9F : .7F) : 0.5F;
@@ -502,7 +512,14 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn, IP
 				ImmersivePetroleum.proxy.handleEntitySound(IESounds.dieselGenerator, this, false, 0, 0);
 			}
 			FluidStack fs = this.getTank().getFluid();
-			ImmersivePetroleum.proxy.handleEntitySound(IESounds.dieselGenerator, this, (this.isVehicle() && fs != FluidStack.EMPTY && fs.getAmount() > 0), (isForwardDown() || isReverseDown() ? .5f : .3f), moving);
+			boolean isActive = (getControllingPassenger() instanceof Player && fs != FluidStack.EMPTY && fs.getAmount() > 0);
+			ImmersivePetroleum.proxy.handleEntitySound(
+				IESounds.dieselGenerator,
+				this,
+				isActive,
+				(isForwardDown() || isReverseDown() ? .5f : .3f),
+				moving
+			);
 			
 			if(isForwardDown()){
 				float xO = Mth.sin(-this.getYRot() * 0.017453292F) + (this.level().random.nextFloat() - .5F) * .3F;
@@ -528,10 +545,11 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn, IP
 			}
 		}
 		
+		final float[] paddlePositions = boatAccess.getPaddlePositions();
 		if(this.isEmergency()){
 			for(int i = 0;i <= 1;++i){
 				if(this.getPaddleState(i)){
-					if(!this.isSilent() && (double) (this.paddlePositions[i] % ((float) Math.PI * 2F)) <= (double) ((float) Math.PI / 4F) && (double) ((this.paddlePositions[i] + ((float) Math.PI / 8F)) % ((float) Math.PI * 2F)) >= (double) ((float) Math.PI / 4F)){
+					if(!this.isSilent() && (double) (paddlePositions[i] % ((float) Math.PI * 2F)) <= (double) ((float) Math.PI / 4F) && (double) ((paddlePositions[i] + ((float) Math.PI / 8F)) % ((float) Math.PI * 2F)) >= (double) ((float) Math.PI / 4F)){
 						SoundEvent soundevent = this.getPaddleSound();
 						if(soundevent != null){
 							Vec3 vec3 = this.getViewVector(1.0F);
@@ -542,16 +560,16 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn, IP
 						}
 					}
 					
-					this.paddlePositions[i] += (float) Math.PI / 8F;
+					paddlePositions[i] += (float) Math.PI / 8F;
 				}else{
-					this.paddlePositions[i] = 0.0F;
+					paddlePositions[i] = 0.0F;
 				}
 			}
 		}else{
 			if(this.getPaddleState(0)){
-				this.paddlePositions[0] += (this.isBoosting ? 0.02F : 0.01F);
+				paddlePositions[0] += (this.isBoosting ? 0.02F : 0.01F);
 			}else if(this.getPaddleState(1)){
-				this.paddlePositions[0] -= 0.01F;
+				paddlePositions[0] -= 0.01F;
 			}
 		}
 		
@@ -635,27 +653,32 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn, IP
 		}
 	}
 	
-	@Override
+	private void addDeltaRotation(BoatAccess boatAccess, float amount){
+		boatAccess.setDeltaRotation(boatAccess.getDeltaRotation() + amount);
+	}
+	
 	protected void controlBoat(){
 		if(!isVehicle())
 			return;
+		
+		final BoatAccess boatAccess = access();
 		
 		float movMagnitude = 0.0F;
 		
 		if(isEmergency()){
 			if(this.isLeftDown()){
-				--this.deltaRotation;
+				addDeltaRotation(boatAccess, -1);
 			}
 			
 			if(this.isRightDown()){
-				++this.deltaRotation;
+				addDeltaRotation(boatAccess, 1);
 			}
 			
 			if(isRightDown() != isLeftDown() && !isForwardDown() && !isReverseDown()){
 				movMagnitude += 0.005F;
 			}
 			
-			this.setYRot(this.getYRot() + this.deltaRotation);
+			this.setYRot(this.getYRot() + boatAccess.getDeltaRotation());
 			if(isForwardDown()){
 				movMagnitude += 0.04F;
 			}
@@ -710,13 +733,13 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn, IP
 				float delta = 1.1F * speed * (this.hasRudders ? 1.5F : 1F) * (this.isBoosting ? 0.5F : 1) * (isReverseDown() && !isForwardDown() ? 2F : 1F);
 				
 				if(this.isRightDown()){
-					this.deltaRotation += delta;
+					addDeltaRotation(boatAccess, delta);
 					
 					this.propellerAssemblyRotation.setClamped(this.propellerAssemblyRotation.get() - 0.2F, -1.0F, 1.0F);
 				}
 				
 				if(this.isLeftDown()){
-					this.deltaRotation -= delta;
+					addDeltaRotation(boatAccess, -delta);
 					
 					this.propellerAssemblyRotation.setClamped(this.propellerAssemblyRotation.get() + 0.2F, -1.0F, 1.0F);
 				}
@@ -728,7 +751,7 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn, IP
 					this.propellerAssemblyRotation.set(0.0F);
 			}
 			
-			this.setYRot(this.getYRot() + this.deltaRotation);
+			this.setYRot(this.getYRot() + boatAccess.getDeltaRotation());
 		}
 		
 		this.setPaddleState(isRightDown() && !isLeftDown() || isForwardDown(), isLeftDown() && !isRightDown() || isForwardDown());
@@ -854,6 +877,10 @@ public class MotorboatEntity extends Boat implements IEntityWithComplexSpawn, IP
 	@Override
 	public boolean stopSound(ResourceLocation soundLocation){
 		return isEmergency();
+	}
+	
+	protected BoatAccess access(){
+		return (BoatAccess) this;
 	}
 	
 	public static class BoatTank{
