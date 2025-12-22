@@ -2,15 +2,15 @@ package flaxbeard.immersivepetroleum.common.blocks.tileentities;
 
 import blusunrize.immersiveengineering.common.items.BulletItem;
 import blusunrize.immersiveengineering.common.util.IESounds;
+import flaxbeard.immersivepetroleum.api.reservoir.Reservoir;
 import flaxbeard.immersivepetroleum.api.reservoir.ReservoirHandler;
-import flaxbeard.immersivepetroleum.api.reservoir.ReservoirIsland;
 import flaxbeard.immersivepetroleum.common.ExternalModContent;
 import flaxbeard.immersivepetroleum.common.IPContent;
 import flaxbeard.immersivepetroleum.common.IPTileTypes;
 import flaxbeard.immersivepetroleum.common.blocks.ticking.IPCommonTickableTile;
 import flaxbeard.immersivepetroleum.common.util.Utils;
 import flaxbeard.immersivepetroleum.common.util.survey.ISurveyInfo;
-import flaxbeard.immersivepetroleum.common.util.survey.IslandInfo;
+import flaxbeard.immersivepetroleum.common.util.survey.ReservoirInfo;
 import flaxbeard.immersivepetroleum.common.util.survey.SurveyScan;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -174,7 +174,7 @@ public class SeismicSurveyTileEntity extends IPTileEntityBase implements IPCommo
 				}
 				
 				if(!world.isClientSide){
-					ReservoirIsland currentIsland = ReservoirHandler.getIslandNoCache(world, pos);
+					Reservoir currentIsland = ReservoirHandler.getReservoirNoCache(world, pos);
 					
 					ItemStack stack = new ItemStack(IPContent.Items.SURVEYRESULT.get());
 					ISurveyInfo info;
@@ -182,9 +182,9 @@ public class SeismicSurveyTileEntity extends IPTileEntityBase implements IPCommo
 					if(currentIsland != null){
 						// Give info about the current one.
 						
-						info = IslandInfo.create(world, pos, currentIsland);
+						info = ReservoirInfo.create(world, pos, currentIsland);
 						
-						if(((IslandInfo) info).getFluid().equals(IPContent.Fluids.CRUDEOIL.get())){
+						if(((ReservoirInfo) info).getFluid().equals(IPContent.Fluids.CRUDEOIL.get())){
 							Utils.unlockIPAdvancement(player, "main/root");
 						}
 						

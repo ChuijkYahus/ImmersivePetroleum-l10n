@@ -3,7 +3,7 @@ package flaxbeard.immersivepetroleum.common.util.survey;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import flaxbeard.immersivepetroleum.ImmersivePetroleum;
-import flaxbeard.immersivepetroleum.api.reservoir.ReservoirIsland;
+import flaxbeard.immersivepetroleum.api.reservoir.Reservoir;
 import flaxbeard.immersivepetroleum.common.IPDataComponents;
 import flaxbeard.immersivepetroleum.common.util.RegistryUtils;
 import io.netty.buffer.ByteBuf;
@@ -18,22 +18,22 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.Fluid;
 import net.neoforged.neoforge.fluids.FluidStack;
 
-public record IslandInfo(int x, int z, byte status, long amount, FluidStack fluidStack, int expected) implements ISurveyInfo{
+public record ReservoirInfo(int x, int z, byte status, long amount, FluidStack fluidStack, int expected) implements ISurveyInfo{
 	
 	//@formatter:off
-	public static final Codec<IslandInfo> CODEC = RecordCodecBuilder.create(inst -> inst.group(
+	public static final Codec<ReservoirInfo> CODEC = RecordCodecBuilder.create(inst -> inst.group(
 		Codec.INT.fieldOf("x").forGetter(s -> s.x),
 		Codec.INT.fieldOf("z").forGetter(s -> s.z),
 		Codec.BYTE.fieldOf("status").forGetter(s -> s.status),
 		Codec.LONG.fieldOf("amount").forGetter(s -> s.amount),
-		FluidStack.CODEC.fieldOf("fluidstack").forGetter(s -> s.fluidStack),
+		FluidStack.CODEC.fieldOf("fluid").forGetter(s -> s.fluidStack),
 		Codec.INT.fieldOf("expected").forGetter(s -> s.expected)
-	).apply(inst, IslandInfo::new));
+	).apply(inst, ReservoirInfo::new));
 	//@formatter:on
 	
-	public static final StreamCodec<ByteBuf, IslandInfo> CODEC_STREAM = ByteBufCodecs.COMPOUND_TAG.map(IslandInfo::fromNBT, ISurveyInfo::writeToTag);
+	public static final StreamCodec<ByteBuf, ReservoirInfo> CODEC_STREAM = ByteBufCodecs.COMPOUND_TAG.map(ReservoirInfo::fromNBT, ISurveyInfo::writeToTag);
 	
-	private static IslandInfo fromNBT(CompoundTag nbt){
+	private static ReservoirInfo fromNBT(CompoundTag nbt){
 		int x = nbt.getInt("x");
 		int z = nbt.getInt("z");
 		byte status = nbt.getByte("status");
@@ -51,23 +51,23 @@ public record IslandInfo(int x, int z, byte status, long amount, FluidStack flui
 				}
 			}catch(ResourceLocationException e){
 				// Technically don't care, but made it log this just in case.
-				ImmersivePetroleum.log.debug("IslandInfo invalid ResourceLocation. Ignoring.");
+				ImmersivePetroleum.log.debug("ReservoirInfo invalid ResourceLocation. Ignoring.");
 			}
 		}
 		
-		return new IslandInfo(x, z, status, amount, fluidStack, expected);
+		return new ReservoirInfo(x, z, status, amount, fluidStack, expected);
 	}
 	
-	public static IslandInfo create(Level world, BlockPos pos, ReservoirIsland island){
+	public static ReservoirInfo create(Level world, BlockPos pos, Reservoir reservoir){
 		int x = pos.getX();
 		int z = pos.getZ();
 		
-		byte status = (byte) (island.getAmount() / (float) island.getCapacity() * 100);
-		long amount = island.getAmount();
-		FluidStack fluidStack = new FluidStack(island.getFluid(), 1);
-		int expected = ReservoirIsland.getFlow(island.getPressure(world, pos.getX(), pos.getZ()));
+		byte status = (byte) (reservoir.getAmount() / (float) reservoir.getCapacity() * 100);
+		long amount = reservoir.getAmount();
+		FluidStack fluidStack = new FluidStack(reservoir.getFluid(), 1);
+		int expected = Reservoir.getFlow(reservoir.getPressure(world, pos.getX(), pos.getZ()));
 		
-		return new IslandInfo(x, z, status, amount, fluidStack, expected);
+		return new ReservoirInfo(x, z, status, amount, fluidStack, expected);
 	}
 	
 	@Override
@@ -86,7 +86,7 @@ public record IslandInfo(int x, int z, byte status, long amount, FluidStack flui
 	
 	@Override
 	public void writeToStack(ItemStack stack){
-		stack.set(IPDataComponents.ISLAND_INFO, this);
+		stack.set(IPDataComponents.RESERVOIR_INFO, this);
 	}
 	
 	@Override

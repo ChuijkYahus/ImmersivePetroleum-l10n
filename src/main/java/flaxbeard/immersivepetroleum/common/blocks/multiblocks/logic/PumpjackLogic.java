@@ -13,8 +13,8 @@ import blusunrize.immersiveengineering.api.multiblocks.blocks.util.CapabilityPos
 import blusunrize.immersiveengineering.api.multiblocks.blocks.util.MultiblockFace;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.util.RelativeBlockFace;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.util.ShapeType;
+import flaxbeard.immersivepetroleum.api.reservoir.Reservoir;
 import flaxbeard.immersivepetroleum.api.reservoir.ReservoirHandler;
-import flaxbeard.immersivepetroleum.api.reservoir.ReservoirIsland;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.shapes.PumpjackShape;
 import flaxbeard.immersivepetroleum.common.blocks.tileentities.WellPipeTileEntity;
 import flaxbeard.immersivepetroleum.common.blocks.tileentities.WellTileEntity;
@@ -29,10 +29,11 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
 import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.PumpjackLogic.State;
 
@@ -87,46 +88,45 @@ public class PumpjackLogic implements IMultiblockLogic<State>, IServerTickableCo
 					int extracted = state.energy.extractEnergy(consumption, true);
 					
 					if(extracted >= consumption){
-						// Does any island still have pressure?
-						boolean foundPressurizedIsland = false;
-						for(ColumnPos cPos: well.tappedIslands){
-							ReservoirIsland island = ReservoirHandler.getIsland(level.getRawLevel(), cPos);
+						// Does any reservoir still have pressure?
+						boolean foundPressurizedReservoir = false;
+						for(ColumnPos cPos: well.tappedReservoirs){
+							Reservoir reservoir = ReservoirHandler.getReservoir(level.getRawLevel(), cPos);
 							
-							if(island != null && island.getPressure(level.getRawLevel(), cPos.x(), cPos.z()) > 0.0F){
-								foundPressurizedIsland = true;
+							if(reservoir != null && reservoir.getPressure(level.getRawLevel(), cPos.x(), cPos.z()) > 0.0F){
+								foundPressurizedReservoir = true;
 								break;
 							}
 						}
 						
 						// Skip if there is (Simulates pumpjack not being able to handle high pressures)
-						if(!foundPressurizedIsland){
+						if(!foundPressurizedReservoir){
 							int extractSpeed = IPServerConfig.EXTRACTION.pumpjack_speed.get();
 							
-							IFluidHandler portEast_output = state.east_port_output;
-							IFluidHandler portWest_output = state.west_port_output;
+							IFluidHandler portEast_output = state.east_port_output.get();
+							IFluidHandler portWest_output = state.west_port_output.get();
 							
-							for(ColumnPos cPos: well.tappedIslands){
-								ReservoirIsland island = ReservoirHandler.getIsland(level.getRawLevel(), cPos);
+							for(ColumnPos cPos: well.tappedReservoirs){
+								Reservoir reservoir = ReservoirHandler.getReservoir(level.getRawLevel(), cPos);
 								
-								if(island != null){
-									FluidStack fluid = new FluidStack(island.getFluid(), island.extract(extractSpeed, IFluidHandler.FluidAction.SIMULATE));
+								if(reservoir != null){
+									FluidStack fluid = new FluidStack(reservoir.getFluid(), reservoir.extract(extractSpeed, FluidAction.SIMULATE));
 									
 									if(portEast_output != null){
-										
-										int accepted = portEast_output.fill(fluid, IFluidHandler.FluidAction.SIMULATE);
+										int accepted = portEast_output.fill(fluid, FluidAction.SIMULATE);
 										if(accepted > 0){
-											int drained = portEast_output.fill(FluidHelper.copyFluid(fluid, Math.min(fluid.getAmount(), accepted)), IFluidHandler.FluidAction.EXECUTE);
-											island.extract(drained, IFluidHandler.FluidAction.EXECUTE);
+											int drained = portEast_output.fill(FluidHelper.copyFluid(fluid, Math.min(fluid.getAmount(), accepted)), FluidAction.EXECUTE);
+											reservoir.extract(drained, FluidAction.EXECUTE);
 											fluid = FluidHelper.copyFluid(fluid, fluid.getAmount() - drained);
 											active = true;
 										}
 									}
 									
 									if(portWest_output != null && fluid.getAmount() > 0){
-										int accepted = portWest_output.fill(fluid, IFluidHandler.FluidAction.SIMULATE);
+										int accepted = portWest_output.fill(fluid, FluidAction.SIMULATE);
 										if(accepted > 0){
-											int drained = portWest_output.fill(FluidHelper.copyFluid(fluid, Math.min(fluid.getAmount(), accepted)), IFluidHandler.FluidAction.EXECUTE);
-											island.extract(drained, IFluidHandler.FluidAction.EXECUTE);
+											int drained = portWest_output.fill(FluidHelper.copyFluid(fluid, Math.min(fluid.getAmount(), accepted)), FluidAction.EXECUTE);
+											reservoir.extract(drained, FluidAction.EXECUTE);
 											active = true;
 										}
 									}
@@ -176,12 +176,12 @@ public class PumpjackLogic implements IMultiblockLogic<State>, IServerTickableCo
 		
 		private final IFluidHandler fakeFluidHandler = FAKE_TANK;
 		
-		private final @Nullable IFluidHandler east_port_output;
-		private final @Nullable IFluidHandler west_port_output;
+		private final Supplier<IFluidHandler> east_port_output;
+		private final Supplier<IFluidHandler> west_port_output;
 		
 		public State(IInitialMultiblockContext<State> context){
-			this.east_port_output = context.getCapabilityAt(Capabilities.FluidHandler.BLOCK, EAST_PORT_OFFSET).get();
-			this.west_port_output = context.getCapabilityAt(Capabilities.FluidHandler.BLOCK, WEST_PORT_OFFSET).get();
+			this.east_port_output = context.getCapabilityAt(Capabilities.FluidHandler.BLOCK, EAST_PORT_OFFSET);
+			this.west_port_output = context.getCapabilityAt(Capabilities.FluidHandler.BLOCK, WEST_PORT_OFFSET);
 		}
 		
 		@Override

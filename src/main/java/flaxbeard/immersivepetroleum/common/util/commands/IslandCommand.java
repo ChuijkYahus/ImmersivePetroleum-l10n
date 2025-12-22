@@ -9,13 +9,13 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import flaxbeard.immersivepetroleum.api.reservoir.AxisAlignedIslandBB;
+import flaxbeard.immersivepetroleum.api.reservoir.Reservoir;
+import flaxbeard.immersivepetroleum.api.reservoir.ReservoirBoundingBox;
 import flaxbeard.immersivepetroleum.api.reservoir.ReservoirHandler;
-import flaxbeard.immersivepetroleum.api.reservoir.ReservoirIsland;
 import flaxbeard.immersivepetroleum.api.reservoir.ReservoirType;
-import flaxbeard.immersivepetroleum.common.ReservoirRegionDataStorage;
-import flaxbeard.immersivepetroleum.common.ReservoirRegionDataStorage.RegionData;
-import flaxbeard.immersivepetroleum.common.ReservoirRegionDataStorage.RegionPos;
+import flaxbeard.immersivepetroleum.common.datastorage.reservoir.RegionData;
+import flaxbeard.immersivepetroleum.common.datastorage.reservoir.RegionPos;
+import flaxbeard.immersivepetroleum.common.datastorage.reservoir.ReservoirRegionDataStorage;
 import flaxbeard.immersivepetroleum.common.util.Utils;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
@@ -31,6 +31,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ColumnPos;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.fluids.FluidStack;
 
 import javax.annotation.Nonnull;
@@ -53,13 +54,13 @@ public class IslandCommand{
 		return main;
 	}
 	
-	private static int get(CommandContext<CommandSourceStack> context, @Nonnull ReservoirIsland island){
+	private static int get(CommandContext<CommandSourceStack> context, @Nonnull Reservoir reservoir){
 		//@formatter:off
 		CommandUtils.sendTranslated(context.getSource(),
 				"chat.immersivepetroleum.command.reservoir.get",
-				island.getAmount(),
-				Utils.fDecimal(island.getAmount() / (double) island.getCapacity() * 100),
-				new FluidStack(island.getFluid(), 1).getHoverName()
+				reservoir.getAmount(),
+				Utils.fDecimal(reservoir.getAmount() / (double) reservoir.getCapacity() * 100),
+				new FluidStack(reservoir.getFluid(), 1).getHoverName()
 		);
 		//@formatter:on
 		return Command.SINGLE_SUCCESS;
@@ -67,13 +68,20 @@ public class IslandCommand{
 	
 	private static int locate(CommandContext<CommandSourceStack> command){
 		CommandSourceStack source = command.getSource();
-		BlockPos srcPos = source.getEntity().blockPosition();
+		BlockPos srcPos;
+		if(source.getEntity() != null){
+			srcPos = source.getEntity().blockPosition();
+		}else{
+			Vec3 position = source.getPosition();
+			srcPos = new BlockPos((int) position.x, (int) position.y, (int) position.z);
+		}
+		
 		double dx = srcPos.getX() + 0.5;
 		double dz = srcPos.getZ() + 0.5;
 		int range = 128;
 		int rangeSqr = range * range;
 		
-		Set<ReservoirIsland> nearby = new HashSet<>();
+		Set<Reservoir> nearby = new HashSet<>();
 		
 		ReservoirRegionDataStorage storage = ReservoirRegionDataStorage.get();
 		
@@ -89,11 +97,11 @@ public class IslandCommand{
 		final ResourceKey<Level> dimKey = source.getLevel().dimension();
 		for(RegionData rd: regions){
 			if(rd != null){
-				Multimap<ResourceKey<Level>, ReservoirIsland> islands = rd.getReservoirIslandList();
+				Multimap<ResourceKey<Level>, Reservoir> islands = rd.getReservoirList();
 				synchronized(islands){
-					islands.get(dimKey).forEach(island -> {
-						if(island.getBoundingBox().getCenter().distToCenterSqr(dx, 0, dz) <= rangeSqr){
-							nearby.add(island);
+					islands.get(dimKey).forEach(reservoir -> {
+						if(reservoir.getBoundingBox().getCenter().distToCenterSqr(dx, 0, dz) <= rangeSqr){
+							nearby.add(reservoir);
 						}
 					});
 				}
@@ -106,21 +114,21 @@ public class IslandCommand{
 		}
 		
 		// Find the Closest coordinate that can tap into one of them
-		ReservoirIsland closestIsland = null;
+		Reservoir closestIsland = null;
 		double smallestDistance = rangeSqr;
 		ColumnPos p = null;
-		for(ReservoirIsland island: nearby){
-			AxisAlignedIslandBB IAABB = island.getBoundingBox();
-			for(int z = IAABB.minZ() + 1;z < IAABB.maxZ();z++){
-				for(int x = IAABB.minX() + 1;x < IAABB.maxX();x++){
-					if(island.contains(x, z)){
+		for(Reservoir reservoir: nearby){
+			ReservoirBoundingBox IAABB = reservoir.getBoundingBox();
+			for(int z = IAABB.zMin() + 1;z < IAABB.zMax();z++){
+				for(int x = IAABB.xMin() + 1;x < IAABB.xMax();x++){
+					if(reservoir.getPolygon().contains(x, z)){
 						double xa = (x + 0.5) - dx;
 						double za = (z + 0.5) - dz;
 						double dst = xa * xa + za * za;
 						if(dst < smallestDistance){
 							p = new ColumnPos(x, z);
 							smallestDistance = dst;
-							closestIsland = island;
+							closestIsland = reservoir;
 						}
 					}
 				}
@@ -134,11 +142,11 @@ public class IslandCommand{
 		
 		// Find the spot with the highest pressure
 		double hPressure = 0.0D;
-		AxisAlignedIslandBB IAABB = closestIsland.getBoundingBox();
-		for(int z = IAABB.minZ() + 1;z < IAABB.maxZ();z++){
-			for(int x = IAABB.minX() + 1;x < IAABB.maxX();x++){
+		ReservoirBoundingBox IAABB = closestIsland.getBoundingBox();
+		for(int z = IAABB.zMin() + 1;z < IAABB.zMax();z++){
+			for(int x = IAABB.xMin() + 1;x < IAABB.xMax();x++){
 				double cPressure;
-				if(closestIsland.contains(x, z) && (cPressure = ReservoirHandler.getValueOf(source.getLevel(), x, z)) > hPressure){
+				if(closestIsland.getPolygon().contains(x, z) && (cPressure = ReservoirHandler.getValueOf(source.getLevel(), x, z)) > hPressure){
 					hPressure = cPressure;
 					p = new ColumnPos(x, z);
 				}
@@ -148,7 +156,7 @@ public class IslandCommand{
 		final ClickEvent clickEvent = new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/tp @s " + p.x() + " ~ " + p.z());
 		final HoverEvent hoverEvent = new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("chat.coordinates.tooltip"));
 		
-		ReservoirIsland finalClosestIsland = closestIsland;
+		Reservoir finalClosestIsland = closestIsland;
 		ColumnPos finalP = p;
 		source.sendSuccess(() -> Component.translatable("chat.immersivepetroleum.command.reservoir.locate", finalClosestIsland.getType().value().name, ComponentUtils.wrapInSquareBrackets(Component.literal(finalP.x() + " " + finalP.z())).withStyle((s) -> {
 			return s.withColor(ChatFormatting.GREEN).withItalic(true).withClickEvent(clickEvent).withHoverEvent(hoverEvent);
@@ -160,8 +168,8 @@ public class IslandCommand{
 	private static LiteralArgumentBuilder<CommandSourceStack> setters(){
 		LiteralArgumentBuilder<CommandSourceStack> set = Commands.literal("set").requires(source -> source.hasPermission(4));
 		
-		set.then(Commands.literal("amount").then(positional(Commands.argument("amount", LongArgumentType.longArg(0, ReservoirIsland.MAX_AMOUNT)), IslandCommand::setReservoirAmount)));
-		set.then(Commands.literal("capacity").then(positional(Commands.argument("capacity", LongArgumentType.longArg(0, ReservoirIsland.MAX_AMOUNT)), IslandCommand::setReservoirCapacity)));
+		set.then(Commands.literal("amount").then(positional(Commands.argument("amount", LongArgumentType.longArg(0, Reservoir.MAX_AMOUNT)), IslandCommand::setReservoirAmount)));
+		set.then(Commands.literal("capacity").then(positional(Commands.argument("capacity", LongArgumentType.longArg(0, Reservoir.MAX_AMOUNT)), IslandCommand::setReservoirCapacity)));
 		set.then(Commands.literal("type").then(positional(Commands.argument("name", StringArgumentType.string()).suggests(IslandCommand::typeSuggestor), IslandCommand::setReservoirType)));
 		
 		return set;
@@ -171,65 +179,65 @@ public class IslandCommand{
 		return SharedSuggestionProvider.suggest(ReservoirType.map.values().stream().map(type -> type.value().name), builder);
 	}
 	
-	private static int setReservoirAmount(CommandContext<CommandSourceStack> context, @Nonnull ReservoirIsland island){
+	private static int setReservoirAmount(CommandContext<CommandSourceStack> context, @Nonnull Reservoir reservoir){
 		long amount = context.getArgument("amount", Long.class);
-		island.setAmount(amount);
-		island.setDirty();
+		reservoir.setAmount(amount);
+		reservoir.setDirty();
 		
-		CommandUtils.sendTranslated(context.getSource(), "chat.immersivepetroleum.command.reservoir.set.amount.success", island.getAmount());
+		CommandUtils.sendTranslated(context.getSource(), "chat.immersivepetroleum.command.reservoir.set.amount.success", reservoir.getAmount());
 		return Command.SINGLE_SUCCESS;
 	}
 	
-	private static int setReservoirCapacity(CommandContext<CommandSourceStack> context, @Nonnull ReservoirIsland island){
+	private static int setReservoirCapacity(CommandContext<CommandSourceStack> context, @Nonnull Reservoir reservoir){
 		long capacity = context.getArgument("capacity", Long.class);
-		island.setAmountAndCapacity(capacity, capacity);
-		island.setDirty();
+		reservoir.setAmountAndCapacity(capacity, capacity);
+		reservoir.setDirty();
 		
-		CommandUtils.sendTranslated(context.getSource(), "chat.immersivepetroleum.command.reservoir.set.capacity.success", island.getCapacity());
+		CommandUtils.sendTranslated(context.getSource(), "chat.immersivepetroleum.command.reservoir.set.capacity.success", reservoir.getCapacity());
 		return Command.SINGLE_SUCCESS;
 	}
 	
-	private static int setReservoirType(CommandContext<CommandSourceStack> context, @Nonnull ReservoirIsland island){
+	private static int setReservoirType(CommandContext<CommandSourceStack> context, @Nonnull Reservoir reservoir){
 		String name = context.getArgument("name", String.class);
-		RecipeHolder<ReservoirType> reservoir = null;
+		RecipeHolder<ReservoirType> type = null;
 		for(RecipeHolder<ReservoirType> holder: ReservoirType.map.values()){
 			if(holder.value().name.equalsIgnoreCase(name))
-				reservoir = holder;
+				type = holder;
 		}
 		
-		if(reservoir == null){
+		if(type == null){
 			CommandUtils.sendTranslatedError(context.getSource(), "chat.immersivepetroleum.command.reservoir.set.type.fail", name);
 			return Command.SINGLE_SUCCESS;
 		}
 		
-		island.setReservoirType(reservoir);
-		island.setDirty();
+		reservoir.setReservoirType(type);
+		reservoir.setDirty();
 		
-		CommandUtils.sendTranslated(context.getSource(), "chat.immersivepetroleum.command.reservoir.set.type.success", reservoir.value().name);
+		CommandUtils.sendTranslated(context.getSource(), "chat.immersivepetroleum.command.reservoir.set.type.success", reservoir.getType().value().name);
 		return Command.SINGLE_SUCCESS;
 	}
 	
-	static <T extends ArgumentBuilder<CommandSourceStack, T>> T positional(T builder, BiFunction<CommandContext<CommandSourceStack>, ReservoirIsland, Integer> function){
+	static <T extends ArgumentBuilder<CommandSourceStack, T>> T positional(T builder, BiFunction<CommandContext<CommandSourceStack>, Reservoir, Integer> function){
 		builder.executes(command -> {
 			ColumnPos pos = Utils.toColumnPos(BlockPos.containing(command.getSource().getPosition()));
 			
-			ReservoirIsland island = ReservoirHandler.getIsland(command.getSource().getLevel(), pos);
-			if(island == null){
+			Reservoir reservoir = ReservoirHandler.getReservoir(command.getSource().getLevel(), pos);
+			if(reservoir == null){
 				CommandUtils.sendTranslated(command.getSource(), "chat.immersivepetroleum.command.reservoir.notfound");
 				return Command.SINGLE_SUCCESS;
 			}
 			
-			return function.apply(command, island);
+			return function.apply(command, reservoir);
 		}).then(Commands.argument("location", ColumnPosArgument.columnPos()).executes(command -> {
 			ColumnPos pos = ColumnPosArgument.getColumnPos(command, "location");
 			
-			ReservoirIsland island = ReservoirHandler.getIsland(command.getSource().getLevel(), pos);
-			if(island == null){
+			Reservoir reservoir = ReservoirHandler.getReservoir(command.getSource().getLevel(), pos);
+			if(reservoir == null){
 				CommandUtils.sendTranslated(command.getSource(), "chat.immersivepetroleum.command.reservoir.notfound");
 				return Command.SINGLE_SUCCESS;
 			}
 			
-			return function.apply(command, island);
+			return function.apply(command, reservoir);
 		}));
 		return builder;
 	}

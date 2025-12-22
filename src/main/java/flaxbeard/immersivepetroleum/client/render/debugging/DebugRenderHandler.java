@@ -13,16 +13,13 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import flaxbeard.immersivepetroleum.api.crafting.LubricatedHandler;
 import flaxbeard.immersivepetroleum.api.crafting.LubricatedHandler.LubricatedTileInfo;
-import flaxbeard.immersivepetroleum.api.reservoir.AxisAlignedIslandBB;
+import flaxbeard.immersivepetroleum.api.reservoir.Reservoir;
+import flaxbeard.immersivepetroleum.api.reservoir.ReservoirBoundingBox;
 import flaxbeard.immersivepetroleum.api.reservoir.ReservoirHandler;
-import flaxbeard.immersivepetroleum.api.reservoir.ReservoirIsland;
 import flaxbeard.immersivepetroleum.client.render.IPRenderTypes;
 import flaxbeard.immersivepetroleum.client.render.RenderUtils;
 import flaxbeard.immersivepetroleum.client.utils.MCUtil;
 import flaxbeard.immersivepetroleum.common.IPContent;
-import flaxbeard.immersivepetroleum.common.ReservoirRegionDataStorage;
-import flaxbeard.immersivepetroleum.common.ReservoirRegionDataStorage.RegionData;
-import flaxbeard.immersivepetroleum.common.ReservoirRegionDataStorage.RegionPos;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.DerrickLogic;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.OilTankLogic;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.coker.CokerUnitLogic;
@@ -35,6 +32,9 @@ import flaxbeard.immersivepetroleum.common.blocks.tileentities.GasGeneratorTileE
 import flaxbeard.immersivepetroleum.common.blocks.tileentities.IPTileEntityBase;
 import flaxbeard.immersivepetroleum.common.blocks.tileentities.WellPipeTileEntity;
 import flaxbeard.immersivepetroleum.common.blocks.tileentities.WellTileEntity;
+import flaxbeard.immersivepetroleum.common.datastorage.reservoir.RegionData;
+import flaxbeard.immersivepetroleum.common.datastorage.reservoir.RegionPos;
+import flaxbeard.immersivepetroleum.common.datastorage.reservoir.ReservoirRegionDataStorage;
 import flaxbeard.immersivepetroleum.common.entity.MotorboatEntity;
 import flaxbeard.immersivepetroleum.common.items.DebugItem;
 import flaxbeard.immersivepetroleum.common.util.inventory.FluidTankFiltered;
@@ -396,7 +396,7 @@ public class DebugRenderHandler{
 					{
 						ReservoirRegionDataStorage storage = ReservoirRegionDataStorage.get();
 						final ResourceKey<Level> dimKey = player.getCommandSenderWorld().dimension();
-						final Set<ReservoirIsland> islands = new HashSet<>();
+						final Set<Reservoir> islands = new HashSet<>();
 						
 						RegionPos pLocal = new RegionPos(playerPos);
 						RegionPos p0 = new RegionPos(playerPos, 1, -1);
@@ -419,7 +419,7 @@ public class DebugRenderHandler{
 						};
 						for(RegionData rd: array){
 							if(rd != null){
-								Multimap<ResourceKey<Level>, ReservoirIsland> m = rd.getReservoirIslandList();
+								Multimap<ResourceKey<Level>, Reservoir> m = rd.getReservoirList();
 								synchronized(m){
 									islands.addAll(m.get(dimKey));
 								}
@@ -433,17 +433,17 @@ public class DebugRenderHandler{
 								float y = 128.0625F;
 								int radius = 256;
 								radius = radius * radius + radius * radius;
-								for(ReservoirIsland island: islands){
-									BlockPos center = island.getBoundingBox().getCenter();
+								for(Reservoir reservoir: islands){
+									BlockPos center = reservoir.getBoundingBox().getCenter();
 									
 									if(center.distSqr(playerPos) <= radius){
-										AxisAlignedIslandBB bounds = island.getBoundingBox();
+										ReservoirBoundingBox bounds = reservoir.getBoundingBox();
 										matrix.pushPose();
 										{
-											float minX = bounds.minX() + 0.5F;
-											float minZ = bounds.minZ() + 0.5F;
-											float maxX = bounds.maxX() + 0.5F;
-											float maxZ = bounds.maxZ() + 0.5F;
+											float minX = bounds.xMin() + 0.5F;
+											float minZ = bounds.zMin() + 0.5F;
+											float maxX = bounds.xMax() + 0.5F;
+											float maxZ = bounds.zMax() + 0.5F;
 											
 											VertexConsumer builder = buffer.getBuffer(IPRenderTypes.TRANSLUCENT_LINE);
 											
@@ -461,8 +461,8 @@ public class DebugRenderHandler{
 										}
 										matrix.popPose();
 										
-										if(island.getPolygon() != null && !island.getPolygon().isEmpty()){
-											List<ColumnPos> poly = island.getPolygon();
+										if(reservoir.getPolygon() != null && !reservoir.getPolygon().isEmpty()){
+											List<ColumnPos> poly = reservoir.getPolygon().getPolygonList();
 											
 											matrix.pushPose();
 											{

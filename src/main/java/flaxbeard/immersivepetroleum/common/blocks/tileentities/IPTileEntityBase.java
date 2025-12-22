@@ -19,7 +19,7 @@ public abstract class IPTileEntityBase extends BlockEntity{
 	}
 	
 	@Nonnull
-	public Level getWorldNonnull(){
+	public Level getNonnullLevel(){
 		return Objects.requireNonNull(super.getLevel());
 	}
 	
@@ -42,7 +42,7 @@ public abstract class IPTileEntityBase extends BlockEntity{
 	}
 	
 	@Override
-	public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt, HolderLookup.Provider provider){
+	public void onDataPacket(@Nonnull Connection net, ClientboundBlockEntityDataPacket pkt, @Nonnull HolderLookup.Provider provider){
 		loadAdditional(pkt.getTag(), provider);
 	}
 	
@@ -52,7 +52,7 @@ public abstract class IPTileEntityBase extends BlockEntity{
 	}
 	
 	@Override
-	protected void loadAdditional(CompoundTag nbt, HolderLookup.Provider provider){
+	protected void loadAdditional(@Nonnull CompoundTag nbt, @Nonnull HolderLookup.Provider provider){
 		super.loadAdditional(nbt, provider);
 		readCustom(nbt, provider);
 	}

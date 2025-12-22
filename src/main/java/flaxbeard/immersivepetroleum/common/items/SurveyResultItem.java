@@ -3,7 +3,7 @@ package flaxbeard.immersivepetroleum.common.items;
 import flaxbeard.immersivepetroleum.client.gui.SeismicSurveyScreen;
 import flaxbeard.immersivepetroleum.client.utils.MCUtil;
 import flaxbeard.immersivepetroleum.common.util.survey.ISurveyInfo;
-import flaxbeard.immersivepetroleum.common.util.survey.IslandInfo;
+import flaxbeard.immersivepetroleum.common.util.survey.ReservoirInfo;
 import flaxbeard.immersivepetroleum.common.util.survey.SurveyScan;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -84,13 +84,13 @@ public class SurveyResultItem extends IPItemBase{
 			}
 		}
 		
-		if(info instanceof IslandInfo islandInfo){
-			int expected = islandInfo.expected();
-			long amount = islandInfo.amount();
-			byte percentage = islandInfo.status();
-			FluidStack fs = islandInfo.fluidStack();
+		if(info instanceof ReservoirInfo reservoirInfo){
+			int expected = reservoirInfo.expected();
+			long amount = reservoirInfo.amount();
+			byte percentage = reservoirInfo.status();
+			FluidStack fs = reservoirInfo.fluidStack();
 			
-			if(islandInfo.fluidStack() == FluidStack.EMPTY){
+			if(fs == FluidStack.EMPTY){
 				tooltip.add(Component.literal("SORRY, IM FAULTY!").withStyle(ChatFormatting.RED));
 				tooltip.add(Component.literal("YOU'LL HAVE TO TOSS ME!").withStyle(ChatFormatting.RED));
 				return;

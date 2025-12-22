@@ -5,7 +5,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import flaxbeard.immersivepetroleum.common.items.DebugItem;
 import flaxbeard.immersivepetroleum.common.util.RegistryUtils;
 import flaxbeard.immersivepetroleum.common.util.projector.Settings;
-import flaxbeard.immersivepetroleum.common.util.survey.IslandInfo;
+import flaxbeard.immersivepetroleum.common.util.survey.ReservoirInfo;
 import flaxbeard.immersivepetroleum.common.util.survey.SurveyScan;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.core.component.DataComponentType;
@@ -29,7 +29,7 @@ public class IPDataComponents{
 	public static final DeferredHolder<DataComponentType<?>, DataComponentType<Settings.SettingsRecord>> PROJECTOR_SETTINGS = IPRegisters.registerDataComponent("projector_settings", Settings.SettingsRecord.CODEC, Settings.SettingsRecord.CODEC_STREAM);
 	
 	public static final DeferredHolder<DataComponentType<?>, DataComponentType<SurveyScan>> SURVEY_SCAN = IPRegisters.registerDataComponent("survey_scan", SurveyScan.CODEC, SurveyScan.CODEC_STREAM);
-	public static final DeferredHolder<DataComponentType<?>, DataComponentType<IslandInfo>> ISLAND_INFO = IPRegisters.registerDataComponent("island_info", IslandInfo.CODEC, IslandInfo.CODEC_STREAM);
+	public static final DeferredHolder<DataComponentType<?>, DataComponentType<ReservoirInfo>> RESERVOIR_INFO = IPRegisters.registerDataComponent("reservoir_info", ReservoirInfo.CODEC, ReservoirInfo.CODEC_STREAM);
 	
 	public static final DeferredHolder<DataComponentType<?>, DataComponentType<TankData>> TANK_DATA = IPRegisters.registerDataComponent("tank_data", TankData.CODEC, TankData.CODEC_STREAM);
 	public static final DeferredHolder<DataComponentType<?>, DataComponentType<PowerData>> POWER_DATA = IPRegisters.registerDataComponent("power_data", PowerData.CODEC, PowerData.CODEC_STREAM);

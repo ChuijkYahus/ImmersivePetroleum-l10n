@@ -6,8 +6,8 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import flaxbeard.immersivepetroleum.ImmersivePetroleum;
 import flaxbeard.immersivepetroleum.client.IPShaders;
 import flaxbeard.immersivepetroleum.client.render.multiblock.MultiblockDistillationTowerRenderer;
-import flaxbeard.immersivepetroleum.client.render.multiblock.MultiblockOilTankRenderer;
 import flaxbeard.immersivepetroleum.client.render.multiblock.MultiblockHydrotreaterRenderer;
+import flaxbeard.immersivepetroleum.client.render.multiblock.MultiblockOilTankRenderer;
 import flaxbeard.immersivepetroleum.common.util.ResourceUtils;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderStateShard;
@@ -59,7 +59,7 @@ public class IPRenderTypes{
 	
 	public static final RenderType TRANSLUCENT_LINE;
 	public static final RenderType TRANSLUCENT_POSITION_COLOR;
-	public static final RenderType ISLAND_DEBUGGING_POSITION_COLOR;
+	public static final RenderType RESERVOIR_DEBUGGING_POSITION_COLOR;
 	
 	static{
 		/*
@@ -138,7 +138,7 @@ public class IPRenderTypes{
 					.createCompositeState(false)
 		);
 		
-		ISLAND_DEBUGGING_POSITION_COLOR = RenderType.create(
+		RESERVOIR_DEBUGGING_POSITION_COLOR = RenderType.create(
 				typeName("island_debugging_position_color"),
 				DefaultVertexFormat.POSITION_COLOR,
 				VertexFormat.Mode.QUADS,

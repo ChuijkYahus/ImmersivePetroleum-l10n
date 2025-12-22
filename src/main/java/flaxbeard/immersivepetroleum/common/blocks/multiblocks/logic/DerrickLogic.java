@@ -15,8 +15,8 @@ import blusunrize.immersiveengineering.api.multiblocks.blocks.util.RelativeBlock
 import blusunrize.immersiveengineering.api.multiblocks.blocks.util.ShapeType;
 import blusunrize.immersiveengineering.common.blocks.multiblocks.blockimpl.InitialMultiblockContext;
 import blusunrize.immersiveengineering.common.fluids.ArrayFluidHandler;
+import flaxbeard.immersivepetroleum.api.reservoir.Reservoir;
 import flaxbeard.immersivepetroleum.api.reservoir.ReservoirHandler;
-import flaxbeard.immersivepetroleum.api.reservoir.ReservoirIsland;
 import flaxbeard.immersivepetroleum.client.ClientProxy;
 import flaxbeard.immersivepetroleum.client.gui.elements.PipeConfig;
 import flaxbeard.immersivepetroleum.common.ExternalModContent;
@@ -355,11 +355,11 @@ public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableCom
 			state.wellCache = well;
 		}
 		
-		if(popList && state.wellCache != null && state.wellCache.tappedIslands.isEmpty()){
+		if(popList && state.wellCache != null && state.wellCache.tappedReservoirs.isEmpty()){
 			if(state.gridStorage != null){
 				transferGridDataToWell(inPos, state, state.wellCache);
 			}else{
-				state.wellCache.tappedIslands.add(Utils.toColumnPos(inPos));
+				state.wellCache.tappedReservoirs.add(Utils.toColumnPos(inPos));
 				state.wellCache.setChanged();
 			}
 		}
@@ -491,7 +491,7 @@ public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableCom
 			}
 		}
 		
-		well.tappedIslands = list;
+		well.tappedReservoirs = list;
 		well.additionalPipes = additionalPipes;
 		well.setChanged();
 	}
@@ -499,16 +499,16 @@ public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableCom
 	private FluidStack getExtractedFluidStack(@Nonnull WellTileEntity well){
 		Fluid extractedFluid = Fluids.EMPTY;
 		int extractedAmount = 0;
-		for(ColumnPos cPos: well.tappedIslands){
-			ReservoirIsland island = ReservoirHandler.getIsland(well.getLevel(), cPos);
-			if(island != null){
+		for(ColumnPos cPos: well.tappedReservoirs){
+			Reservoir reservoir = ReservoirHandler.getReservoir(well.getLevel(), cPos);
+			if(reservoir != null){
 				if(extractedFluid == Fluids.EMPTY){
-					extractedFluid = island.getFluid();
-				}else if(island.getFluid() != extractedFluid){
+					extractedFluid = reservoir.getFluid();
+				}else if(reservoir.getFluid() != extractedFluid){
 					continue;
 				}
 				
-				extractedAmount += island.extractWithPressure(well.getLevel(), cPos.x(), cPos.z());
+				extractedAmount += reservoir.extractWithPressure(well.getLevel(), cPos.x(), cPos.z());
 			}
 		}
 		
@@ -632,11 +632,11 @@ public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableCom
 		}
 		
 		private int getReservoirFlow(){
-			ReservoirIsland island = ReservoirHandler.getIsland(level.get(), originPos);
-			if(island == null || this.originPos.getY() < level.get().getSeaLevel())
+			Reservoir reservoir = ReservoirHandler.getReservoir(level.get(), originPos);
+			if(reservoir == null || this.originPos.getY() < level.get().getSeaLevel())
 				return 10;
 			
-			return island.getFlowFromPressure(level.get(), originPos);
+			return reservoir.getFlowFromPressure(level.get(), originPos);
 		}
 		
 		public WellTileEntity getWell(IMultiblockLevel level, BlockPos inPos){

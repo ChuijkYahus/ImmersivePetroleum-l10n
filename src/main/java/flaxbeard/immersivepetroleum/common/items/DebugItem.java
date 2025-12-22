@@ -2,8 +2,11 @@ package flaxbeard.immersivepetroleum.common.items;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import flaxbeard.immersivepetroleum.ImmersivePetroleum;
+import flaxbeard.immersivepetroleum.api.reservoir.Reservoir;
+import flaxbeard.immersivepetroleum.api.reservoir.ReservoirBoundingBox;
 import flaxbeard.immersivepetroleum.api.reservoir.ReservoirHandler;
-import flaxbeard.immersivepetroleum.api.reservoir.ReservoirIsland;
+import flaxbeard.immersivepetroleum.api.reservoir.ReservoirPolygon;
 import flaxbeard.immersivepetroleum.api.reservoir.ReservoirType;
 import flaxbeard.immersivepetroleum.api.reservoir.ReservoirType.BWList;
 import flaxbeard.immersivepetroleum.client.model.IPModel;
@@ -23,6 +26,7 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ColumnPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
@@ -33,7 +37,9 @@ import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.fluids.FluidStack;
 
@@ -47,10 +53,10 @@ public class DebugItem extends IPItemBase{
 		INFO_SPEEDBOAT("Info: Speedboat"),
 		
 		SEEDBASED_RESERVOIR("Seed-Based Reservoir: Heatmap"),
-		SEEDBASED_RESERVOIR_AREA_TEST("Seed-Based Reservoir: Island Testing"),
+		SEEDBASED_RESERVOIR_AREA_TEST("Seed-Based Reservoir Testing"),
 		
 		REFRESH_ALL_IPMODELS("Refresh all IPModels"),
-		UPDATE_SHAPES("Does nothing without Debugging Environment"),
+		DATA_STORAGE_TESTING("Data Storage Tests"),
 		GENERAL_TEST("This one could be dangerous to trigger!")
 		;
 		
@@ -120,8 +126,76 @@ public class DebugItem extends IPItemBase{
 			
 			switch(mode){
 				case GENERAL_TEST -> {
-					if(worldIn.isClientSide){
-					}else{
+					try{
+						BlockPos playerPos = playerIn.blockPosition();
+						int x = playerPos.getX();
+						int z = playerPos.getZ();
+						
+						if(ReservoirHandler.getValueOf(worldIn, x, z) > -1){
+							long t = System.nanoTime();
+							ReservoirPolygon reservoirPolygon = ReservoirPolygon.make(worldIn, new ColumnPos(x, z));
+							t = System.nanoTime() - t;
+							
+							ImmersivePetroleum.log.info("Took: {}ns ({}ms)", t, t / 1000000F);
+							
+							Reservoir reservoir = ReservoirHandler.getReservoir(worldIn, playerPos);
+							if(reservoir != null){
+								final List<ColumnPos> newPolygon = reservoirPolygon.getPolygonList();
+								final List<ColumnPos> ogPolygon = reservoir.getPolygon().getPolygonList();
+								
+								ImmersivePetroleum.log.info("{} - {} {}", newPolygon.size(), ogPolygon.size(), (newPolygon.size() == ogPolygon.size() ? "Equal" : "Not Equal"));
+								
+								final BlockState air = Blocks.AIR.defaultBlockState();
+								final BlockState blackWool = Blocks.BLACK_WOOL.defaultBlockState();
+								final BlockState whiteWool = Blocks.WHITE_WOOL.defaultBlockState();
+								final BlockState greenWool = Blocks.GREEN_WOOL.defaultBlockState();
+								final BlockState limeWool = Blocks.LIME_WOOL.defaultBlockState();
+								final BlockState yellowWool = Blocks.YELLOW_WOOL.defaultBlockState();
+								final BlockState redWool = Blocks.RED_WOOL.defaultBlockState();
+								
+								BlockPos defaultHeight = new BlockPos(0, 127, 0);
+								final int range = 3;
+								ReservoirBoundingBox bb = reservoir.getBoundingBox();
+								for(int k = bb.zMin() - range;k <= bb.zMax() + range;k++){
+									for(int i = bb.xMin() - range;i <= bb.xMax() + range;i++){
+										for(int j = -range;j <= range;j++){
+											BlockPos bPos = defaultHeight.offset(i, j, k);
+											worldIn.setBlockAndUpdate(bPos, air);
+										}
+										
+										if(reservoir.getPolygon().contains(i, k))
+											worldIn.setBlockAndUpdate(defaultHeight.offset(i, -range, k), limeWool);
+										else
+											worldIn.setBlockAndUpdate(defaultHeight.offset(i, -range, k), redWool);
+									}
+								}
+								
+								for(int i = 0;i < ogPolygon.size();i++){
+									ColumnPos cPos = ogPolygon.get(i);
+									BlockPos bPos = defaultHeight.offset(cPos.x(), 0, cPos.z());
+									
+									worldIn.setBlockAndUpdate(bPos, blackWool);
+								}
+								
+								for(int i = 0;i < newPolygon.size();i++){
+									ColumnPos cPos = newPolygon.get(i);
+									BlockPos bPos = defaultHeight.offset(cPos.x(), 1, cPos.z());
+									
+									BlockState state = whiteWool;
+									if(i == 0)
+										state = greenWool;
+									if(i == (newPolygon.size() / 2))
+										state = yellowWool;
+									if(i == (newPolygon.size() - 1))
+										state = redWool;
+									
+									worldIn.setBlockAndUpdate(bPos, state);
+								}
+							}
+							
+						}
+					}catch(Exception t){
+						t.printStackTrace(System.err);
 					}
 					return new InteractionResultHolder<>(InteractionResult.SUCCESS, playerIn.getItemInHand(handIn));
 				}
@@ -156,28 +230,28 @@ public class DebugItem extends IPItemBase{
 				case SEEDBASED_RESERVOIR_AREA_TEST -> {
 					BlockPos playerPos = playerIn.blockPosition();
 					
-					ReservoirIsland island;
-					if((island = ReservoirHandler.getIsland(worldIn, playerPos)) != null){
+					Reservoir reservoir;
+					if((reservoir = ReservoirHandler.getReservoir(worldIn, playerPos)) != null){
 						int x = playerPos.getX();
 						int z = playerPos.getZ();
 						
-						float pressure = island.getPressure(worldIn, x, z);
+						float pressure = reservoir.getPressure(worldIn, x, z);
 						
 						if(playerIn.isShiftKeyDown()){
-							island.setAmount(island.getCapacity());
-							island.setDirty();
-							playerIn.displayClientMessage(Component.literal("Island Refilled."), true);
+							reservoir.setAmount(reservoir.getCapacity());
+							reservoir.setDirty();
+							playerIn.displayClientMessage(Component.literal("Reservoir Refilled."), true);
 							return new InteractionResultHolder<>(InteractionResult.SUCCESS, playerIn.getItemInHand(handIn));
 						}
 						
 						String out = String.format(Locale.ENGLISH,
 								"Noise: %.3f, Amount: %d/%d, Pressure: %.3f, Flow: %d, Type: %s",
 								ReservoirHandler.getValueOf(worldIn, x, z),
-								island.getAmount(),
-								island.getCapacity(),
+								reservoir.getAmount(),
+								reservoir.getCapacity(),
 								pressure,
-								ReservoirIsland.getFlow(pressure),
-								new FluidStack(island.getFluid(), 1).getHoverName().getString());
+								Reservoir.getFlow(pressure),
+								new FluidStack(reservoir.getFluid(), 1).getHoverName().getString());
 						
 						playerIn.displayClientMessage(Component.literal(out), true);
 						
@@ -195,6 +269,9 @@ public class DebugItem extends IPItemBase{
 						*/
 					}
 					
+					return new InteractionResultHolder<>(InteractionResult.SUCCESS, playerIn.getItemInHand(handIn));
+				}
+				case DATA_STORAGE_TESTING -> {
 					return new InteractionResultHolder<>(InteractionResult.SUCCESS, playerIn.getItemInHand(handIn));
 				}
 				default -> {
@@ -259,9 +336,6 @@ public class DebugItem extends IPItemBase{
 				}
 				
 				return InteractionResult.SUCCESS;
-			}
-			case UPDATE_SHAPES -> {
-				return InteractionResult.PASS;
 			}
 			default -> {
 			}

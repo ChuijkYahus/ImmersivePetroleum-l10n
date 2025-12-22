@@ -1,8 +1,8 @@
 package flaxbeard.immersivepetroleum.common.blocks.tileentities;
 
 import blusunrize.immersiveengineering.api.multiblocks.blocks.logic.IMultiblockBE;
+import flaxbeard.immersivepetroleum.api.reservoir.Reservoir;
 import flaxbeard.immersivepetroleum.api.reservoir.ReservoirHandler;
-import flaxbeard.immersivepetroleum.api.reservoir.ReservoirIsland;
 import flaxbeard.immersivepetroleum.client.ClientProxy;
 import flaxbeard.immersivepetroleum.common.IPTileTypes;
 import flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic.PumpjackLogic;
@@ -19,6 +19,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ColumnPos;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -37,7 +38,7 @@ public class WellTileEntity extends IPTileEntityBase implements IPCommonTickable
 	
 	/** It's supposed to be never null nor empty. If it is then something's wrong. */
 	@Nonnull
-	public List<ColumnPos> tappedIslands = new ArrayList<>();
+	public List<ColumnPos> tappedReservoirs = new ArrayList<>();
 	
 	/** Only ever contains the Y component of {@link BlockPos} */
 	public final List<Integer> phyiscalPipesList = new ArrayList<>();
@@ -94,7 +95,7 @@ public class WellTileEntity extends IPTileEntityBase implements IPCommonTickable
 				int z = pos.getInt("z");
 				tmp.add(new ColumnPos(x, z));
 			});
-			this.tappedIslands = tmp;
+			this.tappedReservoirs = tmp;
 		}
 		
 		if(nbt.contains("pipeLoc", Tag.TAG_LIST)){
@@ -124,9 +125,9 @@ public class WellTileEntity extends IPTileEntityBase implements IPCommonTickable
 		nbt.putString("spillftype", RegistryUtils.getRegistryNameOf(this.spillFType).toString());
 		nbt.putInt("spillheight", this.spillHeight);
 		
-		if(!this.tappedIslands.isEmpty()){
+		if(!this.tappedReservoirs.isEmpty()){
 			final ListTag list = new ListTag();
-			this.tappedIslands.forEach(c -> {
+			this.tappedReservoirs.forEach(c -> {
 				CompoundTag pos = new CompoundTag();
 				pos.putInt("x", c.x());
 				pos.putInt("z", c.z());
@@ -143,11 +144,11 @@ public class WellTileEntity extends IPTileEntityBase implements IPCommonTickable
 	}
 	
 	private int getFlow(){
-		ReservoirIsland island = ReservoirHandler.getIsland(getWorldNonnull(), getBlockPos());
-		if(island == null)
+		Reservoir reservoir = ReservoirHandler.getReservoir(getNonnullLevel(), getBlockPos());
+		if(reservoir == null)
 			return 0;
 		
-		return island.getFlowFromPressure(getWorldNonnull(), getBlockPos());
+		return reservoir.getFlowFromPressure(getNonnullLevel(), getBlockPos());
 	}
 	
 	@Override
@@ -161,33 +162,33 @@ public class WellTileEntity extends IPTileEntityBase implements IPCommonTickable
 	@Override
 	public void tickServer(){
 		if(this.drillingCompleted){
-			if(this.tappedIslands.size() > 0){
-				for(ColumnPos cPos:this.tappedIslands){
-					ReservoirIsland island = ReservoirHandler.getIsland(getWorldNonnull(), cPos);
-					if(island != null && island.belowHydrostaticEquilibrium(getWorldNonnull())){
-						island.equalizeHydrostaticPressure(getWorldNonnull());
+			if(!this.tappedReservoirs.isEmpty()){
+				for(ColumnPos cPos:this.tappedReservoirs){
+					Reservoir reservoir = ReservoirHandler.getReservoir(getNonnullLevel(), cPos);
+					if(reservoir != null && reservoir.belowHydrostaticEquilibrium(getNonnullLevel())){
+						reservoir.equalizeHydrostaticPressure(getNonnullLevel());
 					}
 				}
 				
-				if(this.getWorldNonnull().getGameTime() % 5 == 0){
+				if(this.getNonnullLevel().getGameTime() % 5 == 0){
 					boolean spill = false;
 					
 					int height = -1;
 					Fluid fType = Fluids.EMPTY;
 					
-					BlockEntity teHigh = getWorldNonnull().getBlockEntity(getBlockPos().above());
+					BlockEntity teHigh = getNonnullLevel().getBlockEntity(getBlockPos().above());
 					if(teHigh instanceof WellPipeTileEntity well){
 						Pair<Boolean, BlockPos> result = well.hasValidConnection();
 						
 						// Don't stop spilling even if the pumpjack is ontop, because it is "not designed" to handle the high pressure
-						BlockEntity te = getWorldNonnull().getBlockEntity(result.getRight());
+						BlockEntity te = getNonnullLevel().getBlockEntity(result.getRight());
 						if(!result.getLeft() || te instanceof IMultiblockBE<?> multiblockBE && multiblockBE.getHelper().getContext().getState() instanceof PumpjackLogic.State){
-							for(ColumnPos cPos:this.tappedIslands){
-								ReservoirIsland island = ReservoirHandler.getIsland(getWorldNonnull(), cPos);
+							for(ColumnPos cPos:this.tappedReservoirs){
+								Reservoir reservoir = ReservoirHandler.getReservoir(getNonnullLevel(), cPos);
 								
 								// One is enough to trigger spilling
-								if(island != null && island.getPressure(getWorldNonnull(), cPos.x(), cPos.z()) > 0.0){
-									fType = island.getFluid();
+								if(reservoir != null && reservoir.getPressure(getNonnullLevel(), cPos.x(), cPos.z()) > 0.0){
+									fType = reservoir.getFluid();
 									height = result.getRight().getY();
 									spill = true;
 									break;
@@ -196,17 +197,17 @@ public class WellTileEntity extends IPTileEntityBase implements IPCommonTickable
 						}
 						
 					}else{
-						ColumnPos cPos = this.tappedIslands.get(0);
-						ReservoirIsland island = ReservoirHandler.getIsland(getWorldNonnull(), cPos);
+						ColumnPos cPos = this.tappedReservoirs.get(0);
+						Reservoir reservoir = ReservoirHandler.getReservoir(getNonnullLevel(), cPos);
 						
-						if(island != null && island.getPressure(getWorldNonnull(), cPos.x(), cPos.z()) > 0.0){
+						if(reservoir != null && reservoir.getPressure(getNonnullLevel(), cPos.x(), cPos.z()) > 0.0){
 							spill = true;
-							fType = island.getFluid();
+							fType = reservoir.getFluid();
 							height = this.worldPosition.getY() + 1;
 						}
 					}
 					
-					if(spill != this.spill || (spill && this.getWorldNonnull().getGameTime() % 10 == 0)){
+					if(spill != this.spill || (spill && this.getNonnullLevel().getGameTime() % 10 == 0)){
 						this.spill = spill;
 						
 						if(this.spill){
@@ -222,12 +223,12 @@ public class WellTileEntity extends IPTileEntityBase implements IPCommonTickable
 				}
 				
 				if(this.spill){
-					for(ColumnPos cPos:this.tappedIslands){
-						ReservoirIsland island = ReservoirHandler.getIsland(getWorldNonnull(), cPos);
+					for(ColumnPos cPos:this.tappedReservoirs){
+						Reservoir reservoir = ReservoirHandler.getReservoir(getNonnullLevel(), cPos);
 						
-						if(island != null){
+						if(reservoir != null){
 							// Already unpressurized islands are left alone by default
-							island.extractWithPressure(getWorldNonnull(), cPos.x(), cPos.z());
+							reservoir.extractWithPressure(getNonnullLevel(), cPos.x(), cPos.z());
 						}
 					}
 				}
@@ -240,15 +241,15 @@ public class WellTileEntity extends IPTileEntityBase implements IPCommonTickable
 						BlockPos pos = getBlockPos();
 						pos = new BlockPos(pos.getX(), integer, pos.getZ());
 						
-						BlockState state = getWorldNonnull().getBlockState(pos);
+						BlockState state = getNonnullLevel().getBlockState(pos);
 						
 						if(state.getBlock() instanceof WellPipeBlock){
-							getWorldNonnull().setBlockAndUpdate(pos, state.setValue(WellPipeBlock.BROKEN, true));
+							getNonnullLevel().setBlockAndUpdate(pos, state.setValue(WellPipeBlock.BROKEN, true));
 						}
 					}
 				}
 				
-				getWorldNonnull().setBlockAndUpdate(getBlockPos(), Blocks.BEDROCK.defaultBlockState());
+				getNonnullLevel().setBlockAndUpdate(getBlockPos(), Blocks.BEDROCK.defaultBlockState());
 			}
 		}
 	}
@@ -296,8 +297,9 @@ public class WellTileEntity extends IPTileEntityBase implements IPCommonTickable
 	public void setChanged(){
 		super.setChanged();
 		
-		BlockState state = level.getBlockState(worldPosition);
-		level.sendBlockUpdated(worldPosition, state, state, 3);
-		level.updateNeighborsAt(worldPosition, state.getBlock());
+		Level level = getNonnullLevel();
+		BlockState state = level.getBlockState(this.worldPosition);
+		level.sendBlockUpdated(this.worldPosition, state, state, 3);
+		level.updateNeighborsAt(this.worldPosition, state.getBlock());
 	}
 }

@@ -18,8 +18,8 @@ public interface ISurveyInfo{
 	
 	@Nullable
 	static ISurveyInfo from(ItemStack stack){
-		IslandInfo info;
-		if((info = stack.get(IPDataComponents.ISLAND_INFO)) != null)
+		ReservoirInfo info;
+		if((info = stack.get(IPDataComponents.RESERVOIR_INFO)) != null)
 			return info;
 		
 		SurveyScan scan;

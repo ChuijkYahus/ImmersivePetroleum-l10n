@@ -1,7 +1,7 @@
 package flaxbeard.immersivepetroleum.common.network;
 
+import flaxbeard.immersivepetroleum.api.reservoir.Reservoir;
 import flaxbeard.immersivepetroleum.api.reservoir.ReservoirHandler;
-import flaxbeard.immersivepetroleum.api.reservoir.ReservoirIsland;
 import flaxbeard.immersivepetroleum.client.gui.SeismicSurveyScreen;
 import flaxbeard.immersivepetroleum.client.utils.MCUtil;
 import flaxbeard.immersivepetroleum.common.util.survey.SurveyScan;
@@ -10,7 +10,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ColumnPos;
 import net.minecraft.server.level.ServerLevel;
@@ -92,7 +91,7 @@ public class MessageSurveyResultDetails{
 		}
 		
 		private BitSet compileBitSet(Level level){
-			final List<ReservoirIsland> islandCache = new ArrayList<>();
+			final List<Reservoir> islandCache = new ArrayList<>();
 			final BitSet set = new BitSet(SCAN_SIZE * SCAN_SIZE);
 			final int r = SCAN_RADIUS;
 			for(int j = -r, a = 0;j <= r;j++, a++){
@@ -102,13 +101,13 @@ public class MessageSurveyResultDetails{
 					
 					double current = ReservoirHandler.getValueOf(level, x, z);
 					if(current != -1){
-						Optional<ReservoirIsland> optional = islandCache.stream().filter(res -> {
-							return res.contains(x, z);
+						Optional<Reservoir> optional = islandCache.stream().filter(res -> {
+							return res.getPolygon().contains(x, z);
 						}).findFirst();
 						
-						ReservoirIsland nearbyIsland = optional.orElse(null);
+						Reservoir nearbyIsland = optional.orElse(null);
 						if(nearbyIsland == null){
-							nearbyIsland = ReservoirHandler.getIslandNoCache(level, new ColumnPos(x, z));
+							nearbyIsland = ReservoirHandler.getReservoirNoCache(level, new ColumnPos(x, z));
 							
 							if(nearbyIsland != null){
 								islandCache.add(nearbyIsland);

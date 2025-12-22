@@ -2,8 +2,8 @@ package flaxbeard.immersivepetroleum.common.util.survey;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import flaxbeard.immersivepetroleum.api.reservoir.Reservoir;
 import flaxbeard.immersivepetroleum.api.reservoir.ReservoirHandler;
-import flaxbeard.immersivepetroleum.api.reservoir.ReservoirIsland;
 import flaxbeard.immersivepetroleum.common.IPDataComponents;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.core.BlockPos;
@@ -78,7 +78,7 @@ public record SurveyScan(@Nullable UUID uuid, int x, int z, byte[] data) impleme
 	}
 	
 	private static byte[] scanArea(Level world, BlockPos pos){
-		final List<ReservoirIsland> islandCache = new ArrayList<>();
+		final List<Reservoir> islandCache = new ArrayList<>();
 		byte[] scanData = new byte[SCAN_SIZE * SCAN_SIZE];
 		
 		for(int j = -SCAN_RADIUS, a = 0;j <= SCAN_RADIUS;j++, a++){
@@ -90,16 +90,16 @@ public record SurveyScan(@Nullable UUID uuid, int x, int z, byte[] data) impleme
 				double current = ReservoirHandler.getValueOf(world, x, z);
 				if(current != -1){
 					//@formatter:off
-					Optional<ReservoirIsland> optional = islandCache.stream()
+					Optional<Reservoir> optional = islandCache.stream()
 						.filter(res -> {
-							return res.contains(x, z);
+							return res.getPolygon().contains(x, z);
 						})
 						.findFirst();
 					//@formatter:on
 					
-					ReservoirIsland nearbyIsland = optional.isPresent() ? optional.get() : null;
+					Reservoir nearbyIsland = optional.orElse(null);
 					if(nearbyIsland == null){
-						nearbyIsland = ReservoirHandler.getIslandNoCache(world, new ColumnPos(x, z));
+						nearbyIsland = ReservoirHandler.getReservoirNoCache(world, new ColumnPos(x, z));
 						
 						if(nearbyIsland != null){
 							islandCache.add(nearbyIsland);
