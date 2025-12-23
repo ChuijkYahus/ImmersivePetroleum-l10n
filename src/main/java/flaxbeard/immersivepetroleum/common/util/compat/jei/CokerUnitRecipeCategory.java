@@ -27,16 +27,12 @@ import java.util.Collections;
 public class CokerUnitRecipeCategory extends IPRecipeCategory<CokerUnitRecipe>{
 	public static final ResourceLocation ID = ResourceUtils.ip("cokerunit");
 	
-	private final IDrawableStatic tankOverlay;
 	public CokerUnitRecipeCategory(IGuiHelper guiHelper){
 		super(CokerUnitRecipe.class, guiHelper, ID, "block.immersivepetroleum.coker_unit");
 		ResourceLocation background = ResourceUtils.ip("textures/gui/jei/coker.png");
-		ResourceLocation coker = ResourceUtils.ip("textures/gui/coker.png");
 		
 		setBackground(guiHelper.createDrawable(background, 0, 0, 150, 77));
 		setIcon(new ItemStack(IPContent.Multiblock.COKERUNIT.block().get()));
-		
-		this.tankOverlay = guiHelper.createDrawable(coker, 200, 0, 20, 51);
 	}
 	
 	@Override
@@ -47,12 +43,12 @@ public class CokerUnitRecipeCategory extends IPRecipeCategory<CokerUnitRecipe>{
 		
 		builder.addSlot(RecipeIngredientRole.INPUT, 2, 2)
 			.setFluidRenderer(guiTankSize, false, 20, 51)
-			.setOverlay(this.tankOverlay, 0, 0)
+			.setOverlay(JEIStuff.tankOverlay, 0, 0)
 			.addIngredients(NeoForgeTypes.FLUID_STACK, Arrays.asList(recipe.getInputFluid().getFluids()));
 		
 		builder.addSlot(RecipeIngredientRole.OUTPUT, 50, 2)
 			.setFluidRenderer(guiTankSize, false, 20, 51)
-			.setOverlay(this.tankOverlay, 0, 0)
+			.setOverlay(JEIStuff.tankOverlay, 0, 0)
 			.addIngredient(NeoForgeTypes.FLUID_STACK, recipe.getOutputFluid());
 		
 		builder.addSlot(RecipeIngredientRole.INPUT, 4, 58)

@@ -28,14 +28,12 @@ import java.util.Locale;
 public class HighPressureRefineryRecipeCategory extends IPRecipeCategory<HighPressureRefineryRecipe>{
 	public static final ResourceLocation ID = ResourceUtils.ip("hydrotreater");
 	
-	private final IDrawableStatic tankOverlay;
 	public HighPressureRefineryRecipeCategory(IGuiHelper guiHelper){
 		super(HighPressureRefineryRecipe.class, guiHelper, ID, "block.immersivepetroleum.hydrotreater");
 		ResourceLocation background = ResourceUtils.ip("textures/gui/jei/hydrotreater.png");
+		
 		setBackground(guiHelper.createDrawable(background, 0, 0, 113, 75));
 		setIcon(new ItemStack(IPContent.Multiblock.HYDROTREATER.block().get()));
-		
-		this.tankOverlay = guiHelper.createDrawable(background, 113, 0, 20, 51);
 	}
 	
 	@Override
@@ -47,23 +45,24 @@ public class HighPressureRefineryRecipeCategory extends IPRecipeCategory<HighPre
 		
 		builder.addSlot(RecipeIngredientRole.INPUT, 3, 3)
 			.setFluidRenderer(guiTankSize, false, 20, 51)
-			.setOverlay(this.tankOverlay, 0, 0)
+			.setOverlay(JEIStuff.tankOverlay, 0, 0)
 			.addIngredients(NeoForgeTypes.FLUID_STACK, Arrays.asList(recipe.getPrimaryInputFluid().getFluids()));
 		
 		IRecipeSlotBuilder secondary = builder.addSlot(RecipeIngredientRole.INPUT, 25, 3)
 			.setFluidRenderer(guiTankSize, false, 20, 51)
-			.setOverlay(this.tankOverlay, 0, 0);
+			.setOverlay(JEIStuff.tankOverlay, 0, 0);
 		if(recipe.getSecondaryInputFluid() != null)
 			secondary.addIngredients(NeoForgeTypes.FLUID_STACK, Arrays.asList(recipe.getSecondaryInputFluid().getFluids()));
 		
 		builder.addSlot(RecipeIngredientRole.OUTPUT, 71, 3)
 			.setFluidRenderer(guiTankSize, false, 20, 51)
-			.setOverlay(this.tankOverlay, 0, 0)
+			.setOverlay(JEIStuff.tankOverlay, 0, 0)
 			.addIngredient(NeoForgeTypes.FLUID_STACK, recipe.getOutputFluid());
 		
 		if(recipe.getSecondaryItem() != null){
 			builder.addSlot(RecipeIngredientRole.OUTPUT, 94, 21)
-				.addIngredient(VanillaTypes.ITEM_STACK, recipe.getSecondaryItem().stack().get());
+				.addIngredient(VanillaTypes.ITEM_STACK, recipe.getSecondaryItem().stack().get())
+				.addRichTooltipCallback(new TooltipHandler(recipe.getSecondaryItem()));
 		}
 	}
 	
@@ -84,12 +83,6 @@ public class HighPressureRefineryRecipeCategory extends IPRecipeCategory<HighPre
 		String text1 = I18n.get("desc.immersiveengineering.info.seconds", Utils.fDecimal(time / 20D));
 		guiGraphics.drawString(font, text1, bWidth / 2 - font.width(text1) / 2, bHeight - font.lineHeight, -1, false);
 		
-		if(recipe.getSecondaryItem() != null){
-			int chance = (int) (100 * recipe.getSecondaryItem().chance());
-			
-			String text2 = String.format(Locale.US, "%d%%", chance);
-			guiGraphics.drawString(font, text2, bWidth + 3 - font.width(text2), bHeight / 2 + 4, -1, false);
-		}
 		guiGraphics.pose().popPose();
 	}
 }

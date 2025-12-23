@@ -10,6 +10,7 @@ import flaxbeard.immersivepetroleum.common.IPContent;
 import flaxbeard.immersivepetroleum.common.util.ResourceUtils;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
+import mezz.jei.api.gui.drawable.IDrawableStatic;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.registration.IGuiHandlerRegistration;
@@ -33,6 +34,8 @@ public class JEIStuff implements IModPlugin{
 	private RecipeType<CokerUnitRecipe> coker_type;
 	private RecipeType<HighPressureRefineryRecipe> recovery_type;
 	
+	protected static IDrawableStatic tankOverlay;
+	
 	@Override
 	@Nonnull
 	public ResourceLocation getPluginUid(){
@@ -42,6 +45,10 @@ public class JEIStuff implements IModPlugin{
 	@Override
 	public void registerCategories(IRecipeCategoryRegistration registration){
 		IGuiHelper guiHelper = registration.getJeiHelpers().getGuiHelper();
+		
+		tankOverlay = guiHelper.drawableBuilder(ResourceUtils.ip("textures/gui/sprites/parts.png"), 20, 0, 20, 51)
+			.setTextureSize(128, 128)
+			.build();
 		
 		DistillationRecipeCategory distillation = new DistillationRecipeCategory(guiHelper);
 		CokerUnitRecipeCategory coker = new CokerUnitRecipeCategory(guiHelper);
