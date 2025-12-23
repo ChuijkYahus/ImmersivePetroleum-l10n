@@ -9,7 +9,7 @@
   "energy": 61440,
   "input": {
     "amount": 100,
-    "tag": "forge:petroleum_gas"
+    "tag": "neoforge:petroleum_gas"
   },
   "result": {
     "amount": 2000,
