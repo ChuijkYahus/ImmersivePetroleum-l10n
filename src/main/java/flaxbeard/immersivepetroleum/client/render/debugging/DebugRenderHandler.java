@@ -324,195 +324,212 @@ public class DebugRenderHandler{
 				
 				matrix.pushPose();
 				{
+					MultiBufferSource.BufferSource buffer = RenderUtils.immediate();
+					
 					// Anti-Jiggle when moving
 					Vec3 renderView = MCUtil.getGameRenderer().getMainCamera().getPosition();
 					matrix.translate(-renderView.x, -renderView.y, -renderView.z);
 					
-					matrix.pushPose();
-					{
-						MultiBufferSource.BufferSource buffer = RenderUtils.immediate();
-						
-						int radius = 16;
-						for(int i = -radius;i <= radius;i++){
-							for(int j = -radius;j <= radius;j++){
-								ChunkPos cPos = new ChunkPos(playerPos.offset(16 * i, 0, 16 * j));
-								int chunkX = cPos.getMinBlockX();
-								int chunkZ = cPos.getMinBlockZ();
-								
-								for(int cX = 0;cX < 16;cX++){
-									for(int cZ = 0;cZ < 16;cZ++){
-										int x = chunkX + cX;
-										int z = chunkZ + cZ;
-										
-										matrix.pushPose();
-										{
-											double n = ReservoirHandler.getValueOf(world, x, z);
-											if(n > -1){
-												int c = (int) Math.round(9 * n);
-												
-												DyeColor color = switch(c){
-													case 1 -> DyeColor.BLUE;
-													case 2 -> DyeColor.CYAN;
-													case 3 -> DyeColor.GREEN;
-													case 4 -> DyeColor.LIME;
-													case 5 -> DyeColor.YELLOW;
-													case 6 -> DyeColor.ORANGE;
-													case 7 -> DyeColor.RED;
-													default -> c > 7 ? DyeColor.WHITE : DyeColor.BLACK;
-												};
-												
-												int r = (color.getTextColor() & 0xFF0000) >> 16;
-												int g = (color.getTextColor() & 0x00FF00) >> 8;
-												int b = (color.getTextColor() & 0x0000FF);
-												
-												int height = world.getHeightmapPos(Heightmap.Types.WORLD_SURFACE, new BlockPos(x, 0, z)).getY();
-												for(;height > 0;height--){
-													if(world.getBlockState(new BlockPos(x, height - 1, z)).isSolidRender(world, new BlockPos(x, height - 1, z))){
-														break;
-													}
-												}
-												
-												matrix.translate(x, Math.max(63, height) + 0.0625, z);
-												
-												Matrix4f mat = matrix.last().pose();
-												
-												VertexConsumer builder = buffer.getBuffer(IPRenderTypes.TRANSLUCENT_POSITION_COLOR);
-												builder.addVertex(mat, 0, 0, 0).setColor(r, g, b, 127);
-												builder.addVertex(mat, 0, 0, 1).setColor(r, g, b, 127);
-												builder.addVertex(mat, 1, 0, 1).setColor(r, g, b, 127);
-												builder.addVertex(mat, 1, 0, 0).setColor(r, g, b, 127);
-											}
-										}
-										matrix.popPose();
-									}
-								}
-							}
-						}
-						buffer.endBatch();
-					}
-					matrix.popPose();
+					renderHeatMap(matrix, buffer, playerPos, world);
 					
-					matrix.pushPose();
-					{
-						ReservoirRegionDataStorage storage = ReservoirRegionDataStorage.get();
-						final ResourceKey<Level> dimKey = player.getCommandSenderWorld().dimension();
-						final Set<Reservoir> islands = new HashSet<>();
-						
-						RegionPos pLocal = new RegionPos(playerPos);
-						RegionPos p0 = new RegionPos(playerPos, 1, -1);
-						RegionPos p1 = new RegionPos(playerPos, 1, 1);
-						RegionPos p2 = new RegionPos(playerPos, -1, -1);
-						RegionPos p3 = new RegionPos(playerPos, -1, 1);
-						
-						RegionData rLocal = storage.getRegionData(pLocal);
-						RegionData r0 = storage.getRegionData(p0);
-						RegionData r1 = storage.getRegionData(p1);
-						RegionData r2 = storage.getRegionData(p2);
-						RegionData r3 = storage.getRegionData(p3);
-						
-						RegionData[] array = {
-							rLocal,
-							r0,
-							r1,
-							r2,
-							r3
-						};
-						for(RegionData rd: array){
-							if(rd != null){
-								Multimap<ResourceKey<Level>, Reservoir> m = rd.getReservoirList();
-								synchronized(m){
-									islands.addAll(m.get(dimKey));
-								}
-							}
-						}
-						
-						{
-							MultiBufferSource.BufferSource buffer = RenderUtils.immediate();
-							
-							if(!islands.isEmpty()){
-								float y = 128.0625F;
-								int radius = 256;
-								radius = radius * radius + radius * radius;
-								for(Reservoir reservoir: islands){
-									BlockPos center = reservoir.getBoundingBox().getCenter();
-									
-									if(center.distSqr(playerPos) <= radius){
-										ReservoirBoundingBox bounds = reservoir.getBoundingBox();
-										matrix.pushPose();
-										{
-											float minX = bounds.xMin() + 0.5F;
-											float minZ = bounds.zMin() + 0.5F;
-											float maxX = bounds.xMax() + 0.5F;
-											float maxZ = bounds.zMax() + 0.5F;
-											
-											VertexConsumer builder = buffer.getBuffer(IPRenderTypes.TRANSLUCENT_LINE);
-											
-											PoseStack.Pose last = matrix.last();
-											Matrix4f mat = last.pose();
-											
-											builder.addVertex(mat, minX, y, minZ).setColor(255, 0, 255, 127).setNormal(last, 0, 1, 0);
-											builder.addVertex(mat, maxX, y, minZ).setColor(255, 0, 255, 127).setNormal(last, 0, 1, 0);
-											builder.addVertex(mat, minX, y, maxZ).setColor(255, 0, 255, 127).setNormal(last, 0, 1, 0);
-											builder.addVertex(mat, maxX, y, maxZ).setColor(255, 0, 255, 127).setNormal(last, 0, 1, 0);
-											builder.addVertex(mat, minX, y, minZ).setColor(255, 0, 255, 127).setNormal(last, 0, 1, 0);
-											builder.addVertex(mat, minX, y, maxZ).setColor(255, 0, 255, 127).setNormal(last, 0, 1, 0);
-											builder.addVertex(mat, maxX, y, minZ).setColor(255, 0, 255, 127).setNormal(last, 0, 1, 0);
-											builder.addVertex(mat, maxX, y, maxZ).setColor(255, 0, 255, 127).setNormal(last, 0, 1, 0);
-										}
-										matrix.popPose();
-										
-										if(reservoir.getPolygon() != null && !reservoir.getPolygon().isEmpty()){
-											List<ColumnPos> poly = reservoir.getPolygon().getPolygonList();
-											
-											matrix.pushPose();
-											{
-												VertexConsumer builder = buffer.getBuffer(IPRenderTypes.TRANSLUCENT_LINE);
-												PoseStack.Pose last = matrix.last();
-												Matrix4f mat = last.pose();
-												
-												// Draw polygon as line
-												int j = poly.size() - 1;
-												for(int i = 0;i < poly.size();i++){
-													ColumnPos a = poly.get(j);
-													ColumnPos b = poly.get(i);
-													float f = i / (float) poly.size();
-													
-													builder.addVertex(mat, a.x() + .5F, y, a.z() + .5F).setColor(f, 0.0F, 1 - f, 0.5F).setNormal(last, 0F, 1F, 0F);
-													builder.addVertex(mat, b.x() + .5F, y, b.z() + .5F).setColor(f, 0.0F, 1 - f, 0.5F).setNormal(last, 0F, 1F, 0F);
-													
-													j = i;
-												}
-												
-												// Center Marker
-												{
-													// Y
-													builder.addVertex(mat, center.getX() + .5F, 128F, center.getZ() + .5F).setColor(0.0F, 1.0F, 0.0F, 0.5F).setNormal(last, 0F, 1F, 0F);
-													builder.addVertex(mat, center.getX() + .5F, 129F, center.getZ() + .5F).setColor(0.0F, 1.0F, 0.0F, 0.5F).setNormal(last, 0F, 1F, 0F);
-													
-													// X
-													builder.addVertex(mat, center.getX(), 128.5F, center.getZ() + .5F).setColor(1.0F, 0.0F, 0.0F, 0.5F).setNormal(last, 0F, 1F, 0F);
-													builder.addVertex(mat, center.getX() + 1, 128.5F, center.getZ() + .5F).setColor(1.0F, 0.0F, 0.0F, 0.5F).setNormal(last, 0F, 1F, 0F);
-													
-													// Z
-													builder.addVertex(mat, center.getX() + .5F, 128.5F, center.getZ()).setColor(0.0F, 0.0F, 1.0F, 0.5F).setNormal(last, 0F, 1F, 0F);
-													builder.addVertex(mat, center.getX() + .5F, 128.5F, center.getZ() + 1).setColor(0.0F, 0.0F, 1.0F, 0.5F).setNormal(last, 0F, 1F, 0F);
-												}
-											}
-											matrix.popPose();
-										}
-									}
-								}
-							}
-							
-							buffer.endBatch();
-						}
-					}
-					matrix.popPose();
+					renderReservoirPolygons(matrix, buffer, player, playerPos);
+					
+					buffer.endBatch();
 				}
 				matrix.popPose();
 				
 			}
 		}
+	}
+	
+	private static void renderReservoirPolygons(PoseStack matrix, MultiBufferSource.BufferSource buffer, Player player, BlockPos playerPos){
+		matrix.pushPose();
+		{
+			ReservoirRegionDataStorage storage = ReservoirRegionDataStorage.get();
+			final ResourceKey<Level> dimKey = player.getCommandSenderWorld().dimension();
+			final Set<Reservoir> islands = new HashSet<>();
+			
+			RegionPos pLocal = new RegionPos(playerPos);
+			RegionPos p0 = new RegionPos(playerPos, 1, -1);
+			RegionPos p1 = new RegionPos(playerPos, 1, 1);
+			RegionPos p2 = new RegionPos(playerPos, -1, -1);
+			RegionPos p3 = new RegionPos(playerPos, -1, 1);
+			
+			RegionData rLocal = storage.getRegionData(pLocal);
+			RegionData r0 = storage.getRegionData(p0);
+			RegionData r1 = storage.getRegionData(p1);
+			RegionData r2 = storage.getRegionData(p2);
+			RegionData r3 = storage.getRegionData(p3);
+			
+			RegionData[] array = {
+				rLocal,
+				r0,
+				r1,
+				r2,
+				r3
+			};
+			for(RegionData rd: array){
+				if(rd != null){
+					Multimap<ResourceKey<Level>, Reservoir> m = rd.getReservoirList();
+					synchronized(m){
+						islands.addAll(m.get(dimKey));
+					}
+				}
+			}
+			
+			if(!islands.isEmpty()){
+				float y = 128.0625F;
+				int radius = 256;
+				radius = radius * radius + radius * radius;
+				for(Reservoir reservoir: islands){
+					BlockPos center = reservoir.getBoundingBox().getCenter();
+					
+					if(center.distSqr(playerPos) <= radius){
+						ReservoirBoundingBox bounds = reservoir.getBoundingBox();
+						renderReservoirBoundingBox(matrix, buffer, bounds, y);
+						
+						if(reservoir.getPolygon() != null && !reservoir.getPolygon().isEmpty()){
+							List<ColumnPos> poly = reservoir.getPolygon().getPolygonList();
+							
+							renderPolygon(matrix, buffer, poly, y, center);
+						}
+					}
+				}
+			}
+		}
+		matrix.popPose();
+	}
+	
+	private static void renderPolygon(PoseStack matrix, MultiBufferSource.BufferSource buffer, List<ColumnPos> poly, float y, BlockPos center){
+		VertexConsumer builder = buffer.getBuffer(IPRenderTypes.TRANSLUCENT_LINE);
+		
+		matrix.pushPose();
+		{
+			PoseStack.Pose last = matrix.last();
+			Matrix4f mat = last.pose();
+			
+			// Draw polygon as line
+			int j = poly.size() - 1;
+			for(int i = 0;i < poly.size();i++){
+				ColumnPos a = poly.get(j);
+				ColumnPos b = poly.get(i);
+				float f = i / (float) poly.size();
+				
+				builder.addVertex(mat, a.x() + .5F, y, a.z() + .5F).setColor(f, 0.0F, 1 - f, 0.5F).setNormal(last, 0F, 1F, 0F);
+				builder.addVertex(mat, b.x() + .5F, y, b.z() + .5F).setColor(f, 0.0F, 1 - f, 0.5F).setNormal(last, 0F, 1F, 0F);
+				
+				j = i;
+			}
+		}
+		matrix.popPose();
+		
+		// Center Marker
+		matrix.pushPose();
+		{
+			PoseStack.Pose last = matrix.last();
+			Matrix4f mat = last.pose();
+			
+			// Y-Axis
+			builder.addVertex(mat, center.getX() + .5F, 128F, center.getZ() + .5F).setColor(0.0F, 1.0F, 0.0F, 0.5F).setNormal(last, 0F, 1F, 0F);
+			builder.addVertex(mat, center.getX() + .5F, 129F, center.getZ() + .5F).setColor(0.0F, 1.0F, 0.0F, 0.5F).setNormal(last, 0F, 1F, 0F);
+			
+			// X-Axis
+			builder.addVertex(mat, center.getX(), 128.5F, center.getZ() + .5F).setColor(1.0F, 0.0F, 0.0F, 0.5F).setNormal(last, 0F, 1F, 0F);
+			builder.addVertex(mat, center.getX() + 1, 128.5F, center.getZ() + .5F).setColor(1.0F, 0.0F, 0.0F, 0.5F).setNormal(last, 0F, 1F, 0F);
+			
+			// Z-Axis
+			builder.addVertex(mat, center.getX() + .5F, 128.5F, center.getZ()).setColor(0.0F, 0.0F, 1.0F, 0.5F).setNormal(last, 0F, 1F, 0F);
+			builder.addVertex(mat, center.getX() + .5F, 128.5F, center.getZ() + 1).setColor(0.0F, 0.0F, 1.0F, 0.5F).setNormal(last, 0F, 1F, 0F);
+		}
+		matrix.popPose();
+	}
+	
+	private static void renderReservoirBoundingBox(PoseStack matrix, MultiBufferSource.BufferSource buffer, ReservoirBoundingBox bounds, float y){
+		matrix.pushPose();
+		{
+			float minX = bounds.xMin() + 0.5F;
+			float minZ = bounds.zMin() + 0.5F;
+			float maxX = bounds.xMax() + 0.5F;
+			float maxZ = bounds.zMax() + 0.5F;
+			
+			VertexConsumer builder = buffer.getBuffer(IPRenderTypes.TRANSLUCENT_LINE);
+			
+			PoseStack.Pose last = matrix.last();
+			Matrix4f mat = last.pose();
+			
+			builder.addVertex(mat, minX, y, minZ).setColor(255, 0, 255, 127).setNormal(last, 0, 1, 0);
+			builder.addVertex(mat, maxX, y, minZ).setColor(255, 0, 255, 127).setNormal(last, 0, 1, 0);
+			builder.addVertex(mat, minX, y, maxZ).setColor(255, 0, 255, 127).setNormal(last, 0, 1, 0);
+			builder.addVertex(mat, maxX, y, maxZ).setColor(255, 0, 255, 127).setNormal(last, 0, 1, 0);
+			builder.addVertex(mat, minX, y, minZ).setColor(255, 0, 255, 127).setNormal(last, 0, 1, 0);
+			builder.addVertex(mat, minX, y, maxZ).setColor(255, 0, 255, 127).setNormal(last, 0, 1, 0);
+			builder.addVertex(mat, maxX, y, minZ).setColor(255, 0, 255, 127).setNormal(last, 0, 1, 0);
+			builder.addVertex(mat, maxX, y, maxZ).setColor(255, 0, 255, 127).setNormal(last, 0, 1, 0);
+		}
+		matrix.popPose();
+	}
+	
+	private static void renderHeatMap(PoseStack matrix, MultiBufferSource.BufferSource buffer, BlockPos playerPos, Level world){
+		matrix.pushPose();
+		{
+			int radius = 16;
+			for(int i = -radius;i <= radius;i++){
+				for(int j = -radius;j <= radius;j++){
+					ChunkPos cPos = new ChunkPos(playerPos.offset(16 * i, 0, 16 * j));
+					int chunkX = cPos.getMinBlockX();
+					int chunkZ = cPos.getMinBlockZ();
+					
+					for(int cX = 0;cX < 16;cX++){
+						for(int cZ = 0;cZ < 16;cZ++){
+							int x = chunkX + cX;
+							int z = chunkZ + cZ;
+							
+							matrix.pushPose();
+							{
+								double n = ReservoirHandler.getValueOf(world, x, z);
+								if(n > -1){
+									int c = (int) Math.round(9 * n);
+									
+									DyeColor color = switch(c){
+										case 1 -> DyeColor.BLUE;
+										case 2 -> DyeColor.CYAN;
+										case 3 -> DyeColor.GREEN;
+										case 4 -> DyeColor.LIME;
+										case 5 -> DyeColor.YELLOW;
+										case 6 -> DyeColor.ORANGE;
+										case 7 -> DyeColor.RED;
+										default -> c > 7 ? DyeColor.WHITE : DyeColor.BLACK;
+									};
+									
+									int r = (color.getTextColor() & 0xFF0000) >> 16;
+									int g = (color.getTextColor() & 0x00FF00) >> 8;
+									int b = (color.getTextColor() & 0x0000FF);
+									
+									int height = world.getHeightmapPos(Heightmap.Types.WORLD_SURFACE, new BlockPos(x, 0, z)).getY();
+									for(;height > 0;height--){
+										if(world.getBlockState(new BlockPos(x, height - 1, z)).isSolidRender(world, new BlockPos(x, height - 1, z))){
+											break;
+										}
+									}
+									
+									matrix.translate(x, Math.max(63, height) + 0.0625, z);
+									
+									Matrix4f mat = matrix.last().pose();
+									
+									VertexConsumer builder = buffer.getBuffer(IPRenderTypes.TRANSLUCENT_POSITION_COLOR);
+									builder.addVertex(mat, 0, 0, 0).setColor(r, g, b, 127);
+									builder.addVertex(mat, 0, 0, 1).setColor(r, g, b, 127);
+									builder.addVertex(mat, 1, 0, 1).setColor(r, g, b, 127);
+									builder.addVertex(mat, 1, 0, 0).setColor(r, g, b, 127);
+								}
+							}
+							matrix.popPose();
+						}
+					}
+				}
+			}
+		}
+		matrix.popPose();
 	}
 	
 	private static void distillationTower(DebugText debugText, IMultiblockBE<?> multiblockBE){
