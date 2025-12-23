@@ -1,7 +1,7 @@
 Molotov
 Perfect for Riots
 <&molotov>
-Fill an empty Glass Bottle using the <link;bottling_machine;§o§nBottling §o§nMachine§r> with <link;immersivepetroleum:fluids;§n§oGasoline§r;gasoline>.
+Fill an empty Glass Bottle using the <link;bottling_machine;Bottling Machine> with <link;immersivepetroleum:fluids;Gasoline;gasoline>.
 Stuff some Wool or <link;hemp;Tough Fabric;fabric_recipe> into neck of the Gasoline filled Glass Bottle. 
 
 Once you're ready to throw it hold Flint & Steel in your off-hand, the Unlit Molotov in your main-hand and hold rightclick to ignite.<np>

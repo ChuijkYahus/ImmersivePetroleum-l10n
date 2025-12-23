@@ -1,7 +1,7 @@
 Pumpjack
 Pump, Pump It Up
 <&pumpjack0>
-The Pumpjack is a machine which pumps liquids from wellheads created by the <link;immersivepetroleum:derrick;§o§nDerrick§r>.
+The Pumpjack is a machine which pumps liquids from wellheads created by the <link;immersivepetroleum:derrick;Derrick>.
 The structure is formed by using the Engineer's Hammer on the heavy engineering block on the second layer.<np>
 Pumpjacks are the workhorse machine of petroleum extraction, producing a slow but steady amount of liquid from their wells by lifting it through a one-way valve to overcome the lack of well pressure. Wells that still have pressure will overcome the pumpjack's valve and will gush liquid.
 

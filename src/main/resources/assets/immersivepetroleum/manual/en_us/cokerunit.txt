@@ -1,6 +1,6 @@
 Coker
 Very Sticky Stuff
-<&cokerunit0>The Coker is a massive machine that cracks and carbonizes residual <link;immersivepetroleum:fluids;§n§obitumen§r;bitumen> from distillation into <link;immersivepetroleum:fluids;§n§opetroleum coke§r;petroleum_coke> and <link;immersivepetroleum:fluids;§n§osulfurized §n§odiesel§r;diesel>.
+<&cokerunit0>The Coker is a massive machine that cracks and carbonizes residual <link;immersivepetroleum:fluids;bitumen;bitumen> from distillation into <link;immersivepetroleum:fluids;petroleum coke;petroleum_coke> and <link;immersivepetroleum:fluids;sulfurized diesel;diesel>.
 
 Energy is input through the two high-amperage connectors on the front of the machine, and bitumen and water to the two labeled input ports on the front of the machine. Sulfurized diesel is output from the orange port on the front, and petroleum coke from the two hoppers below the coking drums.
 
