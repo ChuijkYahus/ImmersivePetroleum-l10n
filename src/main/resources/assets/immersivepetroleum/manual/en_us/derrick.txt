@@ -9,7 +9,7 @@ Fluids are input through the blue fluid port, and fluid is output from the singu
 Applying a redstone signal to the control panel will halt the drilling process, and can be inverted by use of the Engineer's Screwdriver.<np>
 The derrick's drilling process happens in two stages, and cannot happen below the water line as water will flood the nascent drill hole and erode the walls.
 
-The first phase is the reinforced drilling phase, when the derrick drills above the bedrock and must reinforce the placed fluid pipes with <link;immersiveengineering:mixer;§o§nliquid concrete§r> to stabilize them, placing well pipes. If broken, these pipes must be re-drilled.<np>
+The first phase is the reinforced drilling phase, when the derrick drills above the bedrock and must reinforce the placed fluid pipes with <link;concrete;§o§nLiquid Concrete§r;liquid> to stabilize them, placing well pipes. If broken, these pipes must be re-drilled.<np>
 Once the derrick has hit bedrock, the second drill phase begins and concrete reinforcement is swapped for cooling water. The derrick begins drilling through the bedrock to one or more target locations that can be set via its interface, consuming water and fluid pipes to do so.
 
 When the well is completed the wellhead is opened and the drilling equipment is forced out of the well by the fluid pressure from below.

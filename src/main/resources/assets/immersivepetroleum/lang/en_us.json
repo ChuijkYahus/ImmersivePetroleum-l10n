@@ -202,7 +202,7 @@
 	"ie.manual.entry.reservoirs.subtitle": "Black gold",
 	
 	"ie.manual.entry.reservoirs.oil0": "While mining near bedrock, you've occasionally noticed a slick black flammable substance: <link;immersivepetroleum:fluids;§o§ncrude oil§r>. Crude Oil is just one of many fluids that can be found underneath the impenetrable rock, but you won't be able to breach these reserves on your own.\n\nWith the help of a <link;immersivepetroleum:derrick;§o§nspecially §o§ndesigned §o§nmachine§r> you may be able to get your hands on the contents of these reservoirs.<np>",
-	"ie.manual.entry.reservoirs.oil1": "The §o§nSeismic §o§nSurvey §o§nTool§r can be used to prospect for fluid reservoirs via listening to reflected infrasonic waves from an explosion from a <link;bullets;§o§nBuckshot Cartridge§r;buckshot>. Buckshot must be loaded in and the tool right-clicked to produce a map of the surrounding reservoirs that can be used to triangulate an exact location.<np>",
+	"ie.manual.entry.reservoirs.oil1": "The §o§nSeismic §o§nSurvey §o§nTool§r can be used to prospect for fluid reservoirs via listening to reflected infrasonic waves from an explosion from a <link;revolver_cartridges;§o§nBuckshot Cartridge§r;buckshot>. Buckshot must be loaded in and the tool right-clicked to produce a map of the surrounding reservoirs that can be used to triangulate an exact location.<np>",
 	"ie.manual.entry.reservoirs.oil2": "Only one type of fluid can come from a single reservoir, the types of which are listed in the following pages.<np>",
 	
 	"_comment": "Below are used for Dynamic page generation of all reservoirs",
