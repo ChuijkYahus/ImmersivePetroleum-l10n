@@ -209,7 +209,7 @@ public class IPRecipes extends RecipeProvider{
 			.build(this.out, rl("hydrotreater/lubricant_cracking"));
 
 		// PNC Compat
-		/*
+		/* // See Resources -> data.immersivepetroleum.recipes.hydrotreater
 		HighPressureRefineryRecipeBuilder.builder(new FluidStack(ModFluids.PLASTIC.get(), 2000), 61440, 60)
 			.addCondition(new ModLoadedCondition("pneumaticcraft"))
 			.addInputFluid(IPTags.Fluids.petroleum_gas, 100)
