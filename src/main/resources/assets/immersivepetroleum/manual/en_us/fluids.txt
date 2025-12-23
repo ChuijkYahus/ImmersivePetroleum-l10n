@@ -13,7 +13,7 @@ Diesel and sulfurized diesel are the heavyweight fuels of the petrochemical engi
 
 Sulfurized diesel can be used for an easy source of sulfur, and is the second-heaviest fraction distillable from <link;immersivepetroleum:fluids;crude oil;crude>.
 <&kerosene>
-Kerosene is a medium fuel usable in the <link;diesel_generator;Diesel Generator> for bulk power production. It can be separated into its light and heavy fractions to upgrade <link;immersivepetroleum:fluids;naphtha;naphtha> into <link;immersivepetroleum:fluids;gasoline;gasoline>.
+Kerosene is a medium fuel usable in the <link;diesel_generator;Diesel Generator> for bulk power production. It can be separated into its light and heavy fractions to upgrade <link;immersivepetroleum:fluids;Naphtha;naphtha> into <link;immersivepetroleum:fluids;gasoline;gasoline>.
 
 Being a lighter fraction than <link;immersivepetroleum:fluids;diesel;diesel>, kerosene does not accumulate sulfur and does not need to be desulfurized.
 <&naphtha>
@@ -27,13 +27,17 @@ Bitumen is a dark, sticky solid that can be used as artificial binder for concre
 
 Bitumen is created from the distillation of <link;immersivepetroleum:fluids;crude oil;crude> at a slow rate.
 <&petroleum_gas>
-Petroleum Gas is not immediately distillable from crude oil, this lighter feedstock must be cracked from <link;immersivepetroleum:fluids;naphtha;naphtha>.
+Petroleum Gas is not immediately distillable from crude oil, this lighter feedstock must be cracked from <link;immersivepetroleum:fluids;Naphtha;naphtha>.
 
 Petroleum gas cannot be used in generators due to its gaseous nature. Instead, it can be used as a chemical feedstock for <link;industrial_fluids;phenolic resin;resin_acetaldehyde>.
+<&benzol>
+§2Benzol§r is the result of further distilling <link;immersivepetroleum:fluids;Kerosene;kerosene>, which can be used for the production of either <link;immersivepetroleum:fluids;Gasoline;gasoline> or <link;immersivepetroleum:plastics;Creosote Oil;plastics2>
 <&gasoline>
 Gasoline is a high-quality light fuel suitable for the <link;immersivepetroleum:portable_generator;Portable Generator> or <link;immersivepetroleum:speedboat;Motorboat>, and can also be used in <link;immersivepetroleum:fluids;napalm;napalm>.
 
- It has reduced volatility and a higher efficiency in the <link;immersivepetroleum:portable_generator;Portable Generator>. Gasoline is made via the addition of benzol, which is produced from <link;immersivepetroleum:fluids;kerosene;kerosene>, added to <link;immersivepetroleum:fluids;naphtha;naphtha> in the <link;refinery;Refinery>.
+It has reduced volatility and a higher efficiency in the <link;immersivepetroleum:portable_generator;Portable Generator>.
+
+Gasoline is made in the <link;refinery;Refinery> with <link;immersivepetroleum:fluids;Benzol;gasoline> and <link;immersivepetroleum:fluids;Naphtha;naphtha>.
 <&napalm>
 Napalm is an extremely flammable substance that can be created in the <link;mixer;Mixer> using <link;immersivepetroleum:fluids;gasoline;gasoline> and three measures of aluminium grit. It has little use other than wanton destruction; when napalm is lit, fire will spread almost immediately over its surface, allowing for rapid deforestation. In addition, it can serve as a very effective fuel for the <link;chemical_thrower;Chemical Thrower>.
 <&paraffin>

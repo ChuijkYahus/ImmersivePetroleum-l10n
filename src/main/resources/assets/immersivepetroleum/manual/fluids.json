@@ -27,6 +27,10 @@
 		"type": "item_display",
 		"id": "immersivepetroleum:petroleum_gas_bucket"
 	},
+	"benzol":{
+		"type": "item_display",
+		"id": "immersivepetroleum:benzol_bucket"
+	},
 	"gasoline":{
 		"type": "item_display",
 		"items": ["immersivepetroleum:gasoline_bucket", "immersivepetroleum:benzol_bucket"]
