@@ -31,13 +31,15 @@ Petroleum Gas is not immediately distillable from crude oil, this lighter feedst
 
 Petroleum gas cannot be used in generators due to its gaseous nature. Instead, it can be used as a chemical feedstock for <link;industrial_fluids;phenolic resin;resin_acetaldehyde>.
 <&benzol>
-§2Benzol§r is the result of further distilling <link;immersivepetroleum:fluids;Kerosene;kerosene>, which can be used for the production of either <link;immersivepetroleum:fluids;Gasoline;gasoline> or <link;immersivepetroleum:plastics;Creosote Oil;plastics2>
+§2Benzol§r is an aromatic intermediate feedstock used for refined products such as <link;immersivepetroleum:fluids;Gasoline;gasoline> or <link;immersivepetroleum:plastics;Duroplast;plastics2>
+
+§2Benzol§r can be created from the secondary distillation of <link;immersivepetroleum:fluids;Kerosene;kerosene>, as its lighter fraction.
 <&gasoline>
 Gasoline is a high-quality light fuel suitable for the <link;immersivepetroleum:portable_generator;Portable Generator> or <link;immersivepetroleum:speedboat;Motorboat>, and can also be used in <link;immersivepetroleum:fluids;napalm;napalm>.
 
 It has reduced volatility and a higher efficiency in the <link;immersivepetroleum:portable_generator;Portable Generator>.
 
-Gasoline is made in the <link;refinery;Refinery> with <link;immersivepetroleum:fluids;Benzol;gasoline> and <link;immersivepetroleum:fluids;Naphtha;naphtha>.
+Gasoline is mixed in the <link;refinery;Refinery> via the addition of <link;immersivepetroleum:fluids;Benzol;benzol> to <link;immersivepetroleum:fluids;Naphtha;naphtha>.
 <&napalm>
 Napalm is an extremely flammable substance that can be created in the <link;mixer;Mixer> using <link;immersivepetroleum:fluids;gasoline;gasoline> and three measures of aluminium grit. It has little use other than wanton destruction; when napalm is lit, fire will spread almost immediately over its surface, allowing for rapid deforestation. In addition, it can serve as a very effective fuel for the <link;chemical_thrower;Chemical Thrower>.
 <&paraffin>

@@ -18,5 +18,5 @@ The distillation tower can separate the following fluids into their fractions:
 |   0.07/t of <link;immersivepetroleum:fluids;Bitumen;bitumen>.
 
 10mB/t of <link;immersivepetroleum:fluids;kerosene;lubricant> into
-|   5mB/t of <link;immersivepetroleum:fluids;Benzol;gasoline>
+|   5mB/t of <link;immersivepetroleum:fluids;Benzol;benzol>
 |   5mB/t of <link;immersivepetroleum:fluids;Sulfurized Diesel;diesel>.
