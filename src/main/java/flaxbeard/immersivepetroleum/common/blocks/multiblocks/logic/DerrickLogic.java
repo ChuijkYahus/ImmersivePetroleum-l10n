@@ -273,8 +273,8 @@ public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableCom
 		}
 		
 		boolean forceSync = false;
-		if(state.isRedstoned != rsEnabled){
-			state.isRedstoned = rsEnabled;
+		if(state.isRedstoned != !rsEnabled){
+			state.isRedstoned = !rsEnabled;
 			forceSync = true;
 		}
 		
@@ -595,6 +595,7 @@ public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableCom
 			this.tank.readFromNBT(nbt.getCompound("tank"), provider);
 			
 			this.rsState.readSaveNBT(nbt, provider);
+			this.isRedstoned = nbt.getBoolean("isRedstoned");
 			
 			ContainerHelper.loadAllItems(nbt, this.inventory, provider);
 		}
@@ -613,6 +614,7 @@ public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableCom
 			}
 			
 			this.rsState.writeSaveNBT(nbt, provider);
+			nbt.putBoolean("isRedstoned", this.isRedstoned);
 			
 			ContainerHelper.saveAllItems(nbt, this.inventory, provider);
 		}
@@ -620,15 +622,12 @@ public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableCom
 		@Override
 		public void readSyncNBT(CompoundTag nbt, HolderLookup.Provider provider){
 			readSaveNBT(nbt, provider);
-			
-			this.isRedstoned = nbt.getBoolean("isRedstoned");
 		}
 		
 		@Override
 		public void writeSyncNBT(CompoundTag nbt, HolderLookup.Provider provider){
 			writeSaveNBT(nbt, provider);
 			
-			nbt.putBoolean("isRedstoned", this.isRedstoned);
 		}
 		
 		private int getReservoirFlow(){
