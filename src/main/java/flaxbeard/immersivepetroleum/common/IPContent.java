@@ -82,7 +82,7 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-@EventBusSubscriber(modid = ImmersivePetroleum.MODID, bus = Bus.MOD)
+@EventBusSubscriber(modid = ImmersivePetroleum.MODID, bus = Bus.MOD, value = Dist.CLIENT)
 public class IPContent{
 	public static final Logger log = LogManager.getLogger(ImmersivePetroleum.MODID + "/Content");
 	
