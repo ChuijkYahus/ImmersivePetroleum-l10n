@@ -1,12 +1,13 @@
 package flaxbeard.immersivepetroleum.common.cfg;
 
-import com.electronwill.nightconfig.core.Config;
+import com.electronwill.nightconfig.core.CommentedConfig;
 import com.google.common.base.Preconditions;
 import flaxbeard.immersivepetroleum.ImmersivePetroleum;
 import flaxbeard.immersivepetroleum.api.energy.FuelHandler;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.EventBusSubscriber.Bus;
+import net.neoforged.fml.config.IConfigSpec;
 import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.neoforged.neoforge.common.ModConfigSpec.BooleanValue;
@@ -35,19 +36,19 @@ public class IPServerConfig{
 		ALL = builder.build();
 	}
 	
-	private static Config rawConfig;
-	public static Config getRawConfig(){
+	private static IConfigSpec.ILoadedConfig rawConfig;
+	public static CommentedConfig getRawConfig(){
 		if(rawConfig == null){
 			try{
-				Field childConfig = ModConfigSpec.class.getDeclaredField("childConfig");
+				Field childConfig = ModConfigSpec.class.getDeclaredField("loadedConfig");
 				childConfig.setAccessible(true);
-				rawConfig = (Config) childConfig.get(ALL);
+				rawConfig = (IConfigSpec.ILoadedConfig) childConfig.get(ALL);
 				Preconditions.checkNotNull(rawConfig);
 			}catch(Exception x){
 				throw new RuntimeException(x);
 			}
 		}
-		return rawConfig;
+		return rawConfig.config();
 	}
 	
 	public static class Extraction{
