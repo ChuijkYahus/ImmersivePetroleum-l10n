@@ -69,6 +69,6 @@ public class ReservoirBoundingBox{
 	
 	@Override
 	public String toString(){
-		return String.format("IslandAxisAlignedBB [minX = %d, minZ = %d, maxX = %d, maxZ = %d]", this.xMin, this.zMin, this.xMax, this.zMax);
+		return String.format("%s [xMin = %d, zMin = %d, xMax = %d, zMax = %d]", getClass().getSimpleName(), this.xMin, this.zMin, this.xMax, this.zMax);
 	}
 }
