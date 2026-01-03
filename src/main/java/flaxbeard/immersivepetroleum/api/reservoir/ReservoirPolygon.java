@@ -14,7 +14,6 @@ import java.util.Objects;
 import java.util.Set;
 
 public class ReservoirPolygon{
-	private static final Set<Location> TEMP = new HashSet<>();
 	
 	public static ReservoirPolygon make(Level level, ColumnPos start){
 		return new ReservoirPolygon(level, start);
@@ -27,16 +26,17 @@ public class ReservoirPolygon{
 	private final ArrayList<ColumnPos> poly = new ArrayList<>();
 	private final ReservoirBoundingBox bounds;
 	ReservoirPolygon(Level level, ColumnPos start){
-		scan(level, start);
+		final Set<Location> TEMP = new HashSet<>(2600);
+		
+		scan(level, start, TEMP);
 		
 		// Only keep outline
 		TEMP.removeIf(location -> !location.edge());
 		
-		makeDirectional();
+		makeDirectional(TEMP);
 		cullLines();
 		
 		this.poly.trimToSize();
-		TEMP.clear();
 		
 		this.bounds = createBoundingBox();
 	}
@@ -190,13 +190,13 @@ public class ReservoirPolygon{
 		return ret;
 	}
 	
-	void makeDirectional(){
+	void makeDirectional(final Set<Location> TEMP){
 		Location current = TEMP.stream().findFirst().get();
 		TEMP.remove(current);
 		final ArrayList<Location> dst = new ArrayList<>();
 		dst.add(current);
 		while(!TEMP.isEmpty()){
-			current = nextDir(current, dst);
+			current = nextDir(TEMP, current, dst);
 			
 			if(current == null){
 				if(!TEMP.isEmpty())
@@ -281,7 +281,7 @@ public class ReservoirPolygon{
 		}
 	}
 	
-	static Location nextDir(Location current, List<Location> dst){
+	static Location nextDir(Set<Location> TEMP, Location current, List<Location> dst){
 		Location[] locations = {
 			current.offset(1, 0),
 			current.offset(-1, 0),
@@ -304,7 +304,7 @@ public class ReservoirPolygon{
 		return null;
 	}
 	
-	void scan(Level level, ColumnPos pos){
+	void scan(Level level, ColumnPos pos, final Set<Location> TEMP){
 		if(TEMP.contains(new Location(pos, false)) || ReservoirHandler.getValueOf(level, pos.x(), pos.z()) == -1)
 			return;
 		
@@ -320,10 +320,10 @@ public class ReservoirPolygon{
 		
 		TEMP.add(new Location(pos, b0 | b1 | b2 | b3));
 		
-		scan(level, new ColumnPos(p0.x(), p0.z()));
-		scan(level, new ColumnPos(p1.x(), p1.z()));
-		scan(level, new ColumnPos(p2.x(), p2.z()));
-		scan(level, new ColumnPos(p3.x(), p3.z()));
+		scan(level, p0, TEMP);
+		scan(level, p1, TEMP);
+		scan(level, p2, TEMP);
+		scan(level, p3, TEMP);
 	}
 	
 	private record Location(@Nonnull ColumnPos pos, boolean edge){
