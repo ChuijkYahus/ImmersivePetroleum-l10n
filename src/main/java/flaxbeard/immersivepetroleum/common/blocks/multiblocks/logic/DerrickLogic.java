@@ -407,36 +407,38 @@ public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableCom
 		}
 	}
 	
-	private void outputReservoirFluid(IMultiblockLevel level, State state, BlockPos inPos, IMultiblockContext<State> ctx){
-		WellTileEntity well = createAndGetWell(() -> level.getRawLevel(), state, inPos, true);
-		boolean mirrored = level.getOrientation().mirrored();
-		Direction front = level.getOrientation().front();
+	private void outputReservoirFluid(IMultiblockLevel mbLevel, State state, BlockPos inPos, IMultiblockContext<State> ctx){
+		final Level rawLevel = mbLevel.getRawLevel();
+		
+		WellTileEntity well = createAndGetWell(() -> rawLevel, state, inPos, true);
 		if(well == null)
 			return;
 		
 		FluidStack extracted = getExtractedFluidStack(well);
 		if(!extracted.isEmpty()){
+			Direction front = mbLevel.getOrientation().front();
+			boolean mirrored = mbLevel.getOrientation().mirrored();
+			
 			Direction facing = mirrored ? front.getCounterClockWise() : front.getClockWise();
-			BlockPos outPos = level.toAbsolute(FLUID_OUT.posInMultiblock()).relative(facing, 1);
-			BlockEntity target = level.getRawLevel().getBlockEntity(outPos);
-			if(target != null){
-				boolean isIEPipe = target instanceof IFluidPipe;
+			BlockPos outPos = mbLevel.toAbsolute(FLUID_OUT.posInMultiblock()).relative(facing, 1);
+			
+			IFluidHandler fluidHandler = rawLevel.getCapability(FluidHandler.BLOCK, outPos, facing.getOpposite());
+			if(fluidHandler != null){
+				boolean isIEPipe = rawLevel.getBlockEntity(outPos) instanceof IFluidPipe;
 				
-				IFluidHandler output = level.getRawLevel().getCapability(FluidHandler.BLOCK, outPos, mirrored ? front.getClockWise() : front.getCounterClockWise());
-				
-				state.spilling = iterativeOutput(output, extracted, isIEPipe);
+				state.spilling = iterativeOutput(fluidHandler, extracted, isIEPipe);
 				
 			}else{
 				state.spilling = true;
 			}
 		}
 		
-		if(state.spilling && !extracted.isEmpty() && state.fluidSpilled != extracted.getFluid()){
+		if(state.spilling && !extracted.isEmpty() && state.fluidSpilled != extracted.getFluid())
 			state.fluidSpilled = extracted.getFluid();
-		}
-		if(!state.spilling && state.fluidSpilled != Fluids.EMPTY){
+		
+		if(!state.spilling && state.fluidSpilled != Fluids.EMPTY)
 			state.fluidSpilled = Fluids.EMPTY;
-		}
+		
 	}
 	
 	/**
