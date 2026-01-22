@@ -6,10 +6,9 @@ import flaxbeard.immersivepetroleum.api.reservoir.ReservoirHandler;
 import flaxbeard.immersivepetroleum.api.reservoir.ReservoirPolygon;
 import flaxbeard.immersivepetroleum.api.reservoir.ReservoirType;
 import flaxbeard.immersivepetroleum.common.datastorage.reservoir.ReservoirRegionDataStorage;
-import flaxbeard.immersivepetroleum.common.util.RegistryUtils;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ColumnPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
@@ -18,6 +17,7 @@ import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
@@ -52,8 +52,7 @@ public class FeatureReservoir extends Feature<NoneFeatureConfiguration>{
 		int chunkX = chunkPos.getMinBlockX();
 		int chunkZ = chunkPos.getMinBlockZ();
 		
-		ResourceKey<Level> dimensionKey = world.dimension();
-		ResourceLocation dimensionRL = dimensionKey.location();
+		ResourceKey<Level> dimension = world.dimension();
 		
 		final ReservoirRegionDataStorage storage = ReservoirRegionDataStorage.get();
 		
@@ -71,16 +70,16 @@ public class FeatureReservoir extends Feature<NoneFeatureConfiguration>{
 					return;
 				
 				// Getting the biome now to prevent lockups
-				ResourceLocation biomeRL = RegistryUtils.getRegistryNameOf(world.getBiome(new BlockPos(x, 64, z)));
+				Holder<Biome> biome = world.getBiome(new BlockPos(x, 64, z));
 				
 				RecipeHolder<ReservoirType> type = null;
-				int totalWeight = ReservoirHandler.getTotalWeight(dimensionRL, biomeRL);
+				int totalWeight = ReservoirHandler.getTotalWeight(dimension, biome);
 				if(totalWeight > 0){
 					int weight = Math.abs(randomSource.nextInt() % totalWeight);
 					for(RecipeHolder<ReservoirType> holder:ReservoirType.map.values()){
 						ReservoirType res = holder.value();
 						
-						if(res.getDimensions().valid(dimensionRL) && res.getBiomes().valid(biomeRL)){
+						if(res.getDimensions().isValid(dimension) && res.getBiomes().isValid(biome)){
 							weight -= res.weight;
 							if(weight < 0){
 								type = holder;
@@ -96,7 +95,7 @@ public class FeatureReservoir extends Feature<NoneFeatureConfiguration>{
 							int amount = (int) Mth.lerp(randomSource.nextFloat(), type.value().minSize, type.value().maxSize);
 							
 							Reservoir reservoir = new Reservoir(reservoirPolygon, type, amount);
-							storage.addReservoir(dimensionKey, reservoir);
+							storage.addReservoir(dimension, reservoir);
 						}
 					}
 				}

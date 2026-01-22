@@ -8,7 +8,6 @@ import flaxbeard.immersivepetroleum.api.reservoir.ReservoirBoundingBox;
 import flaxbeard.immersivepetroleum.api.reservoir.ReservoirHandler;
 import flaxbeard.immersivepetroleum.api.reservoir.ReservoirPolygon;
 import flaxbeard.immersivepetroleum.api.reservoir.ReservoirType;
-import flaxbeard.immersivepetroleum.api.reservoir.ReservoirType.BWList;
 import flaxbeard.immersivepetroleum.client.model.IPModel;
 import flaxbeard.immersivepetroleum.client.model.IPModels;
 import flaxbeard.immersivepetroleum.common.IPContent;
@@ -16,16 +15,18 @@ import flaxbeard.immersivepetroleum.common.IPDataComponents;
 import flaxbeard.immersivepetroleum.common.entity.MotorboatEntity;
 import flaxbeard.immersivepetroleum.common.network.IPPacketHandler;
 import flaxbeard.immersivepetroleum.common.network.MessageDebugSync;
-import flaxbeard.immersivepetroleum.common.util.RegistryUtils;
+import flaxbeard.immersivepetroleum.common.reservoir.util.BWListBiome;
+import flaxbeard.immersivepetroleum.common.reservoir.util.BWListDimension;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ColumnPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -37,6 +38,7 @@ import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -309,19 +311,19 @@ public class DebugItem extends IPItemBase{
 					
 					BlockPos pos = context.getClickedPos();
 					
-					ResourceLocation dimensionRL = world.dimension().location();
-					ResourceLocation biomeRL = RegistryUtils.getRegistryNameOf(world.getBiome(pos));
+					ResourceKey<Level> dimension = world.dimension();
+					Holder<Biome> biome = world.getBiome(pos);
 					
-					player.displayClientMessage(Component.literal(dimensionRL.toString()), false);
+					player.displayClientMessage(Component.literal(dimension.location().toString()), false);
 					
 					for(RecipeHolder<ReservoirType> holder:ReservoirType.map.values()){
 						ReservoirType res = holder.value();
 						
-						BWList dims = res.getDimensions();
-						BWList biom = res.getBiomes();
+						BWListDimension dims = res.getDimensions();
+						BWListBiome biom = res.getBiomes();
 						
-						boolean validDimension = dims.valid(dimensionRL);
-						boolean validBiome = biom.valid(biomeRL);
+						boolean validDimension = dims.isValid(dimension);
+						boolean validBiome = biom.isValid(biome);
 						
 						MutableComponent component = Component.literal(res.name)
 							.append(Component.literal(" Dimension").withStyle(validDimension ? ChatFormatting.GREEN : ChatFormatting.RED))

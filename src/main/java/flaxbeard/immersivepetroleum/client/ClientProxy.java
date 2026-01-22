@@ -57,6 +57,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.tags.TagKey;
@@ -85,6 +86,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 public class ClientProxy extends CommonProxy{
@@ -409,10 +411,26 @@ public class ClientProxy extends CommonProxy{
 			if(reservoir.getBiomes().hasEntries()){
 				StringBuilder strBuilder = new StringBuilder();
 				
-				reservoir.getBiomes().forEach(rl -> {
-					Biome biome = RegistryUtils.getBiomeFromRegistryName(rl);
-					strBuilder.append((!strBuilder.isEmpty()) ? ", " : "");
-					strBuilder.append(biome != null ? biome.toString() : rl);
+				reservoir.getBiomes().forEach(v -> {
+					if(!strBuilder.isEmpty())
+						strBuilder.append(", ");
+					
+					if(!v.isTag()){
+						strBuilder.append(v.location().getPath());
+						return;
+					}
+					
+					RegistryUtils.listBiomesInTag(v.getTag()).ifPresentOrElse(list -> {
+						for(int j = 0, len = list.size();j < len;j++){
+							ResourceKey<Biome> biomeResourceKey = list.get(j).unwrapKey().orElse(null);
+							if(biomeResourceKey != null){
+								strBuilder.append(biomeResourceKey.location().getPath());
+								
+								if(j < (len - 1))
+									strBuilder.append(", ");
+							}
+						}
+					}, () -> strBuilder.append("#").append(v.location().getPath()));
 				});
 				
 				if(reservoir.getBiomes().isBlacklist()){

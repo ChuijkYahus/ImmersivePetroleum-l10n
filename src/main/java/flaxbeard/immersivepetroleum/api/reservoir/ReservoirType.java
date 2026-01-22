@@ -3,20 +3,14 @@ package flaxbeard.immersivepetroleum.api.reservoir;
 import blusunrize.immersiveengineering.api.crafting.IERecipeSerializer;
 import blusunrize.immersiveengineering.api.crafting.IESerializableRecipe;
 import blusunrize.immersiveengineering.api.crafting.TagOutput;
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
 import flaxbeard.immersivepetroleum.api.crafting.IPRecipeTypes;
 import flaxbeard.immersivepetroleum.common.crafting.Serializers;
+import flaxbeard.immersivepetroleum.common.reservoir.util.BWListBiome;
+import flaxbeard.immersivepetroleum.common.reservoir.util.BWListDimension;
 import flaxbeard.immersivepetroleum.common.util.RegistryUtils;
-import malte0811.dualcodecs.DualCodec;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
@@ -24,8 +18,9 @@ import net.minecraft.world.level.material.Fluid;
 import net.neoforged.neoforge.common.util.Lazy;
 
 import javax.annotation.Nonnull;
-import java.util.*;
-import java.util.function.Consumer;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 public class ReservoirType extends IESerializableRecipe{
 	static final Lazy<ItemStack> EMPTY_LAZY = Lazy.of(() -> ItemStack.EMPTY);
@@ -44,8 +39,8 @@ public class ReservoirType extends IESerializableRecipe{
 	
 	private final Fluid fluid;
 	
-	private BWList biomes = new BWList(false);
-	private BWList dimensions = new BWList(false);
+	private BWListBiome biomes = new BWListBiome(false);
+	private BWListDimension dimensions = new BWListDimension(false);
 	
 	/**
 	 * Creates a new reservoir.
@@ -98,8 +93,8 @@ public class ReservoirType extends IESerializableRecipe{
 		this.residual = nbt.getInt("residual");
 		this.equilibrium = nbt.getInt("equilibrium");
 		
-		this.biomes = new BWList(nbt.getCompound("biomes"));
-		this.dimensions = new BWList(nbt.getCompound("dimensions"));
+		this.biomes.readFromNbt(nbt.getCompound("biomes"));
+		this.dimensions.readFromNbt(nbt.getCompound("dimensions"));
 		
 		this.weight = nbt.getInt("weight");
 	}
@@ -123,71 +118,31 @@ public class ReservoirType extends IESerializableRecipe{
 		nbt.putInt("residual", this.residual);
 		nbt.putInt("equilibrium", this.equilibrium);
 		
-		nbt.put("biomes", this.biomes.toNbt());
-		nbt.put("dimensions", this.dimensions.toNbt());
+		nbt.put("biomes", this.biomes.writeToNbt());
+		nbt.put("dimensions", this.dimensions.writeToNbt());
 		
 		nbt.putInt("weight", this.weight);
 		
 		return nbt;
 	}
 	
-	public void setBiomes(BWList.Mode mode, ResourceLocation... names){
-		setBiomes(mode, Arrays.asList(names));
-	}
-	
-	public void setBiomes(BWList.Mode mode, List<ResourceLocation> names){
-		setBiomes(new BWList(new HashSet<>(names), mode));
-	}
-	
-	public void setBiomes(boolean blacklist, ResourceLocation... names){
-		setBiomes(blacklist, Arrays.asList(names));
-	}
-	
-	public void setBiomes(boolean blacklist, List<ResourceLocation> names){
-		setBiomes(new BWList(new HashSet<>(names), blacklist));
-	}
-	
-	public void setBiomes(@Nonnull BWList list){
+	public void setBiomes(@Nonnull BWListBiome list){
 		Objects.requireNonNull(list);
 		
 		this.biomes = list;
 	}
 	
-	public void setDimensions(BWList.Mode mode, ResourceLocation... names){
-		setDimensions(mode, Arrays.asList(names));
-	}
-	
-	public void setDimensions(BWList.Mode mode, List<ResourceLocation> names){
-		setDimensions(new BWList(new HashSet<>(names), mode));
-	}
-	
-	public void setDimensions(boolean blacklist, ResourceLocation... names){
-		setDimensions(blacklist, Arrays.asList(names));
-	}
-	
-	public void setDimensions(boolean blacklist, List<ResourceLocation> names){
-		setDimensions(new BWList(new HashSet<>(names), blacklist));
-	}
-	
-	public void setDimensions(@Nonnull BWList list){
+	public void setDimensions(@Nonnull BWListDimension list){
 		Objects.requireNonNull(list);
 		
 		this.dimensions = list;
 	}
 	
-	public Set<ResourceLocation> getBiomeList(){
-		return this.biomes.getSet();
-	}
-	
-	public Set<ResourceLocation> getDimensionList(){
-		return this.dimensions.getSet();
-	}
-	
-	public BWList getDimensions(){
+	public BWListDimension getDimensions(){
 		return this.dimensions;
 	}
 	
-	public BWList getBiomes(){
+	public BWListBiome getBiomes(){
 		return this.biomes;
 	}
 	
@@ -204,155 +159,5 @@ public class ReservoirType extends IESerializableRecipe{
 	@Override
 	public String toString(){
 		return this.writeToNBT().toString();
-	}
-	
-	static Set<ResourceLocation> toSet(ListTag nbtList){
-		Set<ResourceLocation> set = new HashSet<>();
-		if(!nbtList.isEmpty()){
-			nbtList.forEach(tag -> {
-				if(tag instanceof StringTag){
-					set.add(ResourceLocation.parse(tag.getAsString()));
-				}
-			});
-		}
-		return set;
-	}
-	
-	static ListTag toNbt(Set<ResourceLocation> set){
-		ListTag nbtList = new ListTag();
-		if(!set.isEmpty()){
-			set.forEach(rl -> nbtList.add(StringTag.valueOf(rl.toString())));
-		}
-		return nbtList;
-	}
-	
-	/**
-	 * Simple Black/White-List.
-	 * 
-	 * @author TwistedGate
-	 */
-	public static class BWList{
-		//@formatter:off
-		public static final Codec<BWList> CODEC = RecordCodecBuilder.create(inst -> inst.group(
-			ResourceLocation.CODEC.listOf().fieldOf("list")
-				.xmap(resourceLocations -> {
-					Set<ResourceLocation> set = new HashSet<>(resourceLocations.size());
-					set.addAll(resourceLocations);
-					return set;
-				}, ArrayList::new)
-				.forGetter(BWList::getSet),
-			Codec.BOOL.fieldOf("isBlacklist").forGetter(BWList::isBlacklist)
-		).apply(inst, BWList::new));
-		//@formatter:on
-		
-		public static final StreamCodec<RegistryFriendlyByteBuf, BWList> CODEC_STREAM = new StreamCodec<>(){
-			@Nonnull
-			@Override
-			public BWList decode(RegistryFriendlyByteBuf buf){
-				int size = buf.readInt();
-				Set<ResourceLocation> set = new HashSet<>();
-				for(int i = 0;i < size;i++)
-					set.add(ResourceLocation.STREAM_CODEC.decode(buf));
-				boolean isBlacklist = buf.readBoolean();
-				return new BWList(set, isBlacklist);
-			}
-			
-			@Override
-			public void encode(RegistryFriendlyByteBuf buf, BWList bwList){
-				buf.writeInt(bwList.set.size());
-				bwList.set.forEach(rl -> ResourceLocation.STREAM_CODEC.encode(buf, rl));
-				buf.writeBoolean(bwList.isBlacklist());
-			}
-		};
-		
-		public static final DualCodec<RegistryFriendlyByteBuf, BWList> CODECS = new DualCodec<>(CODEC, CODEC_STREAM);
-		
-		private final Set<ResourceLocation> set;
-		private final Mode mode;
-		public BWList(boolean isBlacklist){
-			this(new HashSet<>(), isBlacklist);
-		}
-		
-		public BWList(Set<ResourceLocation> set, boolean isBlacklist){
-			this(set, isBlacklist ? Mode.BLACKLIST : Mode.WHITELIST);
-		}
-		
-		public BWList(Set<ResourceLocation> set, Mode mode){
-			this.set = set;
-			this.mode = mode;
-		}
-		
-		public BWList(CompoundTag tag){
-			this.mode = tag.getBoolean("isBlacklist") ? Mode.BLACKLIST : Mode.WHITELIST;
-			
-			if(tag.contains("list", Tag.TAG_LIST)){
-				ListTag list = tag.getList("list", Tag.TAG_STRING);
-				
-				Set<ResourceLocation> set = new HashSet<>();
-				if(!list.isEmpty()){
-					list.forEach(t -> {
-						if(t instanceof StringTag){
-							set.add(ResourceLocation.parse(t.getAsString()));
-						}
-					});
-				}
-				this.set = set;
-			}else{
-				this.set = new HashSet<>();
-			}
-		}
-		
-		public boolean isBlacklist(){
-			return this.mode == Mode.BLACKLIST;
-		}
-		
-		public boolean add(ResourceLocation rl){
-			return this.set.add(rl);
-		}
-		
-		public boolean addAll(Collection<? extends ResourceLocation> c){
-			return this.set.addAll(c);
-		}
-		
-		public boolean hasEntries(){
-			return !this.set.isEmpty();
-		}
-		
-		public boolean valid(ResourceLocation rl){
-			if(this.set.isEmpty()){
-				// An empty set is considered to be "allow anywhere". Regardless of mode value.
-				return true;
-			}
-			
-			boolean contains = this.set.contains(rl);
-			return isBlacklist() ? !contains : contains;
-		}
-		
-		public Set<ResourceLocation> getSet(){
-			return Collections.unmodifiableSet(this.set);
-		}
-		
-		public void forEach(Consumer<ResourceLocation> action){
-			this.set.forEach(action);
-		}
-		
-		public CompoundTag toNbt(){
-			CompoundTag tag = new CompoundTag();
-			tag.putBoolean("isBlacklist", this.mode == Mode.BLACKLIST);
-			tag.put("list", toNbtList());
-			return tag;
-		}
-		
-		private ListTag toNbtList(){
-			ListTag nbtList = new ListTag();
-			if(hasEntries()){
-				this.set.forEach(rl -> nbtList.add(StringTag.valueOf(rl.toString())));
-			}
-			return nbtList;
-		}
-		
-		public enum Mode{
-			WHITELIST, BLACKLIST
-		}
 	}
 }

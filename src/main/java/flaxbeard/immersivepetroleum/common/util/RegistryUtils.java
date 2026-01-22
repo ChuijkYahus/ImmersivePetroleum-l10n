@@ -9,6 +9,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.inventory.MenuType;
@@ -26,6 +27,8 @@ import net.neoforged.neoforge.event.server.ServerStartingEvent;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.List;
+import java.util.Optional;
 
 @EventBusSubscriber(modid = ImmersivePetroleum.MODID, bus = Bus.GAME)
 public class RegistryUtils{
@@ -70,6 +73,10 @@ public class RegistryUtils{
 		
 		Holder<Biome> holder = BIOME_REGISTRY.getHolder(resourceKey).orElse(null);
 		return holder != null ? holder.value() : null;
+	}
+	
+	public static Optional<List<Holder<Biome>>> listBiomesInTag(TagKey<Biome> tag){
+		return BIOME_REGISTRY.getTag(tag).map(holders -> holders.stream().toList());
 	}
 	
 	@Nullable

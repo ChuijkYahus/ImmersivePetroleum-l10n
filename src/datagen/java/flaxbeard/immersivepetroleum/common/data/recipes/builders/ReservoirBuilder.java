@@ -1,14 +1,18 @@
 package flaxbeard.immersivepetroleum.common.data.recipes.builders;
 
 import flaxbeard.immersivepetroleum.api.reservoir.ReservoirType;
-import flaxbeard.immersivepetroleum.api.reservoir.ReservoirType.BWList;
 import flaxbeard.immersivepetroleum.common.data.recipes.IPGenericBuilder;
+import flaxbeard.immersivepetroleum.common.reservoir.util.BWList;
+import flaxbeard.immersivepetroleum.common.reservoir.util.BWListBiome;
+import flaxbeard.immersivepetroleum.common.reservoir.util.BWListDimension;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.material.Fluid;
 
 import javax.annotation.Nonnull;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author TwistedGate
@@ -44,8 +48,8 @@ public class ReservoirBuilder extends IPGenericBuilder<ReservoirType>{
 	private int equilibrium;
 	private final int weight;
 	
-	private BWList bioList;
-	private BWList dimList;
+	private BWListBiome bioList;
+	private BWListDimension dimList;
 	
 	private ReservoirBuilder(String name, Fluid fluid, double min, double max, double trace, int weight){
 		this.name = name;
@@ -93,15 +97,16 @@ public class ReservoirBuilder extends IPGenericBuilder<ReservoirType>{
 	 *
 	 * @param biomes Biomes to blacklist/whitelist
 	 * @return {@link flaxbeard.immersivepetroleum.common.data.recipes.builders.ReservoirBuilder}
-	 * @throws IllegalArgumentException when it has already been set
+	 * @throws IllegalStateException if already set
 	 */
 	public ReservoirBuilder setBiomes(BWList.Mode mode, @Nonnull ResourceLocation[] biomes){
 		if(this.bioList != null){
-			throw new IllegalArgumentException("Biomes list already set.");
+			throw new IllegalStateException("Biomes list already set.");
 		}
 		Objects.requireNonNull(biomes);
 		
-		this.bioList = new BWList(Set.of(biomes), mode);
+		Set<BWListBiome.Validator> set = Arrays.stream(biomes).map(BWListBiome.Validator::new).collect(Collectors.toSet());
+		this.bioList = new BWListBiome(set, mode);
 		
 		return this;
 	}
@@ -113,15 +118,16 @@ public class ReservoirBuilder extends IPGenericBuilder<ReservoirType>{
 	 *
 	 * @param dimensions Dimensions to blacklist/whitelist
 	 * @return {@link flaxbeard.immersivepetroleum.common.data.recipes.builders.ReservoirBuilder}
-	 * @throws IllegalArgumentException when it has already been set
+	 * @throws IllegalStateException if already set
 	 */
 	public ReservoirBuilder setDimensions(BWList.Mode mode, @Nonnull ResourceLocation[] dimensions){
 		if(this.dimList != null){
-			throw new IllegalArgumentException("Dimensions list already set.");
+			throw new IllegalStateException("Dimensions list already set.");
 		}
 		Objects.requireNonNull(dimensions);
 		
-		this.dimList = new BWList(Set.of(dimensions), mode);
+		Set<BWListDimension.Validator> set = Arrays.stream(dimensions).map(BWListDimension.Validator::new).collect(Collectors.toSet());
+		this.dimList = new BWListDimension(set, mode);
 		
 		return this;
 	}

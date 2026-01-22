@@ -4,12 +4,14 @@ import com.google.common.collect.ImmutableList;
 import flaxbeard.immersivepetroleum.common.datastorage.reservoir.ReservoirRegionDataStorage;
 import flaxbeard.immersivepetroleum.common.util.Utils;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ColumnPos;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.LegacyRandomSource;
 import net.minecraft.world.level.levelgen.WorldgenRandom;
 import net.minecraft.world.level.levelgen.synth.PerlinSimplexNoise;
@@ -36,15 +38,18 @@ public class ReservoirHandler{
 	 * @param biome     The biome to check
 	 * @return The total weight associated with the dimension/biome pair
 	 */
-	public static int getTotalWeight(ResourceLocation dimension, ResourceLocation biome){
-		Map<ResourceLocation, Integer> map = totalWeightMap.computeIfAbsent(dimension, k -> new HashMap<>());
+	public static int getTotalWeight(ResourceKey<Level> dimension, Holder<Biome> biome){
+		final ResourceLocation dimensionRL = dimension.location();
+		final ResourceLocation biomeRL = biome.getKey().location();
 		
-		return map.computeIfAbsent(biome, biomeRL -> {
+		Map<ResourceLocation, Integer> map = totalWeightMap.computeIfAbsent(dimensionRL, k -> new HashMap<>());
+		
+		return map.computeIfAbsent(biomeRL, r -> {
 			int totalWeight = 0;
 			for(RecipeHolder<ReservoirType> holder: ReservoirType.map.values()){
 				ReservoirType reservoir = holder.value();
 				
-				if(reservoir.getDimensions().valid(dimension) && reservoir.getBiomes().valid(biome)){
+				if(reservoir.getDimensions().isValid(dimension) && reservoir.getBiomes().isValid(biome)){
 					totalWeight += reservoir.weight;
 				}
 			}

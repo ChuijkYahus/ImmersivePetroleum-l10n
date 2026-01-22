@@ -25,6 +25,8 @@ import flaxbeard.immersivepetroleum.common.data.recipes.builders.DistillationTow
 import flaxbeard.immersivepetroleum.common.data.recipes.builders.HighPressureRefineryRecipeBuilder;
 import flaxbeard.immersivepetroleum.common.data.recipes.builders.ReservoirBuilder;
 import flaxbeard.immersivepetroleum.common.items.GasolineBottleItem;
+import flaxbeard.immersivepetroleum.common.reservoir.util.BWList;
+import flaxbeard.immersivepetroleum.common.reservoir.util.BWListDimension;
 import flaxbeard.immersivepetroleum.common.util.RegistryUtils;
 import flaxbeard.immersivepetroleum.common.util.ResourceUtils;
 import net.minecraft.core.HolderLookup;
@@ -54,8 +56,6 @@ import javax.annotation.Nonnull;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-
-import static flaxbeard.immersivepetroleum.api.reservoir.ReservoirType.BWList;
 
 public class IPRecipes extends RecipeProvider{
 	private final Map<String, Integer> PATH_COUNT = new HashMap<>();
