@@ -62,19 +62,6 @@ public class RegistryUtils{
 		return holder != null ? holder.value() : null;
 	}
 	
-	@Nullable
-	public static ResourceLocation getRegistryNameOf(Holder<Biome> biome){
-		return biome.unwrapKey().map(ResourceKey::location).orElse(null);
-	}
-	
-	@Nullable
-	public static Biome getBiomeFromRegistryName(ResourceLocation rl){
-		ResourceKey<Biome> resourceKey = ResourceKey.create(Registries.BIOME, rl);
-		
-		Holder<Biome> holder = BIOME_REGISTRY.getHolder(resourceKey).orElse(null);
-		return holder != null ? holder.value() : null;
-	}
-	
 	public static Optional<List<Holder<Biome>>> listBiomesInTag(TagKey<Biome> tag){
 		return BIOME_REGISTRY.getTag(tag).map(holders -> holders.stream().toList());
 	}

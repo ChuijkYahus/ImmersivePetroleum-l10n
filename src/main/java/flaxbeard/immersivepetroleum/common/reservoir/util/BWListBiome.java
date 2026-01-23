@@ -45,10 +45,10 @@ public class BWListBiome extends BWList<Holder<Biome>, BWListBiome.Validator>{
 		}
 		
 		@Override
-		public void encode(@Nonnull RegistryFriendlyByteBuf buf, @Nonnull BWListBiome testBiome){
-			buf.writeInt(testBiome.set.size());
-			testBiome.set.forEach(v -> Validator.STREAM_CODEC.encode(buf, v));
-			buf.writeBoolean(testBiome.isBlacklist());
+		public void encode(@Nonnull RegistryFriendlyByteBuf buf, @Nonnull BWListBiome biomes){
+			buf.writeInt(biomes.set.size());
+			biomes.set.forEach(v -> Validator.STREAM_CODEC.encode(buf, v));
+			buf.writeBoolean(biomes.isBlacklist());
 		}
 	};
 	

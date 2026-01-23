@@ -42,10 +42,10 @@ public class BWListDimension extends BWList<ResourceKey<Level>, BWListDimension.
 		}
 		
 		@Override
-		public void encode(@Nonnull RegistryFriendlyByteBuf buf, @Nonnull BWListDimension testBiome){
-			buf.writeInt(testBiome.set.size());
-			testBiome.set.forEach(v -> Validator.STREAM_CODEC.encode(buf, v));
-			buf.writeBoolean(testBiome.isBlacklist());
+		public void encode(@Nonnull RegistryFriendlyByteBuf buf, @Nonnull BWListDimension dimensions){
+			buf.writeInt(dimensions.set.size());
+			dimensions.set.forEach(v -> Validator.STREAM_CODEC.encode(buf, v));
+			buf.writeBoolean(dimensions.isBlacklist());
 		}
 	};
 	public static final DualCodec<RegistryFriendlyByteBuf, BWListDimension> CODECS = new DualCodec<>(CODEC, CODEC_STREAM);
