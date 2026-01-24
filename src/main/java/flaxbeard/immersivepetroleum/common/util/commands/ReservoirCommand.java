@@ -40,16 +40,16 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 
-public class IslandCommand{
-	private IslandCommand(){
+public class ReservoirCommand{
+	private ReservoirCommand(){
 	}
 	
 	public static LiteralArgumentBuilder<CommandSourceStack> create(){
 		LiteralArgumentBuilder<CommandSourceStack> main = Commands.literal("reservoir").requires(source -> source.hasPermission(4));
 		
-		main.then(Commands.literal("locate").executes(IslandCommand::locate));
+		main.then(Commands.literal("locate").executes(ReservoirCommand::locate));
 		main.then(setters());
-		main.then(positional(Commands.literal("get"), IslandCommand::get));
+		main.then(positional(Commands.literal("get"), ReservoirCommand::get));
 		
 		return main;
 	}
@@ -168,9 +168,9 @@ public class IslandCommand{
 	private static LiteralArgumentBuilder<CommandSourceStack> setters(){
 		LiteralArgumentBuilder<CommandSourceStack> set = Commands.literal("set").requires(source -> source.hasPermission(4));
 		
-		set.then(Commands.literal("amount").then(positional(Commands.argument("amount", LongArgumentType.longArg(0, Reservoir.MAX_AMOUNT)), IslandCommand::setReservoirAmount)));
-		set.then(Commands.literal("capacity").then(positional(Commands.argument("capacity", LongArgumentType.longArg(0, Reservoir.MAX_AMOUNT)), IslandCommand::setReservoirCapacity)));
-		set.then(Commands.literal("type").then(positional(Commands.argument("name", StringArgumentType.string()).suggests(IslandCommand::typeSuggestor), IslandCommand::setReservoirType)));
+		set.then(Commands.literal("amount").then(positional(Commands.argument("amount", LongArgumentType.longArg(0, Reservoir.MAX_AMOUNT)), ReservoirCommand::setReservoirAmount)));
+		set.then(Commands.literal("capacity").then(positional(Commands.argument("capacity", LongArgumentType.longArg(0, Reservoir.MAX_AMOUNT)), ReservoirCommand::setReservoirCapacity)));
+		set.then(Commands.literal("type").then(positional(Commands.argument("name", StringArgumentType.string()).suggests(ReservoirCommand::typeSuggestor), ReservoirCommand::setReservoirType)));
 		
 		return set;
 	}
