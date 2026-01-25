@@ -67,12 +67,17 @@ import java.util.stream.Collectors;
 import static flaxbeard.immersivepetroleum.ImmersivePetroleum.MODID;
 
 public class IPRegisters{
+	private static List<DeferredRegister<?>> REGISTERS = new ArrayList<>(20);
 	private static <T> DeferredRegister<T> make(Registry<T> registry){
-		return DeferredRegister.create(registry, MODID);
+		DeferredRegister<T> register = DeferredRegister.create(registry, MODID);
+		REGISTERS.add(register);
+		return register;
 	}
 	
 	private static <T> DeferredRegister<T> make(ResourceKey<Registry<T>> registry){
-		return DeferredRegister.create(registry, MODID);
+		DeferredRegister<T> register = DeferredRegister.create(registry, MODID);
+		REGISTERS.add(register);
+		return register;
 	}
 	
 	private static final DeferredRegister<Block> BLOCK_REGISTER = make(BuiltInRegistries.BLOCK);
@@ -90,27 +95,24 @@ public class IPRegisters{
 	private static final DeferredRegister<Feature<?>> FEATURE_REGISTER = make(BuiltInRegistries.FEATURE);
 	private static final DeferredRegister<DataComponentType<?>> DATA_COMPONENT_REGISTER = make(BuiltInRegistries.DATA_COMPONENT_TYPE);
 	
-	private static final List<Consumer<IEventBus>> MOD_BUS_CALLBACKS = new ArrayList<>();
+	private static List<Consumer<IEventBus>> MOD_BUS_CALLBACKS = new ArrayList<>();
 	
 	public static void addRegistersToEventBus(IEventBus eventBus){
-		FLUID_REGISTER.register(eventBus);
-		BLOCK_REGISTER.register(eventBus);
-		ITEM_REGISTER.register(eventBus);
-		TE_REGISTER.register(eventBus);
-		MENU_REGISTER.register(eventBus);
-		RECIPE_SERIALIZERS.register(eventBus);
-		MOB_EFFECT.register(eventBus);
-		SOUND_EVENT.register(eventBus);
-		PARTICLE_TYPE.register(eventBus);
-		ENTITY_TYPE.register(eventBus);
-		FLUID_TYPE.register(eventBus);
-		CREATIVE_TABS.register(eventBus);
-		FEATURE_REGISTER.register(eventBus);
-		DATA_COMPONENT_REGISTER.register(eventBus);
+		if(REGISTERS == null)
+			return;
+		
+		REGISTERS.forEach(r -> r.register(eventBus));
+		REGISTERS.clear();
+		REGISTERS = null;
 	}
 	
 	public static void runCallbacks(IEventBus eventBus){
+		if(MOD_BUS_CALLBACKS == null)
+			return;
+		
 		MOD_BUS_CALLBACKS.forEach(e -> e.accept(eventBus));
+		MOD_BUS_CALLBACKS.clear();
+		MOD_BUS_CALLBACKS = null;
 	}
 	
 	public static Iterable<Block> getAllBlocks(){
