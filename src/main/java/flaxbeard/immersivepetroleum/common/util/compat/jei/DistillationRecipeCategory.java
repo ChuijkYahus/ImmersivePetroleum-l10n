@@ -52,7 +52,7 @@ public class DistillationRecipeCategory extends IPRecipeCategory<DistillationTow
 			int lastHeight = 52;
 			for(int i = list.size() - 1;i >= 0;i--){
 				FluidStack f = list.get(i);
-				int height = (int) (tH * (f.getAmount() / (float) outputTotal));
+				int height = Math.max(1, (int) (tH * (f.getAmount() / (float) outputTotal)));
 				
 				IRecipeSlotBuilder slot = builder
 						.addSlot(RecipeIngredientRole.OUTPUT, x0, lastHeight - height)
