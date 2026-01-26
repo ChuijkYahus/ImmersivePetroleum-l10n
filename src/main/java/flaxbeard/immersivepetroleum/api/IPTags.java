@@ -20,38 +20,38 @@ public class IPTags{
 	private static final Map<TagKey<Block>, TagKey<Item>> toItemTag = new HashMap<>();
 	
 	public static class Blocks{
-		public static final TagKey<Block> asphalt = createBlockTag(ResourceUtils.forge("asphalt"));
-		public static final TagKey<Block> petcoke = createBlockTag(ResourceUtils.forge("storage_blocks/petcoke"));
-		public static final TagKey<Block> waxBlock = createBlockTag(ResourceUtils.forge("storage_blocks/wax"));
-		public static final TagKey<Block> paraffinWaxBlock = createBlockTag(ResourceUtils.forge("storage_blocks/wax/paraffin"));
+		public static final TagKey<Block> asphalt = createBlockTag(ResourceUtils.common("asphalt"));
+		public static final TagKey<Block> petcoke = createBlockTag(ResourceUtils.common("storage_blocks/petcoke"));
+		public static final TagKey<Block> waxBlock = createBlockTag(ResourceUtils.common("storage_blocks/wax"));
+		public static final TagKey<Block> paraffinWaxBlock = createBlockTag(ResourceUtils.common("storage_blocks/wax/paraffin"));
 	}
 	
 	public static class Items{
-		public static final TagKey<Item> bitumen = createItemWrapper(ResourceUtils.forge("bitumen"));
-		public static final TagKey<Item> petcoke = createItemWrapper(ResourceUtils.forge("coal_petcoke"));
-		public static final TagKey<Item> petcokeDust = createItemWrapper(ResourceUtils.forge("dusts/coal_petcoke"));
-		public static final TagKey<Item> petcokeStorage = createItemWrapper(ResourceUtils.forge("storage_blocks/coal_petcoke"));
-		public static final TagKey<Item> paraffinWax = createItemWrapper(ResourceUtils.forge("wax/paraffin"));
-		public static final TagKey<Item> wax = createItemWrapper(ResourceUtils.forge("wax"));
-		public static final TagKey<Item> waxBlock = createItemWrapper(ResourceUtils.forge("storage_blocks/wax"));
-		public static final TagKey<Item> paraffinWaxBlock = createItemWrapper(ResourceUtils.forge("storage_blocks/wax/paraffin"));
+		public static final TagKey<Item> bitumen = createItemWrapper(ResourceUtils.common("bitumen"));
+		public static final TagKey<Item> petcoke = createItemWrapper(ResourceUtils.common("coal_petcoke"));
+		public static final TagKey<Item> petcokeDust = createItemWrapper(ResourceUtils.common("dusts/coal_petcoke"));
+		public static final TagKey<Item> petcokeStorage = createItemWrapper(ResourceUtils.common("storage_blocks/coal_petcoke"));
+		public static final TagKey<Item> paraffinWax = createItemWrapper(ResourceUtils.common("wax/paraffin"));
+		public static final TagKey<Item> wax = createItemWrapper(ResourceUtils.common("wax"));
+		public static final TagKey<Item> waxBlock = createItemWrapper(ResourceUtils.common("storage_blocks/wax"));
+		public static final TagKey<Item> paraffinWaxBlock = createItemWrapper(ResourceUtils.common("storage_blocks/wax/paraffin"));
 		public static final TagKey<Item> wool = createItemWrapper(ResourceUtils.mc("wool"));
 	}
 	
 	public static class Fluids{
-		public static final TagKey<Fluid> crudeOil = createFluidWrapper(ResourceUtils.forge("crude_oil"));
-		public static final TagKey<Fluid> diesel = createFluidWrapper(ResourceUtils.forge("diesel"));
-		public static final TagKey<Fluid> diesel_sulfur = createFluidWrapper(ResourceUtils.forge("diesel_sulfur"));
-		public static final TagKey<Fluid> gasoline = createFluidWrapper(ResourceUtils.forge("gasoline"));
-		public static final TagKey<Fluid> lubricant = createFluidWrapper(ResourceUtils.forge("lubricant"));
-		public static final TagKey<Fluid> napalm = createFluidWrapper(ResourceUtils.forge("napalm"));
-		public static final TagKey<Fluid> naphtha = createFluidWrapper(ResourceUtils.forge("naphtha"));
-		public static final TagKey<Fluid> benzol = createFluidWrapper(ResourceUtils.forge("benzol"));
-		public static final TagKey<Fluid> petroleum_gas = createFluidWrapper(ResourceUtils.forge("petroleum_gas"));
-		public static final TagKey<Fluid> kerosene = createFluidWrapper(ResourceUtils.forge("kerosene"));
+		public static final TagKey<Fluid> crudeOil = createFluidWrapper(ResourceUtils.common("crude_oil"));
+		public static final TagKey<Fluid> diesel = createFluidWrapper(ResourceUtils.common("diesel"));
+		public static final TagKey<Fluid> diesel_sulfur = createFluidWrapper(ResourceUtils.common("diesel_sulfur"));
+		public static final TagKey<Fluid> gasoline = createFluidWrapper(ResourceUtils.common("gasoline"));
+		public static final TagKey<Fluid> lubricant = createFluidWrapper(ResourceUtils.common("lubricant"));
+		public static final TagKey<Fluid> napalm = createFluidWrapper(ResourceUtils.common("napalm"));
+		public static final TagKey<Fluid> naphtha = createFluidWrapper(ResourceUtils.common("naphtha"));
+		public static final TagKey<Fluid> benzol = createFluidWrapper(ResourceUtils.common("benzol"));
+		public static final TagKey<Fluid> petroleum_gas = createFluidWrapper(ResourceUtils.common("petroleum_gas"));
+		public static final TagKey<Fluid> kerosene = createFluidWrapper(ResourceUtils.common("kerosene"));
 		
 		public static final TagKey<Fluid> water = createFluidWrapper(ResourceUtils.mc("water"));
-		public static final TagKey<Fluid> concrete = createFluidWrapper(ResourceUtils.forge("concrete"));
+		public static final TagKey<Fluid> concrete = createFluidWrapper(ResourceUtils.common("concrete"));
 	}
 	
 	public static class Utility{

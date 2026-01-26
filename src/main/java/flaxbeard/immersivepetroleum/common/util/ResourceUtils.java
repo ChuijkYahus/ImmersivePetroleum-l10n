@@ -15,19 +15,23 @@ public class ResourceUtils{
 		return ModelResourceLocation.standalone(ip(modelPath));
 	}
 	
-	public static ResourceLocation ct(String path){
-		return ResourceLocation.fromNamespaceAndPath("crafttweaker", path);
-	}
-	
 	public static ResourceLocation ie(String path){
 		return ResourceLocation.fromNamespaceAndPath(Lib.MODID, path);
+	}
+	
+	public static ResourceLocation common(String path){
+		return ResourceLocation.fromNamespaceAndPath("c", path);
+	}
+	
+	public static ResourceLocation mc(String path){
+		return ResourceLocation.fromNamespaceAndPath(ResourceLocation.DEFAULT_NAMESPACE, path);
 	}
 	
 	public static ResourceLocation forge(String path){
 		return ResourceLocation.fromNamespaceAndPath(NeoForgeVersion.MOD_ID, path);
 	}
 	
-	public static ResourceLocation mc(String path){
-		return ResourceLocation.fromNamespaceAndPath(ResourceLocation.DEFAULT_NAMESPACE, path);
+	public static ResourceLocation ct(String path){
+		return ResourceLocation.fromNamespaceAndPath("crafttweaker", path);
 	}
 }
