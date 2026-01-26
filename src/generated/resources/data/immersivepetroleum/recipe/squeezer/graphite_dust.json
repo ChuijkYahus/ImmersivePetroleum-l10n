@@ -3,7 +3,7 @@
   "energy": 19200,
   "input": {
     "basePredicate": {
-      "tag": "neoforge:dusts/coal_petcoke"
+      "tag": "c:dusts/coal_petcoke"
     },
     "count": 8
   },

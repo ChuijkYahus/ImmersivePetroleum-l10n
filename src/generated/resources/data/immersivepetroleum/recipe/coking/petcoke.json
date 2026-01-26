@@ -3,7 +3,7 @@
   "energy": 15360,
   "input": {
     "basePredicate": {
-      "tag": "neoforge:bitumen"
+      "tag": "c:bitumen"
     },
     "count": 2
   },

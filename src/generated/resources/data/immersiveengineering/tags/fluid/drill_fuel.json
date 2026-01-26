@@ -1,7 +1,7 @@
 {
   "values": [
-    "#neoforge:diesel",
-    "#neoforge:kerosene",
-    "#neoforge:diesel_sulfur"
+    "#c:diesel",
+    "#c:kerosene",
+    "#c:diesel_sulfur"
   ]
 }

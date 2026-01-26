@@ -2,7 +2,7 @@
   "type": "immersiveengineering:arc_furnace",
   "additives": [
     {
-      "tag": "neoforge:dusts/coal_petcoke"
+      "tag": "c:dusts/coal_petcoke"
     }
   ],
   "energy": 204800,

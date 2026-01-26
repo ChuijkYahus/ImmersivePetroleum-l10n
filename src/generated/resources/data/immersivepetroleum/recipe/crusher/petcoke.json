@@ -2,9 +2,9 @@
   "type": "immersiveengineering:crusher",
   "energy": 2400,
   "input": {
-    "tag": "neoforge:coal_petcoke"
+    "tag": "c:coal_petcoke"
   },
   "result": {
-    "tag": "neoforge:dusts/coal_petcoke"
+    "tag": "c:dusts/coal_petcoke"
   }
 }

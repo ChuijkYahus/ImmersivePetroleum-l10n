@@ -6,11 +6,11 @@
   "energy": 240,
   "input0": {
     "amount": 5,
-    "tag": "neoforge:benzol"
+    "tag": "c:benzol"
   },
   "input1": {
     "amount": 5,
-    "tag": "neoforge:petroleum_gas"
+    "tag": "c:petroleum_gas"
   },
   "result": {
     "amount": 10,

@@ -2,7 +2,7 @@
   "type": "immersiveengineering:bottling_machine",
   "fluid": {
     "amount": 250,
-    "tag": "neoforge:gasoline"
+    "tag": "c:gasoline"
   },
   "input": {
     "item": "minecraft:glass_bottle"

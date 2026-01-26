@@ -4,7 +4,7 @@
   "energy": 1024,
   "input": {
     "amount": 10,
-    "tag": "neoforge:kerosene"
+    "tag": "c:kerosene"
   },
   "results": [
     {

@@ -3,7 +3,7 @@
   "energy": 256000,
   "input": {
     "amount": 2000,
-    "tag": "neoforge:lubricant"
+    "tag": "c:lubricant"
   },
   "result": {
     "amount": 2000,

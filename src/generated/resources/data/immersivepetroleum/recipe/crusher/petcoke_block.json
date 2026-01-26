@@ -2,11 +2,11 @@
   "type": "immersiveengineering:crusher",
   "energy": 4800,
   "input": {
-    "tag": "neoforge:storage_blocks/coal_petcoke"
+    "tag": "c:storage_blocks/coal_petcoke"
   },
   "result": {
     "basePredicate": {
-      "tag": "neoforge:dusts/coal_petcoke"
+      "tag": "c:dusts/coal_petcoke"
     },
     "count": 9
   }

@@ -6,7 +6,7 @@
   "energy": 120,
   "input0": {
     "amount": 15,
-    "tag": "neoforge:petroleum_gas"
+    "tag": "c:petroleum_gas"
   },
   "result": {
     "amount": 15,

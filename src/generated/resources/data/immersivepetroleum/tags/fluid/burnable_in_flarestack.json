@@ -1,13 +1,13 @@
 {
   "values": [
-    "#neoforge:lubricant",
-    "#neoforge:diesel",
-    "#neoforge:diesel_sulfur",
-    "#neoforge:gasoline",
-    "#neoforge:naphtha",
-    "#neoforge:benzol",
-    "#neoforge:petroleum_gas",
-    "#neoforge:kerosene",
+    "#c:lubricant",
+    "#c:diesel",
+    "#c:diesel_sulfur",
+    "#c:gasoline",
+    "#c:naphtha",
+    "#c:benzol",
+    "#c:petroleum_gas",
+    "#c:kerosene",
     "#c:plantoil",
     "#c:creosote",
     "#c:ethanol"

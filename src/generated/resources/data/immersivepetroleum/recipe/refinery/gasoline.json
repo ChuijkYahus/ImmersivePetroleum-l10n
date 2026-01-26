@@ -3,11 +3,11 @@
   "energy": 80,
   "input0": {
     "amount": 15,
-    "tag": "neoforge:naphtha"
+    "tag": "c:naphtha"
   },
   "input1": {
     "amount": 10,
-    "tag": "neoforge:benzol"
+    "tag": "c:benzol"
   },
   "result": {
     "amount": 25,

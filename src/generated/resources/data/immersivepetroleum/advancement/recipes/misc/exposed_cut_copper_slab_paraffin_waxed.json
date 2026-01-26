@@ -5,7 +5,7 @@
       "conditions": {
         "items": [
           {
-            "items": "#neoforge:wax/paraffin"
+            "items": "#c:wax/paraffin"
           }
         ]
       },

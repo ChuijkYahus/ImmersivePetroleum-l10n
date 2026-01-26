@@ -3,7 +3,7 @@
   "energy": 3200,
   "fluid": {
     "amount": 500,
-    "tag": "neoforge:gasoline"
+    "tag": "c:gasoline"
   },
   "inputs": [
     {

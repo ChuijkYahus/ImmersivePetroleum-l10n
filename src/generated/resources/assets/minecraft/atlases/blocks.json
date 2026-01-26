@@ -14,10 +14,6 @@
     },
     {
       "type": "minecraft:single",
-      "resource": "immersivepetroleum:multiblock/distillation_tower_active"
-    },
-    {
-      "type": "minecraft:single",
       "resource": "immersivepetroleum:multiblock/hydrotreater"
     },
     {
@@ -27,6 +23,14 @@
     {
       "type": "minecraft:single",
       "resource": "immersivepetroleum:multiblock/pumpjack_base"
+    },
+    {
+      "type": "minecraft:single",
+      "resource": "immersivepetroleum:multiblock/overlay/distillation_tower_active"
+    },
+    {
+      "type": "minecraft:single",
+      "resource": "immersivepetroleum:multiblock/overlay/hydrotreater_active"
     },
     {
       "type": "minecraft:single",

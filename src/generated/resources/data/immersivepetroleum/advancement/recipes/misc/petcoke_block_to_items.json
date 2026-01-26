@@ -5,7 +5,7 @@
       "conditions": {
         "items": [
           {
-            "items": "#neoforge:storage_blocks/petcoke"
+            "items": "#c:storage_blocks/petcoke"
           }
         ]
       },

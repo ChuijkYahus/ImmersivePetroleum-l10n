@@ -6,7 +6,7 @@
       "tag": "c:strings"
     },
     "w": {
-      "tag": "neoforge:wax/paraffin"
+      "tag": "c:wax/paraffin"
     }
   },
   "pattern": [

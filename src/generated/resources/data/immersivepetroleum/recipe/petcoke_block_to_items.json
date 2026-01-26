@@ -3,7 +3,7 @@
   "category": "misc",
   "ingredients": [
     {
-      "tag": "neoforge:storage_blocks/petcoke"
+      "tag": "c:storage_blocks/petcoke"
     }
   ],
   "result": {
