@@ -1,15 +1,15 @@
 {
-  "type": "immersivepetroleum:hydrotreater",
-  "conditions": [
+  "neoforge:conditions": [
     {
-      "type": "forge:mod_loaded",
+      "type": "neoforge:mod_loaded",
       "modid": "pneumaticcraft"
     }
   ],
+  "type": "immersivepetroleum:hydrotreater",
   "energy": 61440,
   "input": {
     "amount": 100,
-    "tag": "neoforge:petroleum_gas"
+    "tag": "c:petroleum_gas"
   },
   "result": {
     "amount": 2000,
