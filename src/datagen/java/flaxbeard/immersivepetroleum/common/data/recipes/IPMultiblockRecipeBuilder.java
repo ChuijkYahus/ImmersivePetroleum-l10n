@@ -22,17 +22,10 @@ import java.util.List;
 @SuppressWarnings("unchecked")
 public abstract class IPMultiblockRecipeBuilder<B extends IPMultiblockRecipeBuilder<B, R>, R extends IPMultiblockRecipe> extends IPGenericBuilder<R>{
 	
-	protected final List<ICondition> conditions = new ArrayList<>();
 	protected int energy;
 	protected int time;
 	
 	protected abstract R makeInstance();
-	
-	@Override
-	public B addCondition(ICondition condition){
-		this.conditions.add(condition);
-		return (B) this;
-	}
 	
 	public B setTimeAndEnergy(int time, int energy){
 		this.energy = energy;
