@@ -12,11 +12,14 @@ import flaxbeard.immersivepetroleum.client.model.IPModel;
 import flaxbeard.immersivepetroleum.client.model.IPModels;
 import flaxbeard.immersivepetroleum.common.IPContent;
 import flaxbeard.immersivepetroleum.common.IPDataComponents;
+import flaxbeard.immersivepetroleum.common.blocks.tileentities.WellTileEntity;
+import flaxbeard.immersivepetroleum.common.datastorage.reservoir.ReservoirRegionDataStorage;
 import flaxbeard.immersivepetroleum.common.entity.MotorboatEntity;
 import flaxbeard.immersivepetroleum.common.network.IPPacketHandler;
 import flaxbeard.immersivepetroleum.common.network.MessageDebugSync;
 import flaxbeard.immersivepetroleum.common.reservoir.util.BWListBiome;
 import flaxbeard.immersivepetroleum.common.reservoir.util.BWListDimension;
+import flaxbeard.immersivepetroleum.common.util.Utils;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -36,11 +39,10 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.item.crafting.RecipeHolder;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.fluids.FluidStack;
@@ -50,15 +52,22 @@ import java.util.List;
 import java.util.Locale;
 
 public class DebugItem extends IPItemBase{
+	
+	public enum Render{
+		NONE, RESERVOIR_HEATMAP, RESERVOIR_POLYGONS, RESERVOIR_ALL
+	}
+	
 	public enum Mode{
 		DISABLED("Disabled"),
 		INFO_SPEEDBOAT("Info: Speedboat"),
 		
-		SEEDBASED_RESERVOIR("Seed-Based Reservoir: Heatmap"),
-		SEEDBASED_RESERVOIR_AREA_TEST("Seed-Based Reservoir Testing"),
+		SEEDBASED_RESERVOIR(Render.RESERVOIR_HEATMAP, "Seed-Based Reservoir: Heatmap."),
+		SEEDBASED_RESERVOIR_AREA_TEST(Render.RESERVOIR_ALL, "Seed-Based Reservoir: Testing."),
+		SEEDBASED_RESERVOIR_STORAGE(Render.RESERVOIR_POLYGONS, "Seed-Based Reservoir: Storage Tests."),
+		SEEDBASED_RESERVOIR_QUICK_WELL(Render.RESERVOIR_HEATMAP, "Seed-Based Reservoir: Quick Well."),
 		
 		REFRESH_ALL_IPMODELS("Refresh all IPModels"),
-		DATA_STORAGE_TESTING("Data Storage Tests"),
+		
 		GENERAL_TEST("This one could be dangerous to trigger!")
 		;
 		
@@ -69,8 +78,14 @@ public class DebugItem extends IPItemBase{
 		public static final StreamCodec<ByteBuf, Mode> CODEC_STREAM = ByteBufCodecs.INT.map(Mode::fromId, Mode::id);
 		
 		public final String display;
+		public final Render render;
 		Mode(String display){
+			this(Render.NONE, display);
+		}
+		
+		Mode(Render render, String display){
 			this.display = display;
+			this.render = render;
 		}
 		
 		public int id(){
@@ -213,19 +228,11 @@ public class DebugItem extends IPItemBase{
 					return new InteractionResultHolder<>(InteractionResult.SUCCESS, playerIn.getItemInHand(handIn));
 				}
 				case SEEDBASED_RESERVOIR -> {
-					BlockPos playerPos = playerIn.blockPosition();
+					BlockPos pos = playerIn.blockPosition();
 					
-					ChunkPos cPos = new ChunkPos(playerPos);
-					int chunkX = cPos.getMinBlockX();
-					int chunkZ = cPos.getMinBlockZ();
+					double noise = ReservoirHandler.getValueOf(worldIn, pos.getX(), pos.getZ());
 					
-					// Does the whole 0-15 local chunk block thing
-					int x = playerPos.getX() - cPos.getMinBlockX();
-					int z = playerPos.getZ() - cPos.getMinBlockZ();
-					
-					double noise = ReservoirHandler.getValueOf(worldIn, (chunkX + x), (chunkZ + z));
-					
-					playerIn.displayClientMessage(Component.literal((chunkX + " " + chunkZ) + ": " + noise), true);
+					playerIn.displayClientMessage(Component.literal((pos.getX() + " " + pos.getZ()) + ": " + noise), true);
 					
 					return new InteractionResultHolder<>(InteractionResult.SUCCESS, playerIn.getItemInHand(handIn));
 				}
@@ -257,23 +264,11 @@ public class DebugItem extends IPItemBase{
 						
 						playerIn.displayClientMessage(Component.literal(out), true);
 						
-					}else{
-						/*
-						final Multimap<ResourceKey<Level>, ReservoirIsland> islands = ReservoirHandler.getReservoirIslandList();
-						
-						for(ResourceKey<Level> key:islands.keySet()){
-							Collection<ReservoirIsland> list = islands.get(key);
-							
-							String str = key.location() + " has " + list.size() + " islands.";
-							
-							playerIn.displayClientMessage(Component.literal(str), false);
-						}
-						*/
 					}
 					
 					return new InteractionResultHolder<>(InteractionResult.SUCCESS, playerIn.getItemInHand(handIn));
 				}
-				case DATA_STORAGE_TESTING -> {
+				case SEEDBASED_RESERVOIR_STORAGE -> {
 					return new InteractionResultHolder<>(InteractionResult.SUCCESS, playerIn.getItemInHand(handIn));
 				}
 				default -> {
@@ -289,15 +284,13 @@ public class DebugItem extends IPItemBase{
 	@Override
 	@Nonnull
 	public InteractionResult useOn(UseOnContext context){
-		Player player = context.getPlayer();
-		if(player == null){
+		final Player player = context.getPlayer();
+		if(player == null)
 			return InteractionResult.PASS;
-		}
 		
-		ItemStack held = player.getItemInHand(context.getHand());
-		Mode mode = DebugItem.getMode(held);
+		final ItemStack held = player.getItemInHand(context.getHand());
+		final Mode mode = DebugItem.getMode(held);
 		
-		BlockEntity te = context.getLevel().getBlockEntity(context.getClickedPos());
 		switch(mode){
 			case GENERAL_TEST -> {
 				Level world = context.getLevel();
@@ -339,11 +332,73 @@ public class DebugItem extends IPItemBase{
 				
 				return InteractionResult.SUCCESS;
 			}
+			case SEEDBASED_RESERVOIR_QUICK_WELL -> quickWell(context, player);
 			default -> {
 			}
 		}
 		
 		return InteractionResult.PASS;
+	}
+	
+	static InteractionResult quickWell(UseOnContext context, Player player){
+		if(context.getLevel().isClientSide)
+			return InteractionResult.SUCCESS;
+		
+		final Level level = context.getLevel();
+		final BlockPos clickedPos = context.getClickedPos();
+		
+		Reservoir reservoir = ReservoirRegionDataStorage.get().getReservoir(level, Utils.toColumnPos(clickedPos));
+		if(reservoir == null){
+			player.displayClientMessage(Component.literal("No Reservoir Here.").withStyle(ChatFormatting.RED), true);
+			return InteractionResult.FAIL;
+		}
+		
+		WellTileEntity well = null;
+		for(int y = clickedPos.getY();y >= level.getMinBuildHeight() - 1;y--){
+			BlockPos current = new BlockPos(clickedPos.getX(), y, clickedPos.getZ());
+			Block block = level.getBlockState(current).getBlock();
+			
+			if(block == IPContent.Blocks.WELL.get() || block == Blocks.BEDROCK){
+				level.setBlockAndUpdate(current, IPContent.Blocks.WELL.get().defaultBlockState());
+				well = (WellTileEntity) level.getBlockEntity(current);
+				break;
+			}
+		}
+		
+		if(well == null){
+			player.displayClientMessage(Component.literal("Failed to create/get Well.").withStyle(ChatFormatting.RED), true);
+			return InteractionResult.FAIL;
+		}
+		
+		final BlockPos wellPos = well.getBlockPos();
+		
+		int len = Math.abs(clickedPos.getY() - wellPos.getY()) + 1;
+		
+		for(int i = 1;i < len;i++){
+			final BlockPos current = wellPos.offset(0, i, 0);
+			
+			BlockState blockState = level.getBlockState(current);
+			
+			if(blockState.getBlock() == Blocks.BEDROCK || blockState.getBlock() == IPContent.Blocks.WELL.get())
+				break;
+			
+			level.setBlockAndUpdate(current, IPContent.Blocks.WELL_PIPE.get().defaultBlockState());
+			
+			well.phyiscalPipesList.add(current.getY());
+			well.pipes = 1;
+			well.usePipe();
+		}
+		well.pastPhysicalPart = true;
+		well.wellPipeLength = well.phyiscalPipesList.size();
+		well.wellPipeLength = well.getMaxPipeLength();
+		well.drillingCompleted = true;
+		well.tappedReservoirs.add(Utils.toColumnPos(clickedPos));
+		
+		well.setChanged();
+		
+		player.displayClientMessage(Component.literal("Created Well.").withStyle(ChatFormatting.GREEN), true);
+		
+		return InteractionResult.SUCCESS;
 	}
 	
 	public void onSpeedboatClick(MotorboatEntity speedboatEntity, Player player, ItemStack debugStack){
