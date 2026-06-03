@@ -47,6 +47,8 @@ public class DistillationTowerProcess extends MultiblockProcessInMachine<Distill
 		if(output == null || output.isEmpty())
 			return;
 		
+		ItemStack outputCopy = output.copy();
+		
 		final Level rawLevel = mbLevel.getRawLevel();
 		
 		MultiblockOrientation orientation = mbLevel.getOrientation();
@@ -56,10 +58,10 @@ public class DistillationTowerProcess extends MultiblockProcessInMachine<Distill
 		
 		IItemHandler itemHandler = rawLevel.getCapability(Capabilities.ItemHandler.BLOCK, outPos, outDir.getOpposite());
 		if(itemHandler != null){
-			output = ItemHandlerHelper.insertItem(itemHandler, output, false);
+			outputCopy = ItemHandlerHelper.insertItem(itemHandler, outputCopy, false);
 		}
 		
-		if(!output.isEmpty()){
+		if(!outputCopy.isEmpty()){
 			double x = outPos.getX() + 0.5;
 			double y = outPos.getY() + 0.25;
 			double z = outPos.getZ() + 0.5;
@@ -72,7 +74,7 @@ public class DistillationTowerProcess extends MultiblockProcessInMachine<Distill
 				z = outPos.getZ() + (facing == Direction.WEST ? 0.15 : 0.85);
 			}
 			
-			ItemEntity ei = new ItemEntity(rawLevel, x, y, z, output.copy());
+			ItemEntity ei = new ItemEntity(rawLevel, x, y, z, outputCopy);
 			ei.setDeltaMovement(0.075 * outDir.getStepX(), 0.025, 0.075 * outDir.getStepZ());
 			rawLevel.addFreshEntity(ei);
 		}
