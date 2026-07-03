@@ -46,7 +46,6 @@ import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
@@ -523,14 +522,16 @@ public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableCom
 			return;
 		
 		IMultiblockLevel mbLevel = context.getLevel();
-		Level rawLevel = mbLevel.getRawLevel();
 		
 		WellTileEntity well = context.getState().getWell(mbLevel, mbLevel.toRelative(IPContent.Multiblock.DERRICK.masterPosInMB()));
 		if(well != null && !well.drillingCompleted){
 			if(well.wellPipeLength > 0){
 				well.startSelfDestructSequence();
 			}else{
-				rawLevel.setBlockAndUpdate(well.getBlockPos(), Blocks.BEDROCK.defaultBlockState());
+				Level rawLevel = mbLevel.getRawLevel();
+				if(rawLevel.isLoaded(well.getBlockPos())){
+					rawLevel.setBlockAndUpdate(well.getBlockPos(), Blocks.BEDROCK.defaultBlockState());
+				}
 			}
 		}
 	}

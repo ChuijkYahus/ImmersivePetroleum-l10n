@@ -70,14 +70,16 @@ public class ReservoirRegionDataStorage extends SavedData{
 	public CompoundTag save(CompoundTag nbt, @Nonnull HolderLookup.Provider provider){
 		nbt.putInt("version", VERSION);
 		
-		ListTag list = new ListTag();
-		this.regions.forEach((key, entry) -> {
-			CompoundTag tag = new CompoundTag();
-			tag.putInt("x", key.x());
-			tag.putInt("z", key.z());
-			list.add(tag);
-		});
-		nbt.put("regions", list);
+		synchronized(this.regions){
+			ListTag list = new ListTag();
+			this.regions.forEach((key, entry) -> {
+				CompoundTag tag = new CompoundTag();
+				tag.putInt("x", key.x());
+				tag.putInt("z", key.z());
+				list.add(tag);
+			});
+			nbt.put("regions", list);
+		}
 		
 		log.debug("Saved regions file.");
 		return nbt;
@@ -89,15 +91,17 @@ public class ReservoirRegionDataStorage extends SavedData{
 			// TODO Trigger Full Storage Update?
 		}
 		
-		ListTag regions = nbt.getList("regions", Tag.TAG_COMPOUND);
-		for(int i = 0;i < regions.size();i++){
-			CompoundTag tag = regions.getCompound(i);
-			int x = tag.getInt("x");
-			int z = tag.getInt("z");
-			
-			RegionPos rPos = new RegionPos(x, z);
-			RegionData rData = getOrCreateRegionData(rPos);
-			this.regions.put(rPos, rData);
+		synchronized(this.regions){
+			ListTag regions = nbt.getList("regions", Tag.TAG_COMPOUND);
+			for(int i = 0;i < regions.size();i++){
+				CompoundTag tag = regions.getCompound(i);
+				int x = tag.getInt("x");
+				int z = tag.getInt("z");
+				
+				RegionPos rPos = new RegionPos(x, z);
+				RegionData rData = getOrCreateRegionData(rPos);
+				this.regions.put(rPos, rData);
+			}
 		}
 		
 		log.debug("Loaded regions file.");
@@ -106,7 +110,9 @@ public class ReservoirRegionDataStorage extends SavedData{
 	/** Marks itself and all regions as dirty. (Only to be used by {@link CommonEventHandler#onUnload(LevelEvent.Unload)}) */
 	public void markAllDirty(){
 		setDirty();
-		this.regions.values().forEach(RegionData::setDirty);
+		synchronized(this.regions){
+			this.regions.values().forEach(RegionData::setDirty);
+		}
 	}
 	
 	public void addReservoir(ResourceKey<Level> dimensionKey, Reservoir reservoir){
@@ -185,19 +191,23 @@ public class ReservoirRegionDataStorage extends SavedData{
 	
 	@Nullable
 	public RegionData getRegionData(RegionPos regionPos){
-		RegionData ret = this.regions.getOrDefault(regionPos, null);
-		return ret;
+		synchronized(this.regions){
+			RegionData ret = this.regions.getOrDefault(regionPos, null);
+			return ret;
+		}
 	}
 	
 	private RegionData getOrCreateRegionData(RegionPos regionPos){
-		RegionData ret = this.regions.computeIfAbsent(regionPos, pos -> {
-			String fn = getRegionFileName(pos);
-			RegionData data = this.dimData.computeIfAbsent(new Factory<>(() -> new RegionData(pos), (t, p) -> new RegionData(pos, t, p)), fn);
-			setDirty();
-			log.debug("Created RegionData[{}, {}]", regionPos.x(), regionPos.z());
-			return data;
-		});
-		return ret;
+		synchronized(this.regions){
+			RegionData ret = this.regions.computeIfAbsent(regionPos, pos -> {
+				String fn = getRegionFileName(pos);
+				RegionData data = this.dimData.computeIfAbsent(new Factory<>(() -> new RegionData(pos), (t, p) -> new RegionData(pos, t, p)), fn);
+				setDirty();
+				log.debug("Created RegionData[{}, {}]", regionPos.x(), regionPos.z());
+				return data;
+			});
+			return ret;
+		}
 	}
 	
 	private String getRegionFileName(RegionPos regionPos){
