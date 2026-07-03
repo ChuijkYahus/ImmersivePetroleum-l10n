@@ -2,8 +2,8 @@ package flaxbeard.immersivepetroleum.common.data;
 
 import com.mojang.serialization.Lifecycle;
 import flaxbeard.immersivepetroleum.ImmersivePetroleum;
-import flaxbeard.immersivepetroleum.common.IPContent;
 import flaxbeard.immersivepetroleum.common.util.ResourceUtils;
+import flaxbeard.immersivepetroleum.common.world.WorldGenFeatures;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.HolderLookup;
@@ -44,7 +44,7 @@ public class IPWorldGen{
 		final RegistrySetBuilder builder = new RegistrySetBuilder();
 		AtomicReference<Holder.Reference<ConfiguredFeature<?, ?>>> configuredFeature = new AtomicReference<>();
 		AtomicReference<Holder.Reference<PlacedFeature>> placedFeature = new AtomicReference<>();
-		builder.add(Registries.CONFIGURED_FEATURE, ctx -> configuredFeature.set(ctx.register(RESERVOIR_CONFIGURED, new ConfiguredFeature<>(IPContent.WorldGenFeatures.RESERVOIR_FEATURE.get(), new NoneFeatureConfiguration()))));
+		builder.add(Registries.CONFIGURED_FEATURE, ctx -> configuredFeature.set(ctx.register(RESERVOIR_CONFIGURED, new ConfiguredFeature<>(WorldGenFeatures.RESERVOIR_FEATURE.get(), new NoneFeatureConfiguration()))));
 		builder.add(Registries.PLACED_FEATURE, ctx -> placedFeature.set(ctx.register(RESERVOIR_PLACED, new PlacedFeature(configuredFeature.get(), List.of()))));
 		builder.add(NeoForgeRegistries.Keys.BIOME_MODIFIERS, ctx -> {
 			final HolderGetter<Biome> biomeReg = ctx.lookup(Registries.BIOME);

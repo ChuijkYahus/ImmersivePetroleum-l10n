@@ -1,5 +1,6 @@
 package flaxbeard.immersivepetroleum.api.reservoir;
 
+import flaxbeard.immersivepetroleum.ImmersivePetroleum;
 import flaxbeard.immersivepetroleum.common.datastorage.reservoir.RegionData;
 import net.minecraft.ResourceLocationException;
 import net.minecraft.core.BlockPos;
@@ -259,7 +260,8 @@ public class Reservoir implements IReservoir{
 			}
 			
 		}catch(ResourceLocationException e){
-			// Don't care, if it doesn't exist just move on
+			// Don't care, if it doesn't exist, log it and just move on
+			ImmersivePetroleum.log.debug("Failure to load reservoir", e);
 		}
 		return null;
 	}

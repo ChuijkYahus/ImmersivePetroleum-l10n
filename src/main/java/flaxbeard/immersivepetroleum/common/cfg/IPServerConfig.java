@@ -4,6 +4,7 @@ import com.electronwill.nightconfig.core.CommentedConfig;
 import com.google.common.base.Preconditions;
 import flaxbeard.immersivepetroleum.ImmersivePetroleum;
 import flaxbeard.immersivepetroleum.api.energy.FuelHandler;
+import flaxbeard.immersivepetroleum.common.world.WorldGenFeatures;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.EventBusSubscriber.Bus;
@@ -22,6 +23,7 @@ public class IPServerConfig{
 	public static final Refining REFINING;
 	public static final Generation GENERATION;
 	public static final Miscellaneous MISCELLANEOUS;
+	public static final WorldGen WORLDGEN;
 	
 	public static final ModConfigSpec ALL;
 	
@@ -32,6 +34,7 @@ public class IPServerConfig{
 		REFINING = new Refining(builder);
 		GENERATION = new Generation(builder);
 		MISCELLANEOUS = new Miscellaneous(builder);
+		WORLDGEN = new WorldGen(builder);
 		
 		ALL = builder.build();
 	}
@@ -49,6 +52,25 @@ public class IPServerConfig{
 			}
 		}
 		return rawConfig.config();
+	}
+	
+	public static class WorldGen{
+		public final ConfigValue<Boolean> generateMissingReservoirs;
+		WorldGen(ModConfigSpec.Builder builder){
+			builder.push("WorldGen");
+			
+			generateMissingReservoirs = builder
+				.comment(
+					"Set this to true if this mod was added to a pre-existing world.",
+					"Enable this only if absolutely necessary.",
+					"Side effects may include, but are not limited to, hiccups, chills, nausea, dizziness, headache, drowsiness, dry mouth, blurred vision, allergic reactions and crash-outs.",
+					"See \"Doctor Log-Files\" should any symptoms appear while this is enabled.",
+					"Default: false"
+				) 
+				.define("regenerate_missing_reservoirs", false);
+			
+			builder.pop();
+		}
 	}
 	
 	public static class Extraction{
@@ -120,9 +142,11 @@ public class IPServerConfig{
 			fuels = builder
 				.comment("List of Portable Generator fuels. Format: fluid_name, mb_used_per_second, flux_produced_per_tick")
 				.defineList("generator_fuels",
-				List.of("immersivepetroleum:naphtha, 9, 256",
+						List.of(
+							"immersivepetroleum:naphtha, 9, 256",
 							"immersivepetroleum:gasoline, 6, 256",
-							"immersivepetroleum:benzol, 6, 256"), o -> true);
+							"immersivepetroleum:benzol, 6, 256"
+						), o -> true);
 			
 			builder.pop();
 		}
@@ -138,16 +162,18 @@ public class IPServerConfig{
 			boat_fuels = builder
 					.comment("List of Motorboat fuels. Format: fluid_name, mb_used_per_tick")
 					.defineList("boat_fuels",
-							List.of("immersivepetroleum:gasoline, 1",
-							"immersivepetroleum:naphtha, 2",
-									"immersivepetroleum:benzol, 2"), o -> true);
+							List.of(
+								"immersivepetroleum:gasoline, 1",
+								"immersivepetroleum:naphtha, 2",
+								"immersivepetroleum:benzol, 2"
+							), o -> true);
 			
 			autounlock_recipes = builder
 					.comment("Automatically unlock IP recipes for new players", "Default: true")
 					.define("autounlock_recipes", true);
 			
 			asphalt_speed = builder
-					.comment("Set to false to disable the asphalt block boosting player speed", "Default: true")
+					.comment("Setting this to false disables the asphalt block boosting player speed", "Default: true")
 					.define("asphalt_speed", true);
 			
 			builder.pop();
@@ -157,10 +183,16 @@ public class IPServerConfig{
 	@SubscribeEvent
 	public static void onConfigReload(ModConfigEvent.Loading ev){
 		FuelHandler.onConfigReload(ev);
+		
+		if(ev.getConfig().getSpec() == IPServerConfig.ALL)
+			WorldGenFeatures.configChanged();
 	}
 	
 	@SubscribeEvent
 	public static void onConfigReload(ModConfigEvent.Reloading ev){
 		FuelHandler.onConfigReload(ev);
+		
+		if(ev.getConfig().getSpec() == IPServerConfig.ALL)
+			WorldGenFeatures.configChanged();
 	}
 }

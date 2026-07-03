@@ -62,14 +62,13 @@ import flaxbeard.immersivepetroleum.common.lubehandlers.PumpjackLubricationHandl
 import flaxbeard.immersivepetroleum.common.sound.IPSounds;
 import flaxbeard.immersivepetroleum.common.util.IPEffects;
 import flaxbeard.immersivepetroleum.common.util.damageSources.IPDamageSources;
-import flaxbeard.immersivepetroleum.common.world.FeatureReservoir;
+import flaxbeard.immersivepetroleum.common.world.WorldGenFeatures;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SlabBlock;
 import net.minecraft.world.level.block.StairBlock;
-import net.minecraft.world.level.levelgen.feature.Feature;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.bus.api.IEventBus;
@@ -208,14 +207,6 @@ public class IPContent{
 	}
 	
 	public static final DeferredHolder<Item, Item> DEBUGITEM = IPRegisters.registerItem("debug", DebugItem::new);
-	
-	public static class WorldGenFeatures{
-		public static final DeferredHolder<Feature<?>, FeatureReservoir> RESERVOIR_FEATURE = IPRegisters.registerFeature("reservoir", FeatureReservoir::new);
-		
-		//@formatter:off
-		private static void forceClassLoad(){}
-		//@formatter:on
-	}
 	
 	/** block/item/fluid population */
 	public static void modConstruction(IEventBus eBus){

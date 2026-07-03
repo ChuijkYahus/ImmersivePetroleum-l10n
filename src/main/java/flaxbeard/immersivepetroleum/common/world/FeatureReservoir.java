@@ -23,7 +23,7 @@ import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
 
 public class FeatureReservoir extends Feature<NoneFeatureConfiguration>{
-	public static HashMultimap<ResourceKey<Level>, ChunkPos> generatedReservoirChunks = HashMultimap.create();
+	public static final HashMultimap<ResourceKey<Level>, ChunkPos> generatedReservoirChunks = HashMultimap.create();
 	
 	public FeatureReservoir(){
 		super(NoneFeatureConfiguration.CODEC);
@@ -39,11 +39,14 @@ public class FeatureReservoir extends Feature<NoneFeatureConfiguration>{
 		ChunkPos chunkPos = reader.getChunk(pos).getPos();
 		
 		ResourceKey<Level> dimension = level.dimension();
-		if(generatedReservoirChunks.containsEntry(dimension, chunkPos))
-			return false;
 		
-		scanChunkForNewReservoirs(level, chunkPos, pContext.random());
-		generatedReservoirChunks.put(dimension, chunkPos);
+		synchronized(generatedReservoirChunks){
+			if(generatedReservoirChunks.containsEntry(dimension, chunkPos))
+				return false;
+			
+			scanChunkForNewReservoirs(level, chunkPos, pContext.random());
+			generatedReservoirChunks.put(dimension, chunkPos);
+		}
 		
 		return true;
 	}
@@ -56,8 +59,9 @@ public class FeatureReservoir extends Feature<NoneFeatureConfiguration>{
 		
 		final ReservoirRegionDataStorage storage = ReservoirRegionDataStorage.get();
 		
-		for(int j = 0;j < 16;j++){
-			for(int i = 0;i < 16;i++){
+		int i, j;
+		for(j = 0;j < 16;j++){
+			for(i = 0;i < 16;i++){
 				int x = chunkX + i;
 				int z = chunkZ + j;
 				
@@ -76,7 +80,7 @@ public class FeatureReservoir extends Feature<NoneFeatureConfiguration>{
 				int totalWeight = ReservoirHandler.getTotalWeight(dimension, biome);
 				if(totalWeight > 0){
 					int weight = Math.abs(randomSource.nextInt() % totalWeight);
-					for(RecipeHolder<ReservoirType> holder:ReservoirType.map.values()){
+					for(RecipeHolder<ReservoirType> holder: ReservoirType.map.values()){
 						ReservoirType res = holder.value();
 						
 						if(res.getDimensions().isValid(dimension) && res.getBiomes().isValid(biome)){
