@@ -24,6 +24,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.storage.DimensionDataStorage;
 import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -62,7 +63,7 @@ public class ImmersivePetroleum{
 		eBus.addListener(this::setup);
 		eBus.addListener(this::loadComplete);
 		
-		NeoForge.EVENT_BUS.addListener(this::worldLoad);
+		NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, this::worldLoad);
 		NeoForge.EVENT_BUS.addListener(this::serverStarting);
 		NeoForge.EVENT_BUS.addListener(this::registerCommand);
 		NeoForge.EVENT_BUS.addListener(this::addReloadListeners);
