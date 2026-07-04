@@ -63,6 +63,13 @@ public class WorldGenFeatures{
 	public static void chunkDataLoad(ChunkDataEvent.Load event){
 		if(reservoirFeature.isEmpty())
 			return;
+		else if(!IPServerConfig.WORLDGEN.generateMissingReservoirs.get() && reservoirFeature.isPresent()){
+			reservoirFeature = Optional.empty();
+			synchronized(regenChunks){
+				regenChunks.clear();
+			}
+			return;
+		}
 		
 		if(!(event.getLevel() instanceof Level level) || event.getChunk().getPersistedStatus() != ChunkStatus.FULL)
 			return;
@@ -77,7 +84,7 @@ public class WorldGenFeatures{
 	
 	@SubscribeEvent
 	public static void serverLevelTick(LevelTickEvent.Post event){
-		if(!(event.getLevel() instanceof ServerLevel level))
+		if(!(event.getLevel() instanceof ServerLevel level) || reservoirFeature.isEmpty())
 			return;
 		
 		ResourceKey<Level> dimension = level.dimension();
