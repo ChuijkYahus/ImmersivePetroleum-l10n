@@ -425,7 +425,7 @@ public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableCom
 			if(fluidHandler != null){
 				boolean isIEPipe = rawLevel.getBlockEntity(outPos) instanceof IFluidPipe;
 				
-				state.spilling = iterativeOutput(fluidHandler, extracted, isIEPipe);
+				state.spilling = FluidHelper.iterativeOutput(fluidHandler, extracted, isIEPipe).getAmount() > 0;
 				
 			}else{
 				state.spilling = true;
@@ -438,30 +438,6 @@ public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableCom
 		if(!state.spilling && state.fluidSpilled != Fluids.EMPTY)
 			state.fluidSpilled = Fluids.EMPTY;
 		
-	}
-	
-	/**
-	 * <b>This is a hack!</b><br>
-	 * <br>
-	 * Transfer on IE Pipes is limited to 1000mB in a single tick.
-	 * So this outputs multiple times with <b>10</b> attempts max or until everything is transferred
-	 */
-	private static boolean iterativeOutput(IFluidHandler out, FluidStack extracted, boolean isIEPipe){
-		FluidStack fluid = FluidHelper.copyFluid(extracted, extracted.getAmount(), isIEPipe);
-		
-		int drainedTotal = 0;
-		int attempt = 0;
-		for(;attempt < 10 && fluid.getAmount() > 0;attempt++){
-			int accepted = out.fill(fluid, IFluidHandler.FluidAction.SIMULATE);
-			if(accepted == 0)
-				return true;
-			
-			int drained = out.fill(FluidHelper.copyFluid(fluid, Math.min(fluid.getAmount(), accepted), isIEPipe), IFluidHandler.FluidAction.EXECUTE);
-			fluid = FluidHelper.copyFluid(extracted, fluid.getAmount() - drained, isIEPipe);
-			drainedTotal += drained;
-		}
-		
-		return (extracted.getAmount() - drainedTotal) > 0;
 	}
 	
 	public static void transferGridDataToWell(BlockPos masterPos, State state, @Nullable WellTileEntity well){
@@ -500,16 +476,19 @@ public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableCom
 	private FluidStack getExtractedFluidStack(@Nonnull WellTileEntity well){
 		Fluid extractedFluid = Fluids.EMPTY;
 		int extractedAmount = 0;
+		Level level = well.getLevel();
+		
 		for(ColumnPos cPos: well.tappedReservoirs){
-			Reservoir reservoir = ReservoirHandler.getReservoir(well.getLevel(), cPos);
-			if(reservoir != null){
+			Reservoir reservoir = ReservoirHandler.getReservoir(level, cPos);
+			
+			if(reservoir != null && !reservoir.isInfinite()){
 				if(extractedFluid == Fluids.EMPTY){
 					extractedFluid = reservoir.getFluid();
 				}else if(reservoir.getFluid() != extractedFluid){
 					continue;
 				}
 				
-				extractedAmount += reservoir.extractWithPressure(well.getLevel(), cPos.x(), cPos.z());
+				extractedAmount += reservoir.extractWithPressure(level, cPos.x(), cPos.z());
 			}
 		}
 		

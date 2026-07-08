@@ -180,14 +180,14 @@ public class WellTileEntity extends IPTileEntityBase implements IPCommonTickable
 					if(teHigh instanceof WellPipeTileEntity well){
 						Pair<Boolean, BlockPos> result = well.hasValidConnection();
 						
-						// Don't stop spilling even if the pumpjack is ontop, because it is "not designed" to handle the high pressure
+						// Don't stop spilling even if the pumpjack is on top, because it is "not designed" to handle the high pressure
 						BlockEntity te = getNonnullLevel().getBlockEntity(result.getRight());
 						if(!result.getLeft() || te instanceof IMultiblockBE<?> multiblockBE && multiblockBE.getHelper().getContext().getState() instanceof PumpjackLogic.State){
 							for(ColumnPos cPos:this.tappedReservoirs){
 								Reservoir reservoir = ReservoirHandler.getReservoir(getNonnullLevel(), cPos);
 								
 								// One is enough to trigger spilling
-								if(reservoir != null && reservoir.getPressure(getNonnullLevel(), cPos.x(), cPos.z()) > 0.0){
+								if(reservoir != null && reservoir.getPressure(getNonnullLevel(), cPos.x(), cPos.z()) > 0.0 && !reservoir.isInfinite()){
 									fType = reservoir.getFluid();
 									height = result.getRight().getY();
 									spill = true;

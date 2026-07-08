@@ -2,6 +2,7 @@ package flaxbeard.immersivepetroleum.common.util.commands;
 
 import com.google.common.collect.Multimap;
 import com.mojang.brigadier.Command;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.LongArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
@@ -27,6 +28,7 @@ import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentUtils;
 import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ColumnPos;
 import net.minecraft.world.item.crafting.RecipeHolder;
@@ -45,7 +47,7 @@ public class ReservoirCommand{
 	}
 	
 	public static LiteralArgumentBuilder<CommandSourceStack> create(){
-		LiteralArgumentBuilder<CommandSourceStack> main = Commands.literal("reservoir").requires(source -> source.hasPermission(4));
+		LiteralArgumentBuilder<CommandSourceStack> main = Commands.literal("reservoir").requires(source -> source.hasPermission(Commands.LEVEL_ADMINS));
 		
 		main.then(Commands.literal("locate").executes(ReservoirCommand::locate));
 		main.then(setters());
@@ -55,14 +57,18 @@ public class ReservoirCommand{
 	}
 	
 	private static int get(CommandContext<CommandSourceStack> context, @Nonnull Reservoir reservoir){
-		//@formatter:off
-		CommandUtils.sendTranslated(context.getSource(),
-				"chat.immersivepetroleum.command.reservoir.get",
-				reservoir.getAmount(),
-				Utils.fDecimal(reservoir.getAmount() / (double) reservoir.getCapacity() * 100),
-				new FluidStack(reservoir.getFluid(), 1).getHoverName()
-		);
-		//@formatter:on
+		final Component fluidName = new FluidStack(reservoir.getFluid(), 1).getHoverName();
+		
+		if(reservoir.isInfinite()){
+			CommandUtils.sendTranslated(context.getSource(), "chat.immersivepetroleum.command.reservoir.infinite", fluidName);
+			return Command.SINGLE_SUCCESS;
+		}
+		
+		final long amount = reservoir.getAmount();
+		final String percentage = Utils.fDecimal(amount / (double) reservoir.getCapacity() * 100);
+		
+		CommandUtils.sendTranslated(context.getSource(), "chat.immersivepetroleum.command.reservoir.get", amount, percentage, fluidName);
+		
 		return Command.SINGLE_SUCCESS;
 	}
 	
@@ -118,9 +124,9 @@ public class ReservoirCommand{
 		double smallestDistance = rangeSqr;
 		ColumnPos p = null;
 		for(Reservoir reservoir: nearby){
-			ReservoirBoundingBox IAABB = reservoir.getBoundingBox();
-			for(int z = IAABB.zMin() + 1;z < IAABB.zMax();z++){
-				for(int x = IAABB.xMin() + 1;x < IAABB.xMax();x++){
+			ReservoirBoundingBox rBB = reservoir.getBoundingBox();
+			for(int z = rBB.zMin() + 1;z < rBB.zMax();z++){
+				for(int x = rBB.xMin() + 1;x < rBB.xMax();x++){
 					if(reservoir.getPolygon().contains(x, z)){
 						double xa = (x + 0.5) - dx;
 						double za = (z + 0.5) - dz;
@@ -166,11 +172,16 @@ public class ReservoirCommand{
 	}
 	
 	private static LiteralArgumentBuilder<CommandSourceStack> setters(){
-		LiteralArgumentBuilder<CommandSourceStack> set = Commands.literal("set").requires(source -> source.hasPermission(4));
+		LiteralArgumentBuilder<CommandSourceStack> set = Commands.literal("set");
 		
 		set.then(Commands.literal("amount").then(positional(Commands.argument("amount", LongArgumentType.longArg(0, Reservoir.MAX_AMOUNT)), ReservoirCommand::setReservoirAmount)));
 		set.then(Commands.literal("capacity").then(positional(Commands.argument("capacity", LongArgumentType.longArg(0, Reservoir.MAX_AMOUNT)), ReservoirCommand::setReservoirCapacity)));
 		set.then(Commands.literal("type").then(positional(Commands.argument("name", StringArgumentType.string()).suggests(ReservoirCommand::typeSuggestor), ReservoirCommand::setReservoirType)));
+		
+		LiteralArgumentBuilder<CommandSourceStack> inf = Commands.literal("inf");
+		inf.then(positional(Commands.literal("toggle"), ReservoirCommand::toggleInfinity));
+		inf.then(Commands.literal("flow").then(positional(Commands.argument("flow", IntegerArgumentType.integer(1, Reservoir.MAX_MBPT * 4)), ReservoirCommand::setInfiniteMaxFlow)));
+		set.then(inf);
 		
 		return set;
 	}
@@ -214,6 +225,35 @@ public class ReservoirCommand{
 		reservoir.setDirty();
 		
 		CommandUtils.sendTranslated(context.getSource(), "chat.immersivepetroleum.command.reservoir.set.type.success", reservoir.getType().value().name);
+		return Command.SINGLE_SUCCESS;
+	}
+	
+	private static int toggleInfinity(CommandContext<CommandSourceStack> context, @Nonnull Reservoir reservoir){
+		boolean bool = reservoir.toggleInfinite();
+		
+		final BlockPos c = reservoir.getBoundingBox().getCenter();
+		context.getSource().sendSuccess(() -> {
+			MutableComponent clickableCoordinates = ComponentUtils.wrapInSquareBrackets(Component.literal(c.getX() + " " + c.getZ())).withStyle((s) -> {
+				final ClickEvent clickEvent = new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/tp @s " + c.getX() + " ~ " + c.getZ());
+				final HoverEvent hoverEvent = new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("chat.coordinates.tooltip"));
+				
+				return s.withColor(ChatFormatting.GREEN).withItalic(true).withClickEvent(clickEvent).withHoverEvent(hoverEvent);
+			});
+			
+			return Component.translatable("chat.immersivepetroleum.command.reservoir.inf.toggle." + (bool ? "set" : "unset"), clickableCoordinates);
+		}, true);
+		
+		return Command.SINGLE_SUCCESS;
+	}
+	
+	private static int setInfiniteMaxFlow(CommandContext<CommandSourceStack> context, @Nonnull Reservoir reservoir){
+		int flowRate = context.getArgument("flow", Integer.class);
+		
+		reservoir.setInfiniteFlowRate(flowRate);
+		reservoir.setDirty();
+		
+		CommandUtils.sendTranslated(context.getSource(), "chat.immersivepetroleum.command.reservoir.inf.flow", flowRate);
+		
 		return Command.SINGLE_SUCCESS;
 	}
 	

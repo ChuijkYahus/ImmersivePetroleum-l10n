@@ -1,6 +1,7 @@
 package flaxbeard.immersivepetroleum.common.blocks.multiblocks.logic;
 
 import blusunrize.immersiveengineering.api.energy.AveragingEnergyStorage;
+import blusunrize.immersiveengineering.api.fluid.IFluidPipe;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.component.IClientTickableComponent;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.component.IServerTickableComponent;
 import blusunrize.immersiveengineering.api.multiblocks.blocks.component.RedstoneControl;
@@ -73,12 +74,12 @@ public class PumpjackLogic implements IMultiblockLogic<State>, IServerTickableCo
 	@Override
 	public void tickServer(IMultiblockContext<State> context){
 		final State state = context.getState();
-		final IMultiblockLevel level = context.getLevel();
+		final IMultiblockLevel mbLevel = context.getLevel();
 		final boolean rsEnabled = state.rsState.isEnabled(context);
 		
 		boolean active = false;
 		if(rsEnabled){
-			BlockEntity teLow = level.getBlockEntity(DOWN_PORT.below());
+			BlockEntity teLow = mbLevel.getBlockEntity(DOWN_PORT.below());
 			
 			if(teLow instanceof WellPipeTileEntity pipe){
 				WellTileEntity well = pipe.getWell();
@@ -91,9 +92,9 @@ public class PumpjackLogic implements IMultiblockLogic<State>, IServerTickableCo
 						// Does any reservoir still have pressure?
 						boolean foundPressurizedReservoir = false;
 						for(ColumnPos cPos: well.tappedReservoirs){
-							Reservoir reservoir = ReservoirHandler.getReservoir(level.getRawLevel(), cPos);
+							Reservoir reservoir = ReservoirHandler.getReservoir(mbLevel.getRawLevel(), cPos);
 							
-							if(reservoir != null && reservoir.getPressure(level.getRawLevel(), cPos.x(), cPos.z()) > 0.0F){
+							if(reservoir != null && (reservoir.getPressure(mbLevel.getRawLevel(), cPos.x(), cPos.z()) > 0.0F && !reservoir.isInfinite())){
 								foundPressurizedReservoir = true;
 								break;
 							}
@@ -107,12 +108,31 @@ public class PumpjackLogic implements IMultiblockLogic<State>, IServerTickableCo
 							IFluidHandler portWest_output = state.west_port_output.get();
 							
 							for(ColumnPos cPos: well.tappedReservoirs){
-								Reservoir reservoir = ReservoirHandler.getReservoir(level.getRawLevel(), cPos);
+								Reservoir reservoir = ReservoirHandler.getReservoir(mbLevel.getRawLevel(), cPos);
+								if(reservoir == null)
+									continue;
 								
-								if(reservoir != null){
-									FluidStack fluid = new FluidStack(reservoir.getFluid(), reservoir.extract(extractSpeed, FluidAction.SIMULATE));
+								if(reservoir.isInfinite()){
+									final int amount = reservoir.getFlowRateInfinite();
+									final FluidStack fluid = new FluidStack(reservoir.getFluid(), amount);
 									
-									if(portEast_output != null){
+									if(portEast_output != null && fluid.getAmount() > 0){
+										boolean isIEPipe = mbLevel.getBlockEntity(EAST_PORT_OFFSET.posInMultiblock()) instanceof IFluidPipe;
+										FluidStack fs = FluidHelper.iterativeOutput(portEast_output, fluid, isIEPipe);
+										
+										active |= (fluid.getAmount() - fs.getAmount()) > 0;
+									}
+									
+									if(portWest_output != null && fluid.getAmount() > 0){
+										boolean isIEPipe = mbLevel.getBlockEntity(WEST_PORT_OFFSET.posInMultiblock()) instanceof IFluidPipe;
+										FluidStack fs = FluidHelper.iterativeOutput(portWest_output, fluid, isIEPipe);
+										
+										active |= (fluid.getAmount() - fs.getAmount()) > 0;
+									}
+									
+								}else{
+									FluidStack fluid = new FluidStack(reservoir.getFluid(), reservoir.extract(extractSpeed, FluidAction.SIMULATE));
+									if(portEast_output != null && fluid.getAmount() > 0){
 										int accepted = portEast_output.fill(fluid, FluidAction.SIMULATE);
 										if(accepted > 0){
 											int drained = portEast_output.fill(FluidHelper.copyFluid(fluid, Math.min(fluid.getAmount(), accepted)), FluidAction.EXECUTE);
@@ -147,8 +167,10 @@ public class PumpjackLogic implements IMultiblockLogic<State>, IServerTickableCo
 			context.markMasterDirty();
 			context.requestMasterBESync();
 		}
+		
 		state.wasActive = active;
 	}
+	
 	@Override
 	public void registerCapabilities(CapabilityRegistrar<State> register){
 		register.registerAtOrNull(Capabilities.EnergyStorage.BLOCK, ENERGY_IN, state -> state.energy);

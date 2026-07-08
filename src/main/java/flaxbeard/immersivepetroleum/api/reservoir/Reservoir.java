@@ -32,6 +32,10 @@ public class Reservoir implements IReservoir{
 	private long amount;
 	private long capacity;
 	
+	// Neither of the two below get stored or read if "isInfinite" is set to false
+	private boolean isInfinite = false;
+	private int infiniteFlowRate = MIN_MBPT;
+	
 	public Reservoir(@Nonnull ReservoirPolygon polygon, @Nonnull RecipeHolder<ReservoirType> type, long amount){
 		this(polygon, type, amount, amount);
 	}
@@ -80,8 +84,27 @@ public class Reservoir implements IReservoir{
 		return this;
 	}
 	
-	public static long clamp(long num, long min, long max){
-		return Math.max(min, Math.min(max, num));
+	public boolean toggleInfinite(){
+		this.isInfinite = !this.isInfinite;
+		setDirty();
+		return this.isInfinite;
+	}
+	
+	public void setInfiniteFlowRate(int flowRate){
+		this.infiniteFlowRate = Mth.clamp(flowRate, 1, MAX_MBPT * 4);
+	}
+	
+	public boolean isInfinite(){
+		return this.isInfinite;
+	}
+	
+	/** Only relevant if {@link #isInfinite()} returns true */
+	public int getFlowRateInfinite(){
+		return this.infiniteFlowRate;
+	}
+	
+	static long clamp(long num, long min, long max){
+		return Math.min(Math.max(num, min), max);
 	}
 	
 	/**
@@ -109,9 +132,8 @@ public class Reservoir implements IReservoir{
 	
 	@Override
 	public void setDirty(){
-		if(this.regionData != null){
+		if(this.regionData != null)
 			this.regionData.setDirty();
-		}
 	}
 	
 	@Override
@@ -144,6 +166,9 @@ public class Reservoir implements IReservoir{
 	 * @return boolean on whether reservoir is below hydrostatic equilibrium
 	 */
 	public boolean belowHydrostaticEquilibrium(@Nonnull Level level){
+		if(isInfinite())
+			return false;
+		
 		return this.type.value().residual > 0 && this.amount <= this.type.value().equilibrium && this.lastEquilibriumTick != level.getGameTime();
 	}
 	
@@ -161,9 +186,11 @@ public class Reservoir implements IReservoir{
 	
 	@Override
 	public int extract(int amount, FluidAction fluidAction){
-		if(isEmpty()){
+		if(isInfinite())
+			return getFlowRateInfinite();
+		
+		if(isEmpty())
 			return 0;
-		}
 		
 		int extracted = (int) Math.min(amount, this.amount);
 		
@@ -177,17 +204,19 @@ public class Reservoir implements IReservoir{
 	
 	@Override
 	public int extractWithPressure(@Nonnull Level world, int x, int z){
+		if(isInfinite())
+			return 0; // Derrick should not care
+		
 		float pressure = getPressure(world, x, z);
 		
-		if(pressure > 0.0 && this.amount > 0){
-			int flow = (int) Math.min(getFlow(pressure), this.amount);
-			
-			this.amount -= flow;
-			setDirty();
-			return flow;
-		}
+		if(!(pressure > 0.0) || this.amount <= 0)
+			return 0;
 		
-		return 0;
+		int flow = (int) Math.min(getFlow(pressure), this.amount);
+		
+		this.amount -= flow;
+		setDirty();
+		return flow;
 	}
 	
 	/**
@@ -244,6 +273,11 @@ public class Reservoir implements IReservoir{
 		nbt.putInt("capacity", (int) (getCapacity() & MAX_AMOUNT));
 		nbt.put("polygon", this.polygon.writeToNBT());
 		
+		if(this.isInfinite){
+			nbt.putBoolean("infinite", true);
+			nbt.putInt("infflowrate", this.infiniteFlowRate);
+		}
+		
 		return nbt;
 	}
 	
@@ -256,7 +290,14 @@ public class Reservoir implements IReservoir{
 				long capacity = ((long) nbt.getInt("capacity")) & MAX_AMOUNT;
 				
 				ReservoirPolygon polygon = ReservoirPolygon.fromNBT(nbt.getCompound("polygon"));
-				return new Reservoir(polygon, type, capacity, amount);
+				Reservoir reservoir = new Reservoir(polygon, type, capacity, amount);
+				
+				if(nbt.getBoolean("infinite")){
+					reservoir.isInfinite = true;
+					reservoir.infiniteFlowRate = nbt.getInt("infflowrate");
+				}
+				
+				return reservoir;
 			}
 			
 		}catch(ResourceLocationException e){

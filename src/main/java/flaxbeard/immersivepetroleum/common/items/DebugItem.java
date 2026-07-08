@@ -254,13 +254,16 @@ public class DebugItem extends IPItemBase{
 						}
 						
 						String out = String.format(Locale.ENGLISH,
-								"Noise: %.3f, Amount: %d/%d, Pressure: %.3f, Flow: %d, Type: %s",
+								"N: %.3f, A: %d/%d, P: %.3f, F: %d, T: %s",
 								ReservoirHandler.getValueOf(worldIn, x, z),
 								reservoir.getAmount(),
 								reservoir.getCapacity(),
 								pressure,
 								Reservoir.getFlow(pressure),
 								new FluidStack(reservoir.getFluid(), 1).getHoverName().getString());
+						
+						if(reservoir.isInfinite())
+							out += " (§dInfinite§r)";
 						
 						playerIn.displayClientMessage(Component.literal(out), true);
 						

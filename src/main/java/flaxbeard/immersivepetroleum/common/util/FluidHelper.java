@@ -174,6 +174,29 @@ public class FluidHelper{
 		return emptyContainer;
 	}
 	
+	/**
+	 * <b>This is a hack!</b><br>
+	 * <br>
+	 * Transfer on IE Pipes is limited to 1000mB in a single tick.
+	 * So this outputs multiple times with <b>10</b> attempts max or until everything is transferred
+	 * 
+	 * @return {@link FluidStack} with remainder
+	 */
+	public static FluidStack iterativeOutput(IFluidHandler out, FluidStack fluid, boolean isIEPipe){
+		FluidStack copy = FluidHelper.copyFluid(fluid, fluid.getAmount(), isIEPipe);
+		
+		for(int attempt = 0;copy.getAmount() > 0 && attempt < 10;attempt++){
+			int accepted = out.fill(copy, IFluidHandler.FluidAction.SIMULATE);
+			if(accepted == 0)
+				break;
+			
+			int drained = out.fill(FluidHelper.copyFluid(copy, Math.min(copy.getAmount(), accepted), isIEPipe), IFluidHandler.FluidAction.EXECUTE);
+			copy = FluidHelper.copyFluid(fluid, copy.getAmount() - drained, isIEPipe);
+		}
+		
+		return copy;
+	}
+	
 	private FluidHelper(){
 	}
 }
