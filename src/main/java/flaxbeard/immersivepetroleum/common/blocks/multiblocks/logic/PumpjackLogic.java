@@ -113,7 +113,7 @@ public class PumpjackLogic implements IMultiblockLogic<State>, IServerTickableCo
 									continue;
 								
 								if(reservoir.isInfinite()){
-									final int amount = reservoir.getFlowRateInfinite();
+									final int amount = reservoir.getInfinityFlowRate();
 									final FluidStack fluid = new FluidStack(reservoir.getFluid(), amount);
 									
 									if(portEast_output != null && fluid.getAmount() > 0){

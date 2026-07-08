@@ -22,6 +22,11 @@ public interface IReservoir{
 	 */
 	long getCapacity();
 	
+	boolean isInfinite();
+	
+	/** Only relevant if {@link #isInfinite()} returns true */
+	int getInfinityFlowRate();
+	
 	@Nonnull
 	RecipeHolder<ReservoirType> getType();
 	

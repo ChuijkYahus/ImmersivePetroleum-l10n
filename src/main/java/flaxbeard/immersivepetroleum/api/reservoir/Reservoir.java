@@ -94,12 +94,13 @@ public class Reservoir implements IReservoir{
 		this.infiniteFlowRate = Mth.clamp(flowRate, 1, MAX_MBPT * 4);
 	}
 	
+	@Override
 	public boolean isInfinite(){
 		return this.isInfinite;
 	}
 	
-	/** Only relevant if {@link #isInfinite()} returns true */
-	public int getFlowRateInfinite(){
+	@Override
+	public int getInfinityFlowRate(){
 		return this.infiniteFlowRate;
 	}
 	
@@ -187,7 +188,7 @@ public class Reservoir implements IReservoir{
 	@Override
 	public int extract(int amount, FluidAction fluidAction){
 		if(isInfinite())
-			return getFlowRateInfinite();
+			return getInfinityFlowRate();
 		
 		if(isEmpty())
 			return 0;
