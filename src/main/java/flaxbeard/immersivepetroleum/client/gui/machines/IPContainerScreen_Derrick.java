@@ -26,6 +26,7 @@ import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
@@ -96,20 +97,22 @@ public class IPContainerScreen_Derrick extends IPContainerScreen<DerrickContaine
 		public void draw(@Nonnull GuiGraphics guiGraphics, int mouseX, int mouseY){
 			guiGraphics.blitSprite(BOX, this.bounds.x0(), this.bounds.y0(), 0, this.bounds.width(), this.bounds.height());
 			
-			if(this.container.pos().getY() <= 62){
+			Level level = this.container.level;
+			
+			if(this.container.pos().getY() < level.getSeaLevel() && level.dimension() == Level.OVERWORLD){
 				this.console.belowWaterTableText();
 				
 			}else{
-				BlockEntity tile = this.container.level.getBlockEntity(this.container.pos());
+				BlockEntity tile = level.getBlockEntity(this.container.pos());
 				if(tile instanceof IMultiblockBE<?> multiblockBE){
 					IMultiblockContext<?> context;
 					if((context = multiblockBE.getHelper().getContext()) != null && context.getState() instanceof State state){
-						IMultiblockLevel level = context.getLevel();
+						IMultiblockLevel mbLevel = context.getLevel();
 						
 						if(state.isRedstoned){
 							this.console.disabledText();
 						}else{
-							updateStatusConsole(this.console, state, level);
+							updateStatusConsole(this.console, state, mbLevel);
 						}
 					}
 				}

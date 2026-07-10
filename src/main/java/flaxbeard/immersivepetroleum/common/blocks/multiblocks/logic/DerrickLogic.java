@@ -167,7 +167,7 @@ public class DerrickLogic implements IMultiblockLogic<State>, IServerTickableCom
 		boolean lastSpilling = state.spilling;
 		state.drilling = state.spilling = false;
 		
-		if(level.getAbsoluteOrigin().getY() < level.getRawLevel().getSeaLevel()){
+		if(level.getAbsoluteOrigin().getY() < level.getRawLevel().getSeaLevel() && level.getRawLevel().dimension() == Level.OVERWORLD){
 			if(state.fluidSpilled == Fluids.EMPTY){
 				state.fluidSpilled = Fluids.WATER;
 			}
