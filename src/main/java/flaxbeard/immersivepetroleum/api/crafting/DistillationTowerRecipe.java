@@ -25,7 +25,7 @@ public class DistillationTowerRecipe extends IPMultiblockRecipe{
 	
 	private static final RandomSource RANDOM = RandomSource.create();
 	
-	/** May return null! */
+	@Nullable
 	public static RecipeHolder<DistillationTowerRecipe> findRecipe(FluidStack input){
 		if(recipes.isEmpty())
 			return null;
@@ -97,15 +97,10 @@ public class DistillationTowerRecipe extends IPMultiblockRecipe{
 		
 		for(StackWithChance chancedStack: this.itemOutput){
 			if(RANDOM.nextFloat() <= chancedStack.chance()){
-				output.add(chancedStack.stack().get());
+				output.add(chancedStack.stack().get().copy());
 			}
 		}
 		
 		return output;
-	}
-	
-	@Deprecated(forRemoval = true)
-	public double[] chances(){
-		return new double[0];
 	}
 }

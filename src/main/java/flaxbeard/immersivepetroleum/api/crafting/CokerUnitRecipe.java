@@ -12,6 +12,7 @@ import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -19,6 +20,7 @@ import java.util.Objects;
 public class CokerUnitRecipe extends IPMultiblockRecipe{
 	public static Map<ResourceLocation, RecipeHolder<CokerUnitRecipe>> recipes = new HashMap<>();
 	
+	@Nullable
 	public static RecipeHolder<CokerUnitRecipe> findRecipe(ItemStack stack, FluidStack fluid){
 		for(RecipeHolder<CokerUnitRecipe> holder: recipes.values()){
 			CokerUnitRecipe recipe = holder.value();
@@ -120,7 +122,7 @@ public class CokerUnitRecipe extends IPMultiblockRecipe{
 	@Override
 	public NonNullList<ItemStack> getActualItemOutputs(){
 		NonNullList<ItemStack> list = NonNullList.create();
-		list.add(this.outputItem);
+		list.add(getOutputItem());
 		return list;
 	}
 	

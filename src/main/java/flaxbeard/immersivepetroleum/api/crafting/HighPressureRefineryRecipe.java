@@ -28,6 +28,7 @@ public class HighPressureRefineryRecipe extends IPMultiblockRecipe{
 	
 	private static final RandomSource RANDOM = RandomSource.create();
 	
+	@Nullable
 	public static RecipeHolder<HighPressureRefineryRecipe> findRecipe(@Nonnull FluidStack input, @Nonnull FluidStack secondary){
 		Objects.requireNonNull(input);
 		Objects.requireNonNull(secondary);
@@ -141,7 +142,7 @@ public class HighPressureRefineryRecipe extends IPMultiblockRecipe{
 		NonNullList<ItemStack> list = NonNullList.create();
 		
 		if(this.outputItem != null && RANDOM.nextFloat() <= this.outputItem.chance()){
-			list.add(this.outputItem.stack().get());
+			list.add(this.outputItem.stack().get().copy());
 		}
 		
 		return list;
